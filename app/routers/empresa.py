@@ -8,9 +8,10 @@ from app.models.avaliacao_model import Avaliacao
 from app.schemas.empresa_schema import EmpresaCreate, EmpresaResponse
 from app.core.security import verificar_token, get_password_hash
 from math import radians, cos, sin, asin, sqrt
-from app.database import get_db
+from ..database import get_db
 # from app.routers.auth import get_current_user
-from app.dependencies import get_current_user
+# from app.dependencies import get_current_user
+from ..dependencies import get_current_user
 
 router = APIRouter(prefix="/empresas", tags=["Empresas"])
 
