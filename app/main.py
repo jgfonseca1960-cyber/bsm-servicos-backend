@@ -6,6 +6,8 @@ import app.models.usuario_model
 import app.models.empresa_model
 import app.models.avaliacao_model
 
+from app import models
+
 from app.routers import auth, empresa, avaliacao
 
 
