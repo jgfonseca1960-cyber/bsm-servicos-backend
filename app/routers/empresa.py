@@ -11,7 +11,7 @@ from math import radians, cos, sin, asin, sqrt
 from app.database import get_db
 from app.models.usuario import Usuario
 from app.auth import get_current_user
-
+from app.database import get_db
 
 router = APIRouter(prefix="/empresas", tags=["Empresas"])
 
