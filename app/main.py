@@ -16,6 +16,6 @@ app.include_router(auth.router)
 app.include_router(empresa.router)
 app.include_router(avaliacao.router)
 
-@app.get("/")
-def root():
-    return {"status": "API funcionando"}
+# @app.get("/")
+# def root():
+#    return {"status": "API funcionando"}
