@@ -4,6 +4,8 @@ from app.database import engine, Base
 from app.models import usuario_model
 from app.models import empresa_model
 from app.models import avaliacao_model
+from app.models.usuario import Usuario
+from app.models.empresa import Empresa
 
 from app.routers import auth, empresa, avaliacao
 
