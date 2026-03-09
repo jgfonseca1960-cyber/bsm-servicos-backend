@@ -6,6 +6,7 @@ from app.database import SessionLocal
 from app.models.usuario_model import Usuario
 from app.schemas.usuario_schema import UsuarioCreate
 from app.core.security import get_password_hash, verificar_senha, criar_token
+from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
