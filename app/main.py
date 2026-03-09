@@ -12,7 +12,9 @@ from app.routers import auth, empresa, avaliacao
 app = FastAPI()
 
 
-Base.metadata.create_all(bind=engine)
+@app.on_event("startup")
+def startup():
+    Base.metadata.create_all(bind=engine)
 
 
 app.include_router(auth.router)
