@@ -2,10 +2,11 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-from app.routers.auth import get_current_user
+# from app.routers.auth import get_current_user
 
 from app.database import SessionLocal
-from app.models import Usuario
+# from app.models import Usuario
+from app.models.usuario_model import Usuario
 
 SECRET_KEY = "brg7573x"
 ALGORITHM = "HS256"
