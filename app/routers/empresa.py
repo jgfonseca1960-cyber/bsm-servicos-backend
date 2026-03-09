@@ -10,7 +10,6 @@ from app.core.security import verificar_token, get_password_hash
 from math import radians, cos, sin, asin, sqrt
 from app.database import get_db
 from app.routers.auth import get_current_user
-from app.database import get_db
 
 router = APIRouter(prefix="/empresas", tags=["Empresas"])
 
