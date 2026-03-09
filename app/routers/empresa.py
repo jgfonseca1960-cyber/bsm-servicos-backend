@@ -9,7 +9,7 @@ from app.schemas.empresa_schema import EmpresaCreate, EmpresaResponse
 from app.core.security import verificar_token, get_password_hash
 from math import radians, cos, sin, asin, sqrt
 from app.database import get_db
-from app.models.usuario import Usuario
+# from app.models.usuario import Usuario
 from app.auth import get_current_user
 from app.database import get_db
 
