@@ -4,6 +4,7 @@ from app.database import Base
 
 class Empresa(Base):
     __tablename__ = "empresas"
+    __table_args__ = {"extend_existing": True}
 
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String(200))
