@@ -49,15 +49,22 @@ def register(user: UsuarioCreate, db: Session = Depends(get_db)):
 
 
 # LOGIN
-@router.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
 
-    usuario = db.query(Usuario).filter(Usuario.email == form_data.username).first()
+
+@router.post("/login")
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
+
+    usuario = db.query(Usuario).filter(
+        Usuario.email == form_data.username
+    ).first()
 
     if not usuario:
         raise HTTPException(status_code=400, detail="Usuário não encontrado")
 
-    if not verificar_senha(form_data.password, usuario.password):
+    if not verificar_senha(form_data.password, usuario.senha):
         raise HTTPException(status_code=400, detail="Senha inválida")
 
     token = criar_token({"sub": usuario.email})
