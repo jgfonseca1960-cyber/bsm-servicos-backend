@@ -7,9 +7,10 @@ class EmpresaCreate(BaseModel):
     telefone: str
     endereco: str
     cidade: str
+    estado:str
     tipo_servico: str
     descricao: str | None = None
-
+    categoria: str
     latitude: float
     longitude: float
 
