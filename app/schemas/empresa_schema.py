@@ -6,6 +6,7 @@ class EmpresaCreate(BaseModel):
     responsavel: str
     telefone: str
     endereco: str
+    cidade: str
     tipo_servico: str
     descricao: str | None = None
 
