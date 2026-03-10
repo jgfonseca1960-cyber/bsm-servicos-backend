@@ -17,4 +17,5 @@ class Empresa(Base):
     latitude = Column(Float)
     longitude = Column(Float)
     descricao = Column(Text)
+    categoria = column(Text)
     usuario_id = Column(Integer, ForeignKey("usuarios.id"))
