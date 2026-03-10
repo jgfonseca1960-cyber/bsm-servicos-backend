@@ -1,14 +1,13 @@
 from fastapi import FastAPI
-
 from app.database import engine, Base
+from app.models import empresa_model
+from app.models import usuario_model
+from app import models
+from app.routers import auth, empresa, avaliacao
 
 import app.models.usuario_model
 import app.models.empresa_model
 import app.models.avaliacao_model
-
-from app import models
-
-from app.routers import auth, empresa, avaliacao
 
 
 app = FastAPI()

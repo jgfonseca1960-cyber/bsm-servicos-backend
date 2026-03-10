@@ -1,5 +1,4 @@
 from sqlalchemy import Column, Integer, String, Text, Float, ForeignKey
-
 from app.database import Base
 
 class Empresa(Base):
