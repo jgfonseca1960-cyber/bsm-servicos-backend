@@ -29,11 +29,13 @@ def register(user: UsuarioCreate, db: Session = Depends(get_db)):
     if usuario_existente:
         raise HTTPException(status_code=400, detail="Usuário já existe")
 
-    senha_hash = get_password_hash(user.password)
+    # senha_hash = get_password_hash(user.password)
+    senha_hash = get_password_hash(user.senha)
+
 
     novo_usuario = Usuario(
         email=user.email,
-        password=senha_hash
+        senha=senha_hash
     )
 
     db.add(novo_usuario)
