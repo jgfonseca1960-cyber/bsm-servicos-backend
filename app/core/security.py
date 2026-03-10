@@ -9,8 +9,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
+SECRET_KEY = "brg7573x"
+ALGORITHM = "HS256"
 
 # configuração do JWT
 # SECRET_KEY = "bsm_servicos_secret"
