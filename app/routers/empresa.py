@@ -29,10 +29,10 @@ def criar_empresa(
     usuario: Usuario = Depends(get_current_user)
 ):
 
+    dados = empresa.model_dump()
+
     nova_empresa = Empresa(
-        nome=empresa.nome,
-        cidade=empresa.cidade,
-        categoria=empresa.categoria,
+        **dados,
         usuario_id=usuario.id
     )
 
