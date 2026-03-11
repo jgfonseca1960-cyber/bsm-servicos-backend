@@ -14,6 +14,12 @@ from ..dependencies import get_current_user
 # ✅ router precisa vir antes dos endpoints
 router = APIRouter(prefix="/empresas", tags=["Empresas"])
 
+@router.get("/publico")
+def listar_empresas(db: Session = Depends(get_db)):
+
+    empresas = db.query(Empresa).all()
+
+    return empresas
 
 def get_db():
     db = SessionLocal()
