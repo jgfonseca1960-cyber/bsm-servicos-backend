@@ -7,7 +7,7 @@ from app.models.empresa_model import Empresa
 from app.models.usuario_model import Usuario
 from app.models.avaliacao_model import Avaliacao
 
-from app.schemas.empresa_schema import EmpresaCreate
+from app.schemas.empresa_schema import EmpresaCreate, EmpresaResponse
 from ..dependencies import get_current_user
 
 
@@ -24,7 +24,7 @@ def get_db():
 
 
 # ✅ API PUBLICA
-@router.get("/publico")
+@router.get("/publico", response_model=list[EmpresaResponse])
 def listar_empresas(db: Session = Depends(get_db)):
     return db.query(Empresa).all()
 
@@ -52,7 +52,7 @@ def criar_empresa(
 
 
 # ✅ POR CIDADE
-@router.get("/cidade/{cidade}")
+@router.get("/cidade/{cidade}", response_model=list[EmpresaResponse])
 def empresas_por_cidade(cidade: str, db: Session = Depends(get_db)):
 
     return db.query(Empresa).filter(
@@ -61,7 +61,7 @@ def empresas_por_cidade(cidade: str, db: Session = Depends(get_db)):
 
 
 # ✅ POR CATEGORIA
-@router.get("/categoria/{categoria}")
+router.get("/categoria/{categoria}", response_model=list[EmpresaResponse])
 def empresas_por_categoria(categoria: str, db: Session = Depends(get_db)):
 
     return db.query(Empresa).filter(
@@ -75,12 +75,19 @@ def ranking(db: Session = Depends(get_db)):
 
     res = db.query(
         Empresa.nome,
-        func.avg(Avaliacao.nota),
-        func.count(Avaliacao.id)
+        func.avg(Avaliacao.nota).label("media"),
+        func.count(Avaliacao.id).label("total")
     ).join(
         Avaliacao,
         Avaliacao.empresa_id == Empresa.id,
         isouter=True
     ).group_by(Empresa.id).all()
 
-    return res
+    return [
+        {
+            "nome": r[0],
+            "media": float(r[1] or 0),
+            "total": r[2]
+        }
+        for r in res
+    ]
