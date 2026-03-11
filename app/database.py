@@ -3,6 +3,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from app.core.config import settings
 
+# teste 
+
 empresa_model.Base.metadata.drop_all(bind=engine)
 empresa_model.Base.metadata.create_all(bind=engine)
 
