@@ -11,22 +11,22 @@ from app.schemas.empresa_schema import EmpresaCreate
 from ..dependencies import get_current_user
 
 
-# ✅ router precisa vir antes dos endpoints
 router = APIRouter(prefix="/empresas", tags=["Empresas"])
 
-@router.get("/publico")
-def listar_empresas(db: Session = Depends(get_db)):
 
-    empresas = db.query(Empresa).all()
-
-    return empresas
-
+# ✅ get_db precisa vir antes
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
+
+# ✅ API PUBLICA
+@router.get("/publico")
+def listar_empresas(db: Session = Depends(get_db)):
+    return db.query(Empresa).all()
 
 
 # ✅ CRIAR EMPRESA
@@ -51,14 +51,32 @@ def criar_empresa(
     return nova_empresa
 
 
+# ✅ POR CIDADE
+@router.get("/cidade/{cidade}")
+def empresas_por_cidade(cidade: str, db: Session = Depends(get_db)):
+
+    return db.query(Empresa).filter(
+        Empresa.cidade.ilike(f"%{cidade}%")
+    ).all()
+
+
+# ✅ POR CATEGORIA
+@router.get("/categoria/{categoria}")
+def empresas_por_categoria(categoria: str, db: Session = Depends(get_db)):
+
+    return db.query(Empresa).filter(
+        Empresa.categoria.ilike(f"%{categoria}%")
+    ).all()
+
+
 # ✅ RANKING
 @router.get("/ranking")
 def ranking(db: Session = Depends(get_db)):
 
     res = db.query(
         Empresa.nome,
-        func.avg(Avaliacao.nota).label("media"),
-        func.count(Avaliacao.id).label("total")
+        func.avg(Avaliacao.nota),
+        func.count(Avaliacao.id)
     ).join(
         Avaliacao,
         Avaliacao.empresa_id == Empresa.id,
