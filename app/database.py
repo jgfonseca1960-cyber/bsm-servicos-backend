@@ -1,16 +1,11 @@
-import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
-from app.core.config import settings
-
-# teste 
-
-empresa_model.Base.metadata.drop_all(bind=engine)
-empresa_model.Base.metadata.create_all(bind=engine)
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+import os
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-engine = create_engine(settings.DATABASE_URL)
+engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(
     autocommit=False,
@@ -19,11 +14,3 @@ SessionLocal = sessionmaker(
 )
 
 Base = declarative_base()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
