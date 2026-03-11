@@ -11,9 +11,23 @@ app = FastAPI()
 Base.metadata.create_all(bind=engine)
 
 with engine.connect() as conn:
+
     conn.execute(text(
         "ALTER TABLE empresas ADD COLUMN IF NOT EXISTS categoria VARCHAR;"
     ))
+
+    conn.execute(text(
+        "ALTER TABLE empresas ADD COLUMN IF NOT EXISTS estado VARCHAR;"
+    ))
+
+    conn.execute(text(
+        "ALTER TABLE empresas ADD COLUMN IF NOT EXISTS bairro VARCHAR;"
+    ))
+
+    conn.execute(text(
+        "ALTER TABLE empresas ADD COLUMN IF NOT EXISTS descricao TEXT;"
+    ))
+
     conn.commit()
 
 app.include_router(auth.router)
