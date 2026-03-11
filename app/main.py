@@ -12,6 +12,7 @@ Base.metadata.create_all(bind=engine)
 
 with engine.connect() as conn:
 
+    # empresas
     conn.execute(text(
         "ALTER TABLE empresas ADD COLUMN IF NOT EXISTS categoria VARCHAR;"
     ))
@@ -26,6 +27,20 @@ with engine.connect() as conn:
 
     conn.execute(text(
         "ALTER TABLE empresas ADD COLUMN IF NOT EXISTS descricao TEXT;"
+    ))
+
+    # usuarios
+
+    conn.execute(text(
+        "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS nome VARCHAR;"
+    ))
+
+    conn.execute(text(
+        "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS tipo VARCHAR;"
+    ))
+
+    conn.execute(text(
+        "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS empresa_id INTEGER;"
     ))
 
     conn.commit()
