@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 # from app.routers.auth import get_current_user
 # from app.dependencies import get_current_user
 
-from app.database import SessionLocal
+# from app.database import SessionLocal
+from app.core.database import SessionLocal
 # from app.models import Usuario
 from app.models.usuario_model import Usuario
 
