@@ -19,6 +19,8 @@ class Empresa(Base):
 
     endereco = Column(String)
 
+    bairro = Column(String(100))
+
     cidade = Column(String)
 
     estado = Column(String)

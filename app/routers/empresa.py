@@ -41,10 +41,9 @@ def criar_empresa(
     dados = empresa.model_dump()
 
     nova_empresa = Empresa(
-        **dados,
-        usuario_id=usuario.id
-    )
-
+    **dados.dict(),
+    usuario_id=usuario.id
+)
     db.add(nova_empresa)
     db.commit()
     db.refresh(nova_empresa)
