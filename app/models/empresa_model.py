@@ -25,10 +25,12 @@ class Empresa(Base):
     latitude = Column(Float)
     longitude = Column(Float)
 
-    # ✅ ADICIONAR ISSO
-    usuario_id = Column(Integer, ForeignKey("usuarios.id"))
+    usuario_id = Column(
+        Integer,
+        ForeignKey("usuarios.id")
+    )
 
-     usuario = relationship(
+    usuario = relationship(
         "Usuario",
         back_populates="empresas",
         foreign_keys=[usuario_id]

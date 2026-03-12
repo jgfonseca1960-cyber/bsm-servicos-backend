@@ -8,11 +8,10 @@ class Usuario(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    nome = Column(String, nullable=False)
+    nome = Column(String)
     email = Column(String, unique=True, index=True)
-    senha = Column(String, nullable=False)
+    senha = Column(String)
 
-    # ✅ relacionamento correto
     empresas = relationship(
         "Empresa",
         back_populates="usuario",
