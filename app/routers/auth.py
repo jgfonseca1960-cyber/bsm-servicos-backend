@@ -16,6 +16,20 @@ def get_db():
     finally:
         db.close()
 
+@router.post("/register")
+def register(usuario: UsuarioCreate, db: Session = Depends(get_db)):
+
+    novo = Usuario(
+        nome=usuario.nome,
+        email=usuario.email,
+        senha=gerar_hash(usuario.senha),
+    )
+
+    db.add(novo)
+    db.commit()
+    db.refresh(novo)
+
+    return novo
 
 @router.post("/login")
 def login(
