@@ -4,6 +4,7 @@ from app.database import SessionLocal
 from app.models.avaliacao_model import Avaliacao
 from app.schemas.avaliacao_schema import AvaliacaoCreate, AvaliacaoResponse
 from app.core.security import verificar_token
+
 from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/avaliacoes", tags=["Avaliações"])
