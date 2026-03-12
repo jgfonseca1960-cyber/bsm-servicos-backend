@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from sqlalchemy import text
 
-from app.database import engine, Base
+# from app.database import engine, Base
+from app.core.database import engine, Base
+
 from app.models import empresa_model, usuario_model, avaliacao_model
 
 from app.routers import auth, empresa, avaliacao
