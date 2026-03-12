@@ -28,4 +28,8 @@ class Empresa(Base):
     # ✅ ADICIONAR ISSO
     usuario_id = Column(Integer, ForeignKey("usuarios.id"))
 
-    usuario = relationship("Usuario")
+     usuario = relationship(
+        "Usuario",
+        back_populates="empresas",
+        foreign_keys=[usuario_id]
+    )
