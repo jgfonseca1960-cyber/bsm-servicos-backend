@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 # from app.database import SessionLocal
-from app.core.database import SessionLocal
+from app.database import SessionLocal
 from app.models.avaliacao_model import Avaliacao
 from app.schemas.avaliacao_schema import AvaliacaoCreate, AvaliacaoResponse
 from app.core.security import verificar_token

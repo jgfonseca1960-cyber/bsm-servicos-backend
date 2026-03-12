@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 # from app.database import Base
-from app.core.database import Base
+from app.database import Base
 
 class Avaliacao(Base):
     __tablename__ = "avaliacoes"
