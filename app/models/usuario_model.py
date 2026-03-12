@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
-from app.db.base import Base
-
+# from app.db.base import Base
+from app.core.database import Base
 
 class Usuario(Base):
 

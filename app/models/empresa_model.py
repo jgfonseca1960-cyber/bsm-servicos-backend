@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.orm import relationship
 
-from app.db.base import Base
+from app.core.database import Base
+# from app.db.base import Base
 
 
 class Empresa(Base):
