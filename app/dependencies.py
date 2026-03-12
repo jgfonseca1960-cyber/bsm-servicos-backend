@@ -1,19 +1,12 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-# from app.routers.auth import get_current_user
-# from app.dependencies import get_current_user
 
-# from app.database import SessionLocal
 from app.core.database import SessionLocal
-# from app.models import Usuario
+from app.core.security import verificar_token
 from app.models.usuario_model import Usuario
 
-SECRET_KEY = "brg7573x"
-ALGORITHM = "HS256"
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def get_db():
@@ -26,31 +19,14 @@ def get_db():
 
 def get_current_user(
     token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
 
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Não foi possível validar o token",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    user_id = verificar_token(token)
 
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    if not user_id:
+        raise HTTPException(401, "Token inválido")
 
-        email: str = payload.get("sub")
+    usuario = db.query(Usuario).get(user_id)
 
-        if email is None:
-            raise credentials_exception
-
-    except JWTError:
-        raise credentials_exception
-
-    user = db.query(Usuario).filter(
-        Usuario.email == email
-    ).first()
-
-    if user is None:
-        raise credentials_exception
-
-    return user
+    return usuario
