@@ -1,10 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from fastapi.security import OAuth2PasswordRequestForm
 
-from app.core.database import SessionLocal
+from app.database import get_db
 from app.models.usuario_model import Usuario
-from app.core.security import verificar_senha, criar_token
+
+from app.schemas.usuario_schema import UsuarioCreate, UsuarioResponse
+
+from app.core.security import gerar_hash, verificar_senha, criar_token
+
+from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -16,8 +20,18 @@ def get_db():
     finally:
         db.close()
 
-@router.post("/register")
-def register(usuario: UsuarioCreate, db: Session = Depends(get_db)):
+@router.post("/register", response_model=UsuarioResponse)
+def register(
+    usuario: UsuarioCreate,
+    db: Session = Depends(get_db),
+):
+
+    existe = db.query(Usuario).filter(
+        Usuario.email == usuario.email
+    ).first()
+
+    if existe:
+        raise HTTPException(400, "Email já cadastrado")
 
     novo = Usuario(
         nome=usuario.nome,

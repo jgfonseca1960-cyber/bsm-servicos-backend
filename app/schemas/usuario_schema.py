@@ -9,6 +9,13 @@ class UsuarioCreate(BaseModel):
     tipo: Optional[str] = "cliente"
     empresa_id: Optional[int] = None
 
+class UsuarioResponse(BaseModel):
+    id: int
+    nome: str
+    email: str
+
+    class Config:
+        from_attributes = True
 
 class UsuarioLogin(BaseModel):
     email: str
