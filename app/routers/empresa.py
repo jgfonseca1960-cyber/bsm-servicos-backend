@@ -52,12 +52,16 @@ def empresas_por_cidade(cidade: str, db: Session = Depends(get_db)):
     ).all()
 
 
-# ✅ POR CATEGORIA
-@router.get("/categoria/{categoria}", response_model=list[EmpresaResponse])
-def empresas_por_categoria(categoria: str, db: Session = Depends(get_db)):
+# ✅ POR CTIPO DE SERVIÇO
+
+@router.get("/tipo-servico/{tipo}", response_model=list[EmpresaResponse])
+def empresas_por_tipo_servico(
+    tipo: str,
+    db: Session = Depends(get_db)
+):
 
     return db.query(Empresa).filter(
-        Empresa.categoria.ilike(f"%{categoria}%")
+        Empresa.tipo_servico.ilike(f"%{tipo}%")
     ).all()
 
 
