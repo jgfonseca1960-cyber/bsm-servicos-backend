@@ -40,8 +40,7 @@ def register(
         nome=dados.nome,
         email=dados.email,
         senha=dados.senha,
-        tipo="admin"
-    )
+        )
 
     db.add(novo)
     db.commit()
