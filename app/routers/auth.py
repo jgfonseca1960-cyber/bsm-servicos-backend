@@ -6,14 +6,13 @@ from app.schemas.usuario_schema import UsuarioCreate, UsuarioResponse
 from app.core.security import gerar_hash, verificar_senha, criar_token
 from fastapi.security import OAuth2PasswordRequestForm
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+from fastapi import APIRouter
 
-@router.post("/register", response_model=UsuarioResponse)
-def register(
-    usuario: UsuarioCreate,
-    db: Session = Depends(get_db),
-):
+router = APIRouter()
 
+@router.post("/register")
+def register():
+    
     existe = db.query(Usuario).filter(
         Usuario.email == usuario.email
     ).first()
@@ -34,10 +33,8 @@ def register(
     return novo
 
 @router.post("/login")
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db),
-):
+def login():
+
 
     usuario = db.query(Usuario).filter(
         Usuario.email == form_data.username
