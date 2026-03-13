@@ -1,46 +1,50 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
 from app.database import get_db
 from app.models.usuario_model import Usuario
-
-from app.schemas.usuario_schema import (
-    UsuarioCreate,
-    UsuarioLogin,
-    UsuarioResponse
-)
-
-from app.auth import criar_token
-
+from app.schemas.usuario_schema import UsuarioCreate, UsuarioLogin
+from jose import jwt
+from datetime import datetime, timedelta
+from fastapi.security import OAuth2PasswordBearer
 
 router = APIRouter()
 
+SECRET_KEY = "segredo123"
+ALGORITHM = "HS256"
+EXPIRA_MIN = 60 * 24
 
-# =========================
-# REGISTER
-# =========================
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-@router.post("/register", response_model=UsuarioResponse)
+
+def criar_token(data: dict):
+    dados = data.copy()
+
+    expire = datetime.utcnow() + timedelta(
+        minutes=EXPIRA_MIN
+    )
+
+    dados.update({"exp": expire})
+
+    token = jwt.encode(
+        dados,
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
+
+    return token
+
+
+@router.post("/register")
 def register(
     dados: UsuarioCreate,
     db: Session = Depends(get_db)
 ):
 
-    existe = db.query(Usuario).filter(
-        Usuario.email == dados.email
-    ).first()
-
-    if existe:
-        raise HTTPException(
-            status_code=400,
-            detail="Email já cadastrado"
-        )
-
     novo = Usuario(
         nome=dados.nome,
         email=dados.email,
-        senha=dados.senha,
-        )
+        senha=dados.senha
+    )
 
     db.add(novo)
     db.commit()
@@ -49,35 +53,25 @@ def register(
     return novo
 
 
-# =========================
-# LOGIN
-# =========================
-
 @router.post("/login")
 def login(
     dados: UsuarioLogin,
     db: Session = Depends(get_db)
 ):
 
-    usuario = db.query(Usuario).filter(
+    user = db.query(Usuario).filter(
         Usuario.email == dados.email
     ).first()
 
-    if not usuario:
-        raise HTTPException(
-            status_code=401,
-            detail="Usuário não encontrado"
-        )
+    if not user:
+        raise HTTPException(400, "Usuário não encontrado")
 
-    if usuario.senha != dados.senha:
-        raise HTTPException(
-            status_code=401,
-            detail="Senha inválida"
-        )
+    if user.senha != dados.senha:
+        raise HTTPException(400, "Senha inválida")
 
-    token = criar_token(
-        {"user_id": usuario.id}
-    )
+    token = criar_token({
+        "sub": user.email
+    })
 
     return {
         "access_token": token,
