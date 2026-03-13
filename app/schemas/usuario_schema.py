@@ -1,15 +1,16 @@
 from pydantic import BaseModel
-from typing import Optional
-
-class UsuarioLogin(BaseModel):
-    email: str
-    senha: str
 
 
 class UsuarioCreate(BaseModel):
     nome: str
     email: str
     senha: str
+
+
+class UsuarioLogin(BaseModel):
+    email: str
+    senha: str
+
 
 class UsuarioResponse(BaseModel):
     id: int
