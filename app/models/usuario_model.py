@@ -12,8 +12,9 @@ class Usuario(Base):
     email = Column(String, unique=True, index=True)
     senha = Column(String)
 
+    tipo = Column(String, default="usuario")
+
     empresas = relationship(
         "Empresa",
-        back_populates="usuario",
-        foreign_keys="Empresa.usuario_id"
+        back_populates="usuario"
     )

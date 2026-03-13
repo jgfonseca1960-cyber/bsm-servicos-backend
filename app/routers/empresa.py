@@ -1,61 +1,52 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 
-# from app.database import SessionLocal
 from app.database import get_db
 from app.models.empresa_model import Empresa
 from app.models.usuario_model import Usuario
-from app.models.avaliacao_model import Avaliacao
 
-from app.schemas.empresa_schema import EmpresaCreate, EmpresaResponse
-from ..dependencies import get_current_user
+from app.schemas.empresa_schema import (
+    EmpresaCreate,
+    EmpresaResponse
+)
+
+from app.dependencies import get_current_user
 
 
-router = APIRouter(prefix="/empresas", tags=["Empresas"])
+router = APIRouter()
 
 
-# ✅ API PUBLICA
+# =========================
+# LISTAR PUBLICO
+# =========================
+
 @router.get("/publico", response_model=list[EmpresaResponse])
 def listar_empresas(db: Session = Depends(get_db)):
+
     return db.query(Empresa).all()
 
 
-# ✅ CRIAR EMPRESA
-from app.schemas.empresa_schema import EmpresaCreate
+# =========================
+# BUSCAR POR CIDADE
+# =========================
 
-@router.post("/")
-def criar_empresa(
-    dados: EmpresaCreate,
-    db: Session = Depends(get_db),
-    usuario = Depends(get_current_user)
-):
-
-    nova_empresa = Empresa(
-        **dados.model_dump(),
-        usuario_id=usuario.id
-    )
-
-    db.add(nova_empresa)
-    db.commit()
-    db.refresh(nova_empresa)
-
-    return nova_empresa
-
-
-# ✅ POR CIDADE
 @router.get("/cidade/{cidade}", response_model=list[EmpresaResponse])
-def empresas_por_cidade(cidade: str, db: Session = Depends(get_db)):
+def buscar_por_cidade(
+    cidade: str,
+    db: Session = Depends(get_db)
+):
 
     return db.query(Empresa).filter(
         Empresa.cidade.ilike(f"%{cidade}%")
     ).all()
 
 
-# ✅ POR CTIPO DE SERVIÇO
+# =========================
+# BUSCAR POR TIPO SERVICO
+# =========================
 
 @router.get("/tipo-servico/{tipo}", response_model=list[EmpresaResponse])
-def empresas_por_tipo_servico(
+def buscar_por_tipo(
     tipo: str,
     db: Session = Depends(get_db)
 ):
@@ -65,25 +56,50 @@ def empresas_por_tipo_servico(
     ).all()
 
 
-# ✅ RANKING
-@router.get("/ranking")
+# =========================
+# RANKING
+# =========================
+
+@router.get("/ranking", response_model=list[EmpresaResponse])
 def ranking(db: Session = Depends(get_db)):
 
-    res = db.query(
-        Empresa.nome,
-        func.avg(Avaliacao.nota).label("media"),
-        func.count(Avaliacao.id).label("total")
-    ).join(
-        Avaliacao,
-        Avaliacao.empresa_id == Empresa.id,
-        isouter=True
-    ).group_by(Empresa.id).all()
+    return db.query(Empresa).order_by(
+        Empresa.id.desc()
+    ).all()
 
-    return [
-        {
-            "nome": r[0],
-            "media": float(r[1] or 0),
-            "total": r[2]
-        }
-        for r in res
-    ]
+
+# =========================
+# CRIAR EMPRESA (ADMIN)
+# =========================
+
+@router.post("/", response_model=EmpresaResponse)
+def criar_empresa(
+    dados: EmpresaCreate,
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user)
+):
+
+    if usuario.tipo != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Somente admin pode criar empresa"
+        )
+
+    nova = Empresa(
+        nome=dados.nome,
+        cidade=dados.cidade,
+        tipo_servico=dados.tipo_servico,
+        categoria=dados.categoria,
+        telefone=dados.telefone,
+        endereco=dados.endereco,
+        descricao=dados.descricao,
+        latitude=dados.latitude,
+        longitude=dados.longitude,
+        usuario_id=usuario.id
+    )
+
+    db.add(nova)
+    db.commit()
+    db.refresh(nova)
+
+    return nova

@@ -9,17 +9,13 @@ class Empresa(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     nome = Column(String, nullable=False)
-    responsavel = Column(String)
-    telefone = Column(String)
-    endereco = Column(String)
-
-    cidade = Column(String)
-    estado = Column(String)
-    bairro = Column(String)
+    cidade = Column(String, nullable=False)
 
     tipo_servico = Column(String)
     categoria = Column(String)
 
+    telefone = Column(String)
+    endereco = Column(String)
     descricao = Column(String)
 
     latitude = Column(Float)
