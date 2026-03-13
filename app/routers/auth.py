@@ -1,29 +1,46 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from app.database import get_db
 from app.models.usuario_model import Usuario
-from app.schemas.usuario_schema import UsuarioCreate, UsuarioResponse
-from app.core.security import gerar_hash, verificar_senha, criar_token
-from fastapi.security import OAuth2PasswordRequestForm
 
-from fastapi import APIRouter
+from app.schemas.usuario_schema import (
+    UsuarioCreate,
+    UsuarioLogin,
+    UsuarioResponse
+)
+
+from app.auth import criar_token
+
 
 router = APIRouter()
 
-@router.post("/register")
-def register():
-    
+
+# =========================
+# REGISTER
+# =========================
+
+@router.post("/register", response_model=UsuarioResponse)
+def register(
+    dados: UsuarioCreate,
+    db: Session = Depends(get_db)
+):
+
     existe = db.query(Usuario).filter(
-        Usuario.email == usuario.email
+        Usuario.email == dados.email
     ).first()
 
     if existe:
-        raise HTTPException(400, "Email já cadastrado")
+        raise HTTPException(
+            status_code=400,
+            detail="Email já cadastrado"
+        )
 
     novo = Usuario(
-        nome=usuario.nome,
-        email=usuario.email,
-        senha=gerar_hash(usuario.senha),
+        nome=dados.nome,
+        email=dados.email,
+        senha=dados.senha,
+        tipo="admin"
     )
 
     db.add(novo)
@@ -32,25 +49,33 @@ def register():
 
     return novo
 
-@router.post("/login")
-def login():
 
+# =========================
+# LOGIN
+# =========================
+
+@router.post("/login")
+def login(
+    dados: UsuarioLogin,
+    db: Session = Depends(get_db)
+):
 
     usuario = db.query(Usuario).filter(
-        Usuario.email == form_data.username
+        Usuario.email == dados.email,
+        Usuario.senha == dados.senha
     ).first()
 
     if not usuario:
-        raise HTTPException(400, "Usuário não encontrado")
-
-    if not verificar_senha(form_data.password, usuario.senha):
-        raise HTTPException(400, "Senha inválida")
+        raise HTTPException(
+            status_code=401,
+            detail="Login inválido"
+        )
 
     token = criar_token(
-        {"sub": str(usuario.id)}
+        {"user_id": usuario.id}
     )
 
     return {
         "access_token": token,
-        "token_type": "bearer",
+        "token_type": "bearer"
     }
