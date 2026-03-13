@@ -11,7 +11,6 @@ class UsuarioCreate(BaseModel):
     email: str
     senha: str
 
-c
 class UsuarioResponse(BaseModel):
     id: int
     nome: str
