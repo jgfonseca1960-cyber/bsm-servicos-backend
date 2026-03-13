@@ -6,6 +6,7 @@ from app.schemas.usuario_schema import UsuarioCreate, UsuarioLogin
 from jose import jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
+from app.core.security import gerar_hash, verificar_senha, criar_token
 
 router = APIRouter()
 
@@ -41,17 +42,16 @@ def register(
 ):
 
     novo = Usuario(
-        nome=dados.nome,
-        email=dados.email,
-        senha=dados.senha
-    )
-
+    nome=dados.nome,
+    email=dados.email,
+    senha=gerar_hash(dados.senha)
+)
+    
     db.add(novo)
     db.commit()
     db.refresh(novo)
 
     return novo
-
 
 @router.post("/login")
 def login(
@@ -66,8 +66,14 @@ def login(
     if not user:
         raise HTTPException(400, "Usuário não encontrado")
 
-    if user.senha != dados.senha:
-        raise HTTPException(400, "Senha inválida")
+    if not verificar_senha(
+    dados.senha,
+    user.senha
+):
+        raise HTTPException(
+        400,
+        "Senha inválida"
+    )
 
     token = criar_token({
         "sub": user.email
