@@ -61,14 +61,19 @@ def login(
 ):
 
     usuario = db.query(Usuario).filter(
-        Usuario.email == dados.email,
-        Usuario.senha == dados.senha
+        Usuario.email == dados.email
     ).first()
 
     if not usuario:
         raise HTTPException(
             status_code=401,
-            detail="Login inválido"
+            detail="Usuário não encontrado"
+        )
+
+    if usuario.senha != dados.senha:
+        raise HTTPException(
+            status_code=401,
+            detail="Senha inválida"
         )
 
     token = criar_token(
