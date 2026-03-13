@@ -6,10 +6,7 @@ from app.routers import avaliacao
 from app.routers import usuario
 
 
-app = FastAPI(
-    title="BSM API",
-    version="1.0"
-)
+app = FastAPI()
 
 
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
