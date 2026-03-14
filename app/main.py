@@ -5,17 +5,10 @@ from app.database import Base, engine
 from app.models import usuario_model
 from app.models import empresa_model
 
-from app.routers import auth
-from app.routers import empresa
-from app.routers import usuario
-from app.routers import avaliacao
-
-from app.routers import usuarios
-
-app.include_router(usuarios.router)
-
-
-Base.metadata.create_all(bind=engine)
+from app.routers.auth import router as auth_router
+from app.routers.usuario import router as usuario_router
+from app.routers.empresa import router as empresa_router
+from app.routers.avaliacao import router as avaliacao_router
 
 
 app = FastAPI(
@@ -23,10 +16,15 @@ app = FastAPI(
 )
 
 
-app.include_router(auth.router, prefix="/auth", tags=["Auth"])
+# criar tabelas
+Base.metadata.create_all(bind=engine)
 
-app.include_router(usuario.router, prefix="/usuarios", tags=["Usuarios"])
 
-app.include_router(empresa.router, prefix="/empresas", tags=["Empresas"])
+# routers
+app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 
-app.include_router(avaliacao.router, prefix="/avaliacoes", tags=["Avaliacoes"])
+app.include_router(usuario_router, prefix="/usuarios", tags=["Usuarios"])
+
+app.include_router(empresa_router, prefix="/empresas", tags=["Empresas"])
+
+app.include_router(avaliacao_router, prefix="/avaliacoes", tags=["Avaliacoes"])
