@@ -1,5 +1,7 @@
 from passlib.context import CryptContext
 
+user_id = payload.get("sub")
+
 pwd_context = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto"

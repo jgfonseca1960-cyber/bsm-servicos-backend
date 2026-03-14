@@ -5,6 +5,9 @@ SECRET_KEY = "segredo123"
 ALGORITHM = "HS256"
 EXPIRA_MIN = 60 * 24
 
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/auth/login"
+)
 
 def criar_token(data: dict):
 

@@ -7,6 +7,8 @@ from jose import jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
 from app.core.security import gerar_hash, verificar_senha, criar_token
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import Depends
 
 router = APIRouter()
 
@@ -55,28 +57,31 @@ def register(
 
 @router.post("/login")
 def login(
-    dados: UsuarioLogin,
+    form: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
 
     user = db.query(Usuario).filter(
-        Usuario.email == dados.email
+        Usuario.email == form.username
     ).first()
 
     if not user:
-        raise HTTPException(400, "Usuário não encontrado")
+        raise HTTPException(
+            status_code=400,
+            detail="Usuário não encontrado"
+        )
 
     if not verificar_senha(
-    dados.senha,
-    user.senha
-):
+        form.password,
+        user.senha
+    ):
         raise HTTPException(
-        400,
-        "Senha inválida"
-    )
+            status_code=400,
+            detail="Senha inválida"
+        )
 
     token = criar_token({
-        "sub": user.email
+        "sub": str(user.id)
     })
 
     return {
