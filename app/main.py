@@ -10,6 +10,10 @@ from app.routers import empresa
 from app.routers import usuario
 from app.routers import avaliacao
 
+from app.routers import usuarios
+
+app.include_router(usuarios.router)
+
 
 Base.metadata.create_all(bind=engine)
 
