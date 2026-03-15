@@ -6,8 +6,9 @@ from app.database import SessionLocal
 from app.models.usuario_model import Usuario
 from app.core.security import verificar_token
 
+
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/auth/login"
+    tokenUrl="auth/login"
 )
 
 
@@ -32,7 +33,9 @@ def get_current_user(
             detail="Token inválido"
         )
 
-    user = db.query(Usuario).get(user_id)
+    user = db.query(Usuario).filter(
+        Usuario.id == user_id
+    ).first()
 
     if not user:
         raise HTTPException(
