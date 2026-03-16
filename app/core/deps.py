@@ -10,12 +10,14 @@ oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="auth/login"
 )
 
+
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
 
 def get_current_user(
     token: str = Depends(oauth2_scheme),
@@ -30,9 +32,7 @@ def get_current_user(
             detail="Token inválido"
         )
 
-    user = db.query(Usuario).filter(
-        Usuario.id == user_id
-    ).first()
+    user = db.query(Usuario).get(user_id)
 
     if not user:
         raise HTTPException(
