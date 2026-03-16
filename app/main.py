@@ -9,9 +9,14 @@ app = FastAPI()
 
 
 @app.on_event("startup")
-def reset_db():
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+def start_db():
+
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("DB OK")
+
+    except Exception as e:
+        print("ERRO DB", e)
 
 
 app.include_router(auth.router, prefix="/auth")
