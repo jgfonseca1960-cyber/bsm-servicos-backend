@@ -79,24 +79,16 @@ def criar_empresa(
     usuario: Usuario = Depends(get_current_user)
 ):
 
-    if usuario.tipo != "admin":
+    if not usuario.is_admin:
         raise HTTPException(
             status_code=403,
             detail="Somente admin pode criar empresa"
         )
 
     nova = Empresa(
-        nome=dados.nome,
-        cidade=dados.cidade,
-        tipo_servico=dados.tipo_servico,
-        categoria=dados.categoria,
-        telefone=dados.telefone,
-        endereco=dados.endereco,
-        descricao=dados.descricao,
-        latitude=dados.latitude,
-        longitude=dados.longitude,
-        usuario_id=usuario.id
-    )
+    **dados.dict(),
+    usuario_id=usuario.id
+)
 
     db.add(nova)
     db.commit()

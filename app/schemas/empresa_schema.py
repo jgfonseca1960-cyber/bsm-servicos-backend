@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
+
 class EmpresaCreate(BaseModel):
 
     nome: str
-    responsavel: str | None = None
     telefone: str | None = None
     endereco: str | None = None
 
@@ -23,9 +23,6 @@ class EmpresaCreate(BaseModel):
 class EmpresaResponse(EmpresaCreate):
 
     id: int
-
-    media_avaliacoes: float | None = None
-    total_avaliacoes: int | None = None
 
     class Config:
         from_attributes = True

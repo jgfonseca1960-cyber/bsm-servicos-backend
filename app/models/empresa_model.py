@@ -11,20 +11,18 @@ class Empresa(Base):
     nome = Column(String, nullable=False)
 
     descricao = Column(String)
-
     telefone = Column(String)
-
     endereco = Column(String)
 
     cidade = Column(String)
+    estado = Column(String)
+    bairro = Column(String)
 
     categoria = Column(String)
+    tipo_servico = Column(String)
 
     latitude = Column(Float)
-
     longitude = Column(Float)
-
-    # DONO DA EMPRESA
 
     usuario_id = Column(
         Integer,
