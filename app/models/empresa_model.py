@@ -1,17 +1,32 @@
-from sqlalchemy import Column, Integer, String, Float
-
+from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from app.database import Base
 
 
 class Empresa(Base):
+
     __tablename__ = "empresas"
+
     id = Column(Integer, primary_key=True, index=True)
+
     nome = Column(String, nullable=False)
-    cidade = Column(String, nullable=False)
-    tipo_servico = Column(String)
-    categoria = Column(String)
-    telefone = Column(String)
-    endereco = Column(String)
+
     descricao = Column(String)
+
+    telefone = Column(String)
+
+    endereco = Column(String)
+
+    cidade = Column(String)
+
+    categoria = Column(String)
+
     latitude = Column(Float)
-    longitude = Column(Float)    
+
+    longitude = Column(Float)
+
+    # DONO DA EMPRESA
+
+    usuario_id = Column(
+        Integer,
+        ForeignKey("usuarios.id")
+    )
