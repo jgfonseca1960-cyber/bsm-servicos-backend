@@ -34,13 +34,13 @@ def register(
             status_code=400,
             detail="Email já cadastrado"
         )
-
     novo = Usuario(
         nome=dados.nome,
         email=dados.email,
-        senha=gerar_hash(dados.senha)
-    )
-
+        senha=gerar_hash(dados.senha),
+        tipo=dados.tipo
+)
+    
     db.add(novo)
     db.commit()
     db.refresh(novo)
