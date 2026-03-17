@@ -1,71 +1,35 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordRequestForm
 
 from app.database import get_db
 from app.models.usuario_model import Usuario
+from app.core.security import verificar_senha, criar_token
 
-from app.schemas.usuario_schema import (
-    UsuarioCreate,
-    UsuarioLogin
+router = APIRouter(
+    prefix="/auth",
+    tags=["Auth"]
 )
-
-from app.core.security import (
-    gerar_hash,
-    verificar_senha,
-    criar_token
-)
-
-router = APIRouter()
-
-
-@router.post("/register")
-def register(
-    dados: UsuarioCreate,
-    db: Session = Depends(get_db)
-):
-
-    novo = Usuario(
-        nome=dados.nome,
-        email=dados.email,
-        senha=gerar_hash(dados.senha),
-        tipo=dados.tipo
-    )
-
-    db.add(novo)
-    db.commit()
-    db.refresh(novo)
-
-    return novo
 
 
 @router.post("/login")
 def login(
-    dados: UsuarioLogin,
+    form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
 
-    user = db.query(
-        Usuario
-    ).filter(
-        Usuario.email == dados.email
+    user = db.query(Usuario).filter(
+        Usuario.email == form_data.username
     ).first()
 
     if not user:
-
-        raise HTTPException(
-            status_code=400,
-            detail="Usuário não encontrado"
-        )
+        return {"erro": "usuario nao encontrado"}
 
     if not verificar_senha(
-        dados.senha,
+        form_data.password,
         user.senha
     ):
-
-        raise HTTPException(
-            status_code=400,
-            detail="Senha inválida"
-        )
+        return {"erro": "senha invalida"}
 
     token = criar_token(
         {"sub": str(user.id)}
