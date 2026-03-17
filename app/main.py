@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 
 from app.database import Base, engine
-
 from app.routers import auth, empresa, usuario
 
 
@@ -13,7 +12,6 @@ def start_db():
 
     print("CRIANDO TABELAS")
 
-    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
 
