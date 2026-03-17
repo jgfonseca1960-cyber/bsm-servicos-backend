@@ -4,20 +4,14 @@ from pydantic import BaseModel
 class EmpresaCreate(BaseModel):
 
     nome: str
-    telefone: str | None = None
-    endereco: str | None = None
-
     cidade: str
-    estado: str | None = None
-    bairro: str | None = None
-
-    tipo_servico: str | None = None
-    categoria: str | None = None
-
-    descricao: str | None = None
-
-    latitude: float | None = None
-    longitude: float | None = None
+    tipo_servico: str
+    categoria: str
+    telefone: str
+    endereco: str
+    descricao: str
+    latitude: float
+    longitude: float
 
 
 class EmpresaResponse(EmpresaCreate):

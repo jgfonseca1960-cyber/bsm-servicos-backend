@@ -3,10 +3,25 @@ from app.database import Base
 
 
 class Usuario(Base):
+
     __tablename__ = "usuarios"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
     nome = Column(String)
-    email = Column(String, unique=True)
+
+    email = Column(
+        String,
+        unique=True
+    )
+
     senha = Column(String)
-    tipo = Column(String, default="normal")
+
+    tipo = Column(
+        String,
+        default="normal"
+    )
