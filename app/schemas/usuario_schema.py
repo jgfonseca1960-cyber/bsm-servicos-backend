@@ -1,36 +1,16 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
-from app.database import Base
+from pydantic import BaseModel
+from typing import Optional
 
 
-class Empresa(Base):
+class UsuarioCreate(BaseModel):
 
-    __tablename__ = "empresas"
+    nome: str
+    email: str
+    senha: str
+    tipo: Optional[str] = "normal"
 
-    id = Column(
-        Integer,
-        primary_key=True,
-        index=True
-    )
 
-    nome = Column(String)
+class UsuarioLogin(BaseModel):
 
-    cidade = Column(String)
-
-    tipo_servico = Column(String)
-
-    categoria = Column(String)
-
-    telefone = Column(String)
-
-    endereco = Column(String)
-
-    descricao = Column(String)
-
-    latitude = Column(Float)
-
-    longitude = Column(Float)
-
-    usuario_id = Column(
-        Integer,
-        ForeignKey("usuarios.id")
-    )
+    email: str
+    senha: str
