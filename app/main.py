@@ -11,12 +11,10 @@ app = FastAPI()
 @app.on_event("startup")
 def start_db():
 
-    try:
-        Base.metadata.create_all(bind=engine)
-        print("DB OK")
+    print("CRIANDO TABELAS")
 
-    except Exception as e:
-        print("ERRO DB", e)
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
 
 
 app.include_router(auth.router, prefix="/auth")
