@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean
 from app.database import Base
 
 
@@ -12,8 +12,6 @@ class Usuario(Base):
         index=True
     )
 
-    nome = Column(String)
-
     email = Column(
         String,
         unique=True
@@ -21,7 +19,7 @@ class Usuario(Base):
 
     senha = Column(String)
 
-    tipo = Column(
-        String,
-        default="normal"
+    is_admin = Column(
+        Boolean,
+        default=False
     )

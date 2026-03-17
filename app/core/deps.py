@@ -1,43 +1,31 @@
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
+from jose import jwt
+import os
 
-from app.database import SessionLocal
-from app.models.usuario_model import Usuario
-from app.core.security import verificar_token
-
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="auth/login"
+oauth2 = OAuth2PasswordBearer(
+    tokenUrl="/auth/login"
 )
 
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+SECRET = os.getenv("SECRET_KEY", "123")
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db),
+    token: str = Depends(oauth2)
 ):
 
-    user_id = verificar_token(token)
+    try:
 
-    if not user_id:
+        payload = jwt.decode(
+            token,
+            SECRET,
+            algorithms=["HS256"]
+        )
+
+        return payload["sub"]
+
+    except:
         raise HTTPException(
             status_code=401,
             detail="Token inválido"
         )
-
-    user = db.query(Usuario).get(user_id)
-
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Usuário não encontrado"
-        )
-
-    return user

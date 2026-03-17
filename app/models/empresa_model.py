@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey
 from app.database import Base
 
 
@@ -15,20 +15,6 @@ class Empresa(Base):
     nome = Column(String)
 
     cidade = Column(String)
-
-    tipo_servico = Column(String)
-
-    categoria = Column(String)
-
-    telefone = Column(String)
-
-    endereco = Column(String)
-
-    descricao = Column(String)
-
-    latitude = Column(Float)
-
-    longitude = Column(Float)
 
     usuario_id = Column(
         Integer,

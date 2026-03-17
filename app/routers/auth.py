@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.usuario_model import Usuario
@@ -23,13 +23,13 @@ def login(
     ).first()
 
     if not user:
-        return {"erro": "usuario nao encontrado"}
+        return {"erro": "usuario"}
 
     if not verificar_senha(
         form_data.password,
         user.senha
     ):
-        return {"erro": "senha invalida"}
+        return {"erro": "senha"}
 
     token = criar_token(
         {"sub": str(user.id)}

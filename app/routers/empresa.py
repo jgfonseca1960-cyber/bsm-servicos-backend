@@ -1,54 +1,28 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-
 from app.models.empresa_model import Empresa
-from app.models.usuario_model import Usuario
+from app.schemas.empresa_schema import EmpresaCreate
+from app.core.deps import get_current_user
 
-from app.schemas.empresa_schema import (
-    EmpresaCreate,
-    EmpresaResponse
+router = APIRouter(
+    prefix="/empresa",
+    tags=["Empresa"]
 )
 
-from app.dependencies import get_current_user
 
-router = APIRouter()
-
-
-@router.get("/publico",
-response_model=list[EmpresaResponse])
-def listar(db: Session = Depends(get_db)):
-
-    return db.query(
-        Empresa
-    ).all()
-
-
-@router.post("/",
-response_model=EmpresaResponse)
+@router.post("/")
 def criar(
-
     dados: EmpresaCreate,
-
-    db: Session = Depends(get_db),
-
-    usuario: Usuario = Depends(
-        get_current_user
-    )
-
+    user = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
 
-    if usuario.tipo != "admin":
-
-        raise HTTPException(
-            status_code=403,
-            detail="Somente admin"
-        )
-
     nova = Empresa(
-        **dados.dict(),
-        usuario_id=usuario.id
+        nome=dados.nome,
+        cidade=dados.cidade,
+        usuario_id=user
     )
 
     db.add(nova)
@@ -56,3 +30,11 @@ def criar(
     db.refresh(nova)
 
     return nova
+
+
+@router.get("/")
+def listar(
+    db: Session = Depends(get_db)
+):
+
+    return db.query(Empresa).all()

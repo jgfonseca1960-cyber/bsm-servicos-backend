@@ -5,18 +5,13 @@ class EmpresaCreate(BaseModel):
 
     nome: str
     cidade: str
-    tipo_servico: str
-    categoria: str
-    telefone: str
-    endereco: str
-    descricao: str
-    latitude: float
-    longitude: float
 
 
-class EmpresaResponse(EmpresaCreate):
+class EmpresaOut(BaseModel):
 
     id: int
+    nome: str
+    cidade: str
 
     class Config:
         from_attributes = True

@@ -1,75 +1,39 @@
-from datetime import datetime, timedelta
-from jose import jwt, JWTError
 from passlib.context import CryptContext
+from jose import jwt
+from datetime import datetime, timedelta
+import os
 
+SECRET = os.getenv("SECRET_KEY", "123")
 
-SECRET_KEY = "segredo123"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
-
-
-pwd_context = CryptContext(
+pwd = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto"
 )
 
 
-# =========================
-# HASH SENHA
-# =========================
-
-def gerar_hash(senha: str):
-    return pwd_context.hash(senha)
+def hash_senha(senha: str):
+    return pwd.hash(senha)
 
 
 def verificar_senha(
-    senha: str,
-    hash_senha: str
+    senha,
+    hash
 ):
-    return pwd_context.verify(
-        senha,
-        hash_senha
+    return pwd.verify(senha, hash)
+
+
+def criar_token(
+    data: dict
+):
+    payload = data.copy()
+
+    payload["exp"] = (
+        datetime.utcnow()
+        + timedelta(hours=8)
     )
 
-
-# =========================
-# TOKEN
-# =========================
-
-def criar_token(data: dict):
-
-    to_encode = data.copy()
-
-    expire = datetime.utcnow() + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    return jwt.encode(
+        payload,
+        SECRET,
+        algorithm="HS256"
     )
-
-    to_encode.update({"exp": expire})
-
-    token = jwt.encode(
-        to_encode,
-        SECRET_KEY,
-        algorithm=ALGORITHM
-    )
-
-    return token
-
-
-# ✅ ESTA FUNÇÃO ESTAVA FALTANDO
-def verificar_token(token: str):
-
-    try:
-
-        payload = jwt.decode(
-            token,
-            SECRET_KEY,
-            algorithms=[ALGORITHM]
-        )
-
-        user_id = payload.get("sub")
-
-        return int(user_id)
-
-    except JWTError:
-
-        return None
