@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from app.database import Base, engine
-from app.models import usuaro_model
+from app.models import usuario_model
 
 from app.models.usuario_model import Usuario
 from app.models.empresa_model import Empresa
