@@ -2,17 +2,15 @@ from pydantic import BaseModel, EmailStr
 
 
 class UsuarioCreate(BaseModel):
+    nome: str
     email: EmailStr
     senha: str
+    is_admin: bool = False
 
 
-class UsuarioLogin(BaseModel):
-    email: EmailStr
-    senha: str
-
-
-class UsuarioOut(BaseModel):
+class UsuarioResponse(BaseModel):
     id: int
+    nome: str
     email: str
     is_admin: bool
 
