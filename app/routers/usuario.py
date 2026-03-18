@@ -1,30 +1,34 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.usuario_model import Usuario
-from app.schemas.usuario_schema import UsuarioCreate
-from app.core.security import hash_senha
+from app.schemas.usuario_schema import UsuarioCreate, UsuarioOut
 
-router = APIRouter(
-    prefix="/usuario",
-    tags=["Usuario"]
-)
+router = APIRouter(prefix="/usuario", tags=["Usuario"])
 
 
-@router.post("/")
-def criar(
-    dados: UsuarioCreate,
-    db: Session = Depends(get_db)
-):
+@router.post("/", response_model=UsuarioOut)
+def criar_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
 
-    user = Usuario(
-        email=dados.email,
-        senha=hash_senha(dados.senha)
+    existe = db.query(Usuario).filter(
+        Usuario.email == usuario.email
+    ).first()
+
+    if existe:
+        raise HTTPException(
+            status_code=400,
+            detail="Email já cadastrado"
+        )
+
+    novo = Usuario(
+        email=usuario.email,
+        senha=usuario.senha,
+        is_admin=True
     )
 
-    db.add(user)
+    db.add(novo)
     db.commit()
-    db.refresh(user)
+    db.refresh(novo)
 
-    return user
+    return novo
