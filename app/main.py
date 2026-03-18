@@ -12,7 +12,7 @@ from app.routers import empresa
 
 
 # ✅ RESET DO BANCO
-Base.metadata.drop_all(bind=engine)
+
 Base.metadata.create_all(bind=engine)
 
 
