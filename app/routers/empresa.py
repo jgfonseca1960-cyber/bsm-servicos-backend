@@ -21,8 +21,18 @@ def criar(
 
     nova = Empresa(
         nome=dados.nome,
+        cnpj=dados.cnpj,
+        cpf=dados.cpf,
+        responsavel=dados.responsavel,
+        endereco=dados.endereco,
+        bairro=dados.bairro,
         cidade=dados.cidade,
-        usuario_id=user
+        estado=dados.estado,
+        tipo_servico=dados.tipo_servico,
+        latitude=dados.latitude,
+        longitude=dados.longitude,
+        avaliacao=dados.avaliacao,
+        usuario_id=user.id   # ✅ CORRETO
     )
 
     db.add(nova)
@@ -36,5 +46,4 @@ def criar(
 def listar(
     db: Session = Depends(get_db)
 ):
-
     return db.query(Empresa).all()

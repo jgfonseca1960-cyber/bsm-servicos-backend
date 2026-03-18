@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.database import Base, engine
 from app.models import usuario_model
+from app.models import empresa_model 
 
 from app.models.usuario_model import Usuario
 from app.models.empresa_model import Empresa
@@ -12,6 +13,7 @@ from app.routers import empresa
 
 app = FastAPI()
 
+Base.metadata.drop_all(bind=engine)  #provisorio
 Base.metadata.create_all(bind=engine)
 
 app.include_router(auth.router)
