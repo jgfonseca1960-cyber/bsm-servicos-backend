@@ -22,18 +22,10 @@ def verificar_senha(
     return pwd.verify(senha, hash)
 
 
-def criar_token(
-    data: dict
-):
-    payload = data.copy()
-
-    payload["exp"] = (
-        datetime.utcnow()
-        + timedelta(hours=8)
-    )
+def criar_token(data: dict):
 
     return jwt.encode(
-        payload,
+        data,
         SECRET,
         algorithm="HS256"
     )
