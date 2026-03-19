@@ -19,27 +19,41 @@ def criar(
     db: Session = Depends(get_db)
 ):
 
-    print("USER:", current_user)
-    print("DADOS:", dados)
+    if not current_user:
+        raise HTTPException(
+            status_code=401,
+            detail="Usuário não autenticado"
+        )
 
-    nova = Empresa(
-        nome=dados.nome,
-        cnpj=dados.cnpj,
-        cpf=dados.cpf,
-        responsavel=dados.responsavel,
-        endereco=dados.endereco,
-        bairro=dados.bairro,
-        cidade=dados.cidade,
-        estado=dados.estado,
-        tipo_servico=dados.tipo_servico,
-        latitude=dados.latitude,
-        longitude=dados.longitude,
-        avaliacao=dados.avaliacao,
-        usuario_id=current_user.id
-    )
+    try:
 
-    db.add(nova)
-    db.commit()
-    db.refresh(nova)
+        nova = Empresa(
+            nome=dados.nome,
+            cnpj=dados.cnpj,
+            cpf=dados.cpf,
+            responsavel=dados.responsavel,
+            endereco=dados.endereco,
+            bairro=dados.bairro,
+            cidade=dados.cidade,
+            estado=dados.estado,
+            tipo_servico=dados.tipo_servico,
+            latitude=dados.latitude,
+            longitude=dados.longitude,
+            avaliacao=dados.avaliacao,
+            usuario_id=current_user.id
+        )
 
-    return nova
+        db.add(nova)
+        db.commit()
+        db.refresh(nova)
+
+        return nova
+
+    except Exception as e:
+
+        print("ERRO EMPRESA:", e)
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
