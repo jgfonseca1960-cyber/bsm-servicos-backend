@@ -1,26 +1,29 @@
 from fastapi import FastAPI
+from sqlalchemy import text
 
 from app.database import Base, engine
 
-# IMPORTAR MODELS (OBRIGATÓRIO)
 from app.models.usuario_model import Usuario
 from app.models.empresa_model import Empresa
 
-# IMPORTAR ROUTERS
 from app.routers import auth
 from app.routers import usuario
 from app.routers import empresa
 
 app = FastAPI()
 
-# Temporario para resetar tabela 
 
-Empresa.__table__.drop(bind=engine, checkfirst=True)
+# 🔴 RESET BANCO (TEMPORÁRIO)
+with engine.connect() as conn:
+    conn.execute(text("DROP TABLE IF EXISTS avaliacoes CASCADE"))
+    conn.execute(text("DROP TABLE IF EXISTS empresas CASCADE"))
+    conn.execute(text("DROP TABLE IF EXISTS usuarios CASCADE"))
+    conn.commit()
 
-# criar tabelas
+
 Base.metadata.create_all(bind=engine)
 
-# rotas
+
 app.include_router(auth.router)
 app.include_router(usuario.router)
 app.include_router(empresa.router)
