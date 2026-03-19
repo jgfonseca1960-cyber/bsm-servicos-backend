@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -15,9 +15,12 @@ router = APIRouter(
 @router.post("/")
 def criar(
     dados: EmpresaCreate,
-    user = Depends(get_current_user),
+    current_user = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Usuario não autenticado")
 
     nova = Empresa(
         nome=dados.nome,
@@ -32,7 +35,7 @@ def criar(
         latitude=dados.latitude,
         longitude=dados.longitude,
         avaliacao=dados.avaliacao,
-        usuario_id=user.id   # ✅ CORRETO
+        usuario_id=current_user.id
     )
 
     db.add(nova)
@@ -40,10 +43,3 @@ def criar(
     db.refresh(nova)
 
     return nova
-
-
-@router.get("/")
-def listar(
-    db: Session = Depends(get_db)
-):
-    return db.query(Empresa).all()
