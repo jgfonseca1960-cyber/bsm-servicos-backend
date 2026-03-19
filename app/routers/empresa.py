@@ -19,8 +19,8 @@ def criar(
     db: Session = Depends(get_db)
 ):
 
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Usuario não autenticado")
+    print("USER:", current_user)
+    print("DADOS:", dados)
 
     nova = Empresa(
         nome=dados.nome,
