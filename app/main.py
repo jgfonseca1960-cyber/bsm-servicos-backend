@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from sqlalchemy import text
+import os
 
 from app.database import Base, engine
 
@@ -19,8 +21,15 @@ app.include_router(auth.router)
 app.include_router(usuario.router)
 app.include_router(empresa.router)
 
-from sqlalchemy import text
-from app.database import engine
+
+# ✅ DEBUG BANCO
+
+@app.get("/debug/database")
+def debug_database():
+
+    return {
+        "DATABASE_URL": os.getenv("DATABASE_URL")
+    }
 
 
 @app.get("/debug/usuarios")
