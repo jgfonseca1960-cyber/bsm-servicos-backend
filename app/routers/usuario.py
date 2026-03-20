@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.database import get_db
 from app.models.usuario_model import Usuario
@@ -13,10 +14,7 @@ router = APIRouter(
 
 
 @router.post("/")
-def criar(
-    dados: UsuarioCreate,
-    db: Session = Depends(get_db)
-):
+def criar(dados: UsuarioCreate, db: Session = Depends(get_db)):
 
     novo = Usuario(
         email=dados.email,
@@ -25,8 +23,16 @@ def criar(
         is_admin=dados.is_admin
     )
 
-    db.add(novo)
-    db.commit()
-    db.refresh(novo)
+    try:
+        db.add(novo)
+        db.commit()
+        db.refresh(novo)
+
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Email já cadastrado"
+        )
 
     return novo
