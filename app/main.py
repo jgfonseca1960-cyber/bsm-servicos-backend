@@ -13,7 +13,7 @@ from app.routers import empresa
 app = FastAPI()
 
 
-# 🔴 RESET BANCO (TEMPORÁRIO)
+# RESET BANCO (TEMPORÁRIO)
 with engine.connect() as conn:
     conn.execute(text("DROP TABLE IF EXISTS avaliacoes CASCADE"))
     conn.execute(text("DROP TABLE IF EXISTS empresas CASCADE"))
