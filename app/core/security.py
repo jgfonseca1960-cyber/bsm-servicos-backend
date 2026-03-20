@@ -1,25 +1,29 @@
 from passlib.context import CryptContext
 from jose import jwt
-from datetime import datetime, timedelta
 import os
 
-SECRET = os.getenv("SECRET_KEY", "123")
-
-pwd = CryptContext(
+pwd_context = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto"
 )
 
+SECRET = os.getenv("SECRET_KEY", "123")
 
-def hash_senha(senha: str):
-    return pwd.hash(senha)
+
+def gerar_hash(senha: str):
+
+    return pwd_context.hash(senha)
 
 
 def verificar_senha(
     senha,
     hash
 ):
-    return pwd.verify(senha, hash)
+
+    return pwd_context.verify(
+        senha,
+        hash
+    )
 
 
 def criar_token(data: dict):
