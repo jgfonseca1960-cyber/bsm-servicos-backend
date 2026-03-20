@@ -40,3 +40,15 @@ def debug_usuarios():
         result = conn.execute(text("SELECT * FROM usuarios"))
 
         return [dict(row._mapping) for row in result]
+    
+
+@app.get("/debug/tabelas")
+def tabelas():
+
+    with engine.connect() as conn:
+
+        result = conn.execute(text(
+            "SELECT tablename FROM pg_tables WHERE schemaname='public'"
+        ))
+
+        return [r[0] for r in result]
