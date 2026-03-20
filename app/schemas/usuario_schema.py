@@ -1,18 +1,19 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 
 class UsuarioCreate(BaseModel):
-    nome: str
-    email: EmailStr
-    senha: str
-    is_admin: bool = False
 
-
-class UsuarioResponse(BaseModel):
-    id: int
-    nome: str
     email: str
+    senha: str
+    nome: str
     is_admin: bool
+
+
+class UsuarioOut(BaseModel):
+
+    id: int
+    email: str
+    nome: str
 
     class Config:
         from_attributes = True
