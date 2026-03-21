@@ -55,7 +55,3 @@ def tabelas():
         ))
 
         return [r[0] for r in result]
-
-with engine.connect() as conn:
-    conn.execute(text("DROP TABLE IF EXISTS avaliacoes CASCADE"))
-    conn.commit()
