@@ -6,6 +6,7 @@ from app.database import Base, engine
 
 from app.models.usuario_model import Usuario
 from app.models.empresa_model import Empresa
+from app.models.avaliacao_model import Avaliacao
 
 from app.routers import auth
 from app.routers import usuario
@@ -52,3 +53,9 @@ def tabelas():
         ))
 
         return [r[0] for r in result]
+
+with engine.connect() as conn:
+    conn.execute(text("DROP TABLE IF EXISTS avaliacoes CASCADE"))
+    conn.commit()
+
+Base.metadata.create_all(bind=engine)
