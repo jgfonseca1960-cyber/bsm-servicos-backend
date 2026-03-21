@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.avaliacao_model import Avaliacao
+from app.schemas.avaliacao_schema import AvaliacaoCreate
+
 
 router = APIRouter(
     prefix="/avaliacoes",
@@ -11,18 +13,9 @@ router = APIRouter(
 
 
 @router.post("/")
-def criar_avaliacao(
-    nota: int,
-    comentario: str,
-    empresa_id: int,
-    db: Session = Depends(get_db)
-):
+def criar(av: AvaliacaoCreate, db: Session = Depends(get_db)):
 
-    nova = Avaliacao(
-        nota=nota,
-        comentario=comentario,
-        empresa_id=empresa_id
-    )
+    nova = Avaliacao(**av.dict())
 
     db.add(nova)
     db.commit()
@@ -33,4 +26,5 @@ def criar_avaliacao(
 
 @router.get("/")
 def listar(db: Session = Depends(get_db)):
+
     return db.query(Avaliacao).all()

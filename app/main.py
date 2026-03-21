@@ -59,5 +59,3 @@ def tabelas():
 with engine.connect() as conn:
     conn.execute(text("DROP TABLE IF EXISTS avaliacoes CASCADE"))
     conn.commit()
-
-Base.metadata.create_all(bind=engine)
