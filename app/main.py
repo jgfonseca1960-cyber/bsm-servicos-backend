@@ -11,6 +11,7 @@ from app.models.avaliacao_model import Avaliacao
 from app.routers import auth
 from app.routers import usuario
 from app.routers import empresa
+from app.routers import avaliacao
 
 app = FastAPI()
 
@@ -21,6 +22,7 @@ Base.metadata.create_all(bind=engine)
 app.include_router(auth.router)
 app.include_router(usuario.router)
 app.include_router(empresa.router)
+app.include_router(avaliacao.router)
 
 
 # ✅ DEBUG BANCO
