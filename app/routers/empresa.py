@@ -36,20 +36,20 @@ def criar(
     try:
 
         nova = Empresa(
-            nome=dados.nome,
-            cnpj=dados.cnpj,
-            cpf=dados.cpf,
-            responsavel=dados.responsavel,
-            endereco=dados.endereco,
-            bairro=dados.bairro,
-            cidade=dados.cidade,
-            estado=dados.estado,
-            tipo_servico=dados.tipo_servico,
-            latitude=dados.latitude,
-            longitude=dados.longitude,
-            avaliacao=dados.avaliacao,
-            usuario_id=current_user.id
-        )
+    nome=dados.nome,
+    cnpj=dados.cnpj,
+    cpf=dados.cpf,
+    responsavel=dados.responsavel,
+    endereco=dados.endereco,
+    bairro=dados.bairro,
+    cidade=dados.cidade,
+    estado=dados.estado,
+    categoria_id=dados.categoria_id,
+    latitude=dados.latitude,
+    longitude=dados.longitude,
+    avaliacao=dados.avaliacao,
+    usuario_id=current_user["id"]
+)
 
         db.add(nova)
         db.commit()

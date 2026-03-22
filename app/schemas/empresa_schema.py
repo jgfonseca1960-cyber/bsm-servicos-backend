@@ -14,6 +14,7 @@ class EmpresaCreate(BaseModel):
     categoria_id: int | None = None
     latitude: float | None = None
     longitude: float | None = None
+    avaliacao: float | None = 0
 
 class EmpresaOut(BaseModel):
 
