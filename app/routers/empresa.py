@@ -176,9 +176,12 @@ def lista_completa():
     
     ## endpoint pesquisa por nome
 
-    from fastapi import Query
+from fastapi import Query
+from sqlalchemy import text
+from app.database import engine
 
-    @router.get("/busca")
+
+@router.get("/busca")
 def busca(
     categoria_id: int | None = None,
     nome: str | None = None,
@@ -203,10 +206,10 @@ def busca(
         FROM empresas e
 
         LEFT JOIN categorias c
-        ON c.id = e.categoria_id
+            ON c.id = e.categoria_id
 
         LEFT JOIN avaliacoes a
-        ON a.empresa_id = e.id
+            ON a.empresa_id = e.id
 
         WHERE 1=1
 
