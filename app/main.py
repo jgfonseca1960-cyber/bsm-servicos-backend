@@ -59,4 +59,9 @@ def tabelas():
     
     from fastapi.staticfiles import StaticFiles
 
+
+# garante que a pasta existe
+if not os.path.exists("uploads"):
+    os.makedirs("uploads")
+
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
