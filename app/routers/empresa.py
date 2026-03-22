@@ -1,18 +1,24 @@
-## empresa.py
-from fastapi import APIRouter, UploadFile, File
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import text
+import shutil
+import os
 
-from app.database import get_db
+from app.database import get_db, engine
 from app.models.empresa_model import Empresa
 from app.schemas.empresa_schema import EmpresaCreate
 from app.core.deps import get_current_user
+
 
 router = APIRouter(
     prefix="/empresa",
     tags=["Empresa"]
 )
 
+
+# =========================
+# CRIAR EMPRESA
+# =========================
 
 @router.post("/")
 def criar(
@@ -60,12 +66,10 @@ def criar(
             detail=str(e)
         )
 
-from sqlalchemy import text
-from app.database import engine
-from fastapi import APIRouter
 
-router = APIRouter()
-
+# =========================
+# MEDIA DE AVALIACOES
+# =========================
 
 @router.get("/empresas_com_avaliacao")
 def empresas_com_avaliacao():
@@ -77,7 +81,6 @@ def empresas_com_avaliacao():
             SELECT
                 e.id,
                 e.nome,
-                e.categoria,
                 AVG(a.nota) as media,
                 COUNT(a.id) as total_avaliacoes
 
@@ -93,15 +96,17 @@ def empresas_com_avaliacao():
         """))
 
         return [dict(row._mapping) for row in result]
-    
-from fastapi import UploadFile, File
-import shutil
-import os
-from sqlalchemy import text
-from app.database import engine
+
+
+# =========================
+# UPLOAD LOGO
+# =========================
 
 @router.post("/upload_logo/{empresa_id}")
-def upload_logo(empresa_id: int, file: UploadFile = File(...)):
+def upload_logo(
+    empresa_id: int,
+    file: UploadFile = File(...)
+):
 
     pasta = "uploads"
 
@@ -126,4 +131,7 @@ def upload_logo(empresa_id: int, file: UploadFile = File(...)):
 
         conn.commit()
 
-    return {"msg": "Logo enviado", "path": caminho}
+    return {
+        "msg": "Logo enviado",
+        "path": caminho
+    }
