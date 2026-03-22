@@ -1,5 +1,5 @@
 ## empresa.py
-
+from fastapi import APIRouter, UploadFile, File
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -94,7 +94,7 @@ def empresas_com_avaliacao():
 
         return [dict(row._mapping) for row in result]
     
-    from fastapi import UploadFile, File
+from fastapi import UploadFile, File
 import shutil
 import os
 from sqlalchemy import text
