@@ -6,6 +6,8 @@ from app.database import get_db
 from app.models.usuario_model import Usuario
 from app.core.security import verificar_senha, criar_token
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
 router = APIRouter(
     prefix="/auth",
     tags=["Auth"]
