@@ -47,7 +47,7 @@ def criar(
             categoria_id=dados.categoria_id,
             latitude=dados.latitude,
             longitude=dados.longitude,
-            logo=dados.logo
+            logo=dados.logo,
             usuario_id=current_user["id"]
         )
 
