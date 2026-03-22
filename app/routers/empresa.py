@@ -93,3 +93,37 @@ def empresas_com_avaliacao():
         """))
 
         return [dict(row._mapping) for row in result]
+    
+    from fastapi import UploadFile, File
+import shutil
+import os
+from sqlalchemy import text
+from app.database import engine
+
+@router.post("/upload_logo/{empresa_id}")
+def upload_logo(empresa_id: int, file: UploadFile = File(...)):
+
+    pasta = "uploads"
+
+    if not os.path.exists(pasta):
+        os.makedirs(pasta)
+
+    caminho = f"{pasta}/{empresa_id}_{file.filename}"
+
+    with open(caminho, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    with engine.connect() as conn:
+
+        conn.execute(
+            text("""
+                UPDATE empresas
+                SET logo = :logo
+                WHERE id = :id
+            """),
+            {"logo": caminho, "id": empresa_id}
+        )
+
+        conn.commit()
+
+    return {"msg": "Logo enviado", "path": caminho}

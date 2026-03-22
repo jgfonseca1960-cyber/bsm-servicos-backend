@@ -55,3 +55,7 @@ def tabelas():
         ))
 
         return [r[0] for r in result]
+    
+    from fastapi.staticfiles import StaticFiles
+
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
