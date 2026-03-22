@@ -8,11 +8,13 @@ from app.database import Base, engine
 from app.models.usuario_model import Usuario
 from app.models.empresa_model import Empresa
 from app.models.avaliacao_model import Avaliacao
+from app.models.categoria_model import Categoria
 
 from app.routers import auth
 from app.routers import usuario
 from app.routers import empresa
 from app.routers import avaliacao
+from app.routers import categoria
 
 app = FastAPI()
 
@@ -24,6 +26,7 @@ app.include_router(auth.router)
 app.include_router(usuario.router)
 app.include_router(empresa.router)
 app.include_router(avaliacao.router)
+app.include_router(categoria.router)
 
 
 # ✅ DEBUG BANCO
