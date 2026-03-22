@@ -1,3 +1,5 @@
+## empresa.py
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -57,3 +59,37 @@ def criar(
             status_code=500,
             detail=str(e)
         )
+
+from sqlalchemy import text
+from app.database import engine
+from fastapi import APIRouter
+
+router = APIRouter()
+
+
+@router.get("/empresas_com_avaliacao")
+def empresas_com_avaliacao():
+
+    with engine.connect() as conn:
+
+        result = conn.execute(text("""
+
+            SELECT
+                e.id,
+                e.nome,
+                e.categoria,
+                AVG(a.nota) as media,
+                COUNT(a.id) as total_avaliacoes
+
+            FROM empresas e
+
+            LEFT JOIN avaliacoes a
+            ON a.empresa_id = e.id
+
+            GROUP BY e.id
+
+            ORDER BY e.nome
+
+        """))
+
+        return [dict(row._mapping) for row in result]
