@@ -48,6 +48,7 @@ def criar(
             latitude=dados.latitude,
             longitude=dados.longitude,
             logo=dados.logo
+            usuario_id=current_user["id"]
         )
 
         db.add(nova)

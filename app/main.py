@@ -79,3 +79,16 @@ def tabelas():
         ))
 
         return [r[0] for r in result]
+    
+    ### PROVISORIO
+
+    from app.models.empresa_model import Empresa
+
+
+@app.get("/debug/recriar_empresas")
+def recriar_empresas():
+
+    Empresa.__table__.drop(bind=engine)
+    Empresa.__table__.create(bind=engine)
+
+    return {"msg": "tabela empresas recriada"}

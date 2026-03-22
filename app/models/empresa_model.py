@@ -24,3 +24,6 @@ class Empresa(Base):
     longitude = Column(Float)
 
     logo = Column(String)
+
+    # ✅ NOVO CAMPO
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
