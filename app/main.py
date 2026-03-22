@@ -82,13 +82,24 @@ def tabelas():
     
     ### PROVISORIO
 
-    from app.models.empresa_model import Empresa
+from sqlalchemy import text
+from app.models.empresa_model import Empresa
 
 
 @app.get("/debug/recriar_empresas")
 def recriar_empresas():
 
-    Empresa.__table__.drop(bind=engine)
-    Empresa.__table__.create(bind=engine)
+    try:
 
-    return {"msg": "tabela empresas recriada"}
+        with engine.connect() as conn:
+
+            conn.execute(text("DROP TABLE IF EXISTS empresas CASCADE"))
+            conn.commit()
+
+        Empresa.__table__.create(bind=engine)
+
+        return {"msg": "tabela empresas recriada"}
+
+    except Exception as e:
+
+        return {"erro": str(e)}
