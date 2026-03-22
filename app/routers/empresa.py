@@ -135,3 +135,41 @@ def upload_logo(
         "msg": "Logo enviado",
         "path": caminho
     }
+
+@router.get("/lista_completa")
+def lista_completa():
+
+    with engine.connect() as conn:
+
+        result = conn.execute(text("""
+
+            SELECT
+
+                e.id,
+                e.nome,
+                e.cidade,
+                e.bairro,
+                e.logo,
+
+                c.nome as categoria,
+
+                COALESCE(AVG(a.nota),0) as media,
+                COUNT(a.id) as total_avaliacoes
+
+            FROM empresas e
+
+            LEFT JOIN categorias c
+            ON c.id = e.categoria_id
+
+            LEFT JOIN avaliacoes a
+            ON a.empresa_id = e.id
+
+            GROUP BY
+                e.id,
+                c.nome
+
+            ORDER BY e.nome
+
+        """))
+
+        return [dict(r._mapping) for r in result]
