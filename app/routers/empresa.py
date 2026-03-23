@@ -347,8 +347,9 @@ def deletar_foto(foto_id: int, db: Session = Depends(get_db)):
 
     return {"msg": "foto deletada"}
 
-    from sqlalchemy.orm import Session
-from fastapi import Depends, Request
+from fastapi import Request
+from sqlalchemy.orm import Session
+from fastapi import Depends
 
 from app.database import get_db
 from app.models.empresa_model import Empresa
@@ -380,14 +381,14 @@ def listar_empresas(
             Foto.principal == True
         ).first()
 
-        avaliacao = db.query(Avaliacao).filter(
+        avaliacoes = db.query(Avaliacao).filter(
             Avaliacao.empresa_id == e.id
         ).all()
 
         media = 0
 
-        if avaliacao:
-            media = sum([a.nota for a in avaliacao]) / len(avaliacao)
+        if avaliacoes:
+            media = sum([a.nota for a in avaliacoes]) / len(avaliacoes)
 
         resultado.append({
 
