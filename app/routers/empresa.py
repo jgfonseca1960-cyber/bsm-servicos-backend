@@ -244,3 +244,38 @@ def busca(
         result = conn.execute(text(sql), params)
 
         return [dict(r._mapping) for r in result]
+
+
+        ## Criação de vinculo de fotos
+
+from app.models.foto_model import Foto
+
+@router.post("/upload_foto/{empresa_id}")
+def upload_foto(
+    empresa_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+
+    pasta = "uploads"
+
+    if not os.path.exists(pasta):
+        os.makedirs(pasta)
+
+    caminho = f"{pasta}/{empresa_id}_{file.filename}"
+
+    with open(caminho, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    foto = Foto(
+        caminho=caminho,
+        empresa_id=empresa_id
+    )
+
+    db.add(foto)
+    db.commit()
+
+    return {
+        "msg": "Foto enviada",
+        "path": caminho
+    }
