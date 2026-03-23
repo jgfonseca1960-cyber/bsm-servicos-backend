@@ -81,6 +81,25 @@ def tabelas():
 
         return [r[0] for r in result]
     
+    from app.models.foto_model import Foto
+from sqlalchemy import text
+
+# Criar Tabela Fotos 
+
+@app.get("/debug/criar_fotos")
+def criar_fotos():
+
+    try:
+
+        Foto.__table__.create(bind=engine)
+
+        return {"msg": "tabela fotos criada"}
+
+    except Exception as e:
+
+        return {"erro": str(e)}
+    
+
     ### PROVISORIAMENTE RETIRADO Recriação da tabela Empresa
 
 # from sqlalchemy import text
