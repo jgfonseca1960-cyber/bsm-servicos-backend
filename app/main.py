@@ -123,3 +123,19 @@ def criar_fotos():
 #     except Exception as e:
 
 #         return {"erro": str(e)}
+
+from sqlalchemy import text
+
+
+@app.get("/debug/add_principal")
+def add_principal():
+
+    with engine.connect() as conn:
+
+        conn.execute(text(
+            "ALTER TABLE fotos ADD COLUMN principal BOOLEAN DEFAULT FALSE"
+        ))
+
+        conn.commit()
+
+    return {"msg": "ok"}
