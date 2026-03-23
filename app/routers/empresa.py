@@ -346,3 +346,58 @@ def deletar_foto(foto_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"msg": "foto deletada"}
+
+    from sqlalchemy.orm import Session
+from fastapi import Depends, Request
+
+from app.database import get_db
+from app.models.empresa_model import Empresa
+from app.models.categoria_model import Categoria
+from app.models.foto_model import Foto
+from app.models.avaliacao_model import Avaliacao
+
+
+@router.get("/listar")
+def listar_empresas(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+
+    empresas = db.query(Empresa).all()
+
+    base_url = str(request.base_url)
+
+    resultado = []
+
+    for e in empresas:
+
+        categoria = db.query(Categoria).filter(
+            Categoria.id == e.categoria_id
+        ).first()
+
+        foto = db.query(Foto).filter(
+            Foto.empresa_id == e.id,
+            Foto.principal == True
+        ).first()
+
+        avaliacao = db.query(Avaliacao).filter(
+            Avaliacao.empresa_id == e.id
+        ).all()
+
+        media = 0
+
+        if avaliacao:
+            media = sum([a.nota for a in avaliacao]) / len(avaliacao)
+
+        resultado.append({
+
+            "id": e.id,
+            "nome": e.nome,
+            "cidade": e.cidade,
+            "categoria": categoria.nome if categoria else None,
+            "avaliacao": media,
+            "foto": base_url + foto.caminho if foto else None
+
+        })
+
+    return resultado
