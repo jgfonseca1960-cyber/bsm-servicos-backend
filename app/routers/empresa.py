@@ -316,3 +316,46 @@ def por_categoria(
         })
 
     return resultado
+
+    @router.get("/proximas")
+def empresas_proximas(
+    lat: float,
+    lng: float,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+
+    empresas = db.query(Empresa).all()
+
+    base_url = str(request.base_url)
+
+    resultado = []
+
+    for e in empresas:
+
+        if not e.latitude or not e.longitude:
+            continue
+
+        distancia = (
+            (e.latitude - lat) ** 2 +
+            (e.longitude - lng) ** 2
+        ) ** 0.5
+
+        foto = db.query(Foto).filter(
+            Foto.empresa_id == e.id,
+            Foto.principal == True
+        ).first()
+
+        resultado.append({
+
+            "id": e.id,
+            "nome": e.nome,
+            "cidade": e.cidade,
+            "distancia": distancia,
+            "foto": base_url + foto.caminho if foto else None
+
+        })
+
+    resultado.sort(key=lambda x: x["distancia"])
+
+    return resultado
