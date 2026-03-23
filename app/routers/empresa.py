@@ -317,7 +317,8 @@ def por_categoria(
 
     return resultado
 
-    @router.get("/proximas")
+@router.get("/proximas")
+
 def empresas_proximas(
     lat: float,
     lng: float,
