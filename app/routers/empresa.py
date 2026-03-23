@@ -267,18 +267,26 @@ def upload_foto(
     with open(caminho, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    foto = Foto(
+    # verifica se já existe foto principal
+    principal = db.query(Foto).filter(
+        Foto.empresa_id == empresa_id,
+        Foto.principal == True
+    ).first()
+
+    nova = Foto(
         caminho=caminho,
-        empresa_id=empresa_id
+        empresa_id=empresa_id,
+        principal=True if not principal else False
     )
 
-    db.add(foto)
+    db.add(nova)
     db.commit()
 
     return {
         "msg": "Foto enviada",
-        "path": caminho
+        "principal": nova.principal
     }
+
 
 ### Incluir Fotos
 
@@ -312,6 +320,7 @@ def listar_fotos(
     return resultado
 
 @router.post("/foto_principal/{foto_id}")
+
 def foto_principal(foto_id: int, db: Session = Depends(get_db)):
 
     foto = db.query(Foto).filter(
