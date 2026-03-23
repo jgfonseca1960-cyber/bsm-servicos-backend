@@ -1,4 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy.orm import relationship
+
 from app.database import Base
 
 
@@ -16,3 +18,8 @@ class Foto(Base):
     )
 
     principal = Column(Boolean, default=False)
+
+    empresa = relationship(
+        "Empresa",
+        back_populates="fotos"
+    )
