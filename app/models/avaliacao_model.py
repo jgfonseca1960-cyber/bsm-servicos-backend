@@ -1,6 +1,5 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, Float, ForeignKey
 from sqlalchemy.orm import relationship
-
 from app.database import Base
 
 
@@ -10,22 +9,21 @@ class Avaliacao(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    nota = Column(Integer)
+    nota = Column(Float)
 
-    comentario = Column(String)
+    empresa_id = Column(
+        Integer,
+        ForeignKey("empresas.id")
+    )
 
-    usuario_id = Column(Integer, ForeignKey("usuarios.id"))
+    usuario_id = Column(
+        Integer,
+        ForeignKey("usuarios.id"),
+        nullable=True
+    )
 
-    empresa_id = Column(Integer, ForeignKey("empresas.id"))
-
-    usuario = relationship("Usuario")
-
-    empresa = relationship("Empresa")
-
-    __table_args__ = (
-        UniqueConstraint(
-            "usuario_id",
-            "empresa_id",
-            name="unique_usuario_empresa"
-        ),
+    # relacionamento
+    empresa = relationship(
+        "Empresa",
+        back_populates="avaliacoes"
     )

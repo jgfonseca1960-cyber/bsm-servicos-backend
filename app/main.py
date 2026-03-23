@@ -80,26 +80,26 @@ def tabelas():
 
         return [r[0] for r in result]
     
-    ### PROVISORIO
+    ### PROVISORIAMENTE RETIRADO Recriação da tabela Empresa
 
-from sqlalchemy import text
-from app.models.empresa_model import Empresa
+# from sqlalchemy import text
+# from app.models.empresa_model import Empresa
 
 
-@app.get("/debug/recriar_empresas")
-def recriar_empresas():
+# @app.get("/debug/recriar_empresas")
+# def recriar_empresas():
 
-    try:
+#     try:
 
-        with engine.connect() as conn:
+#         with engine.connect() as conn:
 
-            conn.execute(text("DROP TABLE IF EXISTS empresas CASCADE"))
-            conn.commit()
+#             conn.execute(text("DROP TABLE IF EXISTS empresas CASCADE"))
+#             conn.commit()
 
-        Empresa.__table__.create(bind=engine)
+#         Empresa.__table__.create(bind=engine)
 
-        return {"msg": "tabela empresas recriada"}
+#         return {"msg": "tabela empresas recriada"}
 
-    except Exception as e:
+#     except Exception as e:
 
-        return {"erro": str(e)}
+#         return {"erro": str(e)}

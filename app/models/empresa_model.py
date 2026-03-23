@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy.orm import relationship
 from app.database import Base
 
 
@@ -25,5 +26,15 @@ class Empresa(Base):
 
     logo = Column(String)
 
-    # ✅ NOVO CAMPO
-    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
+    usuario_id = Column(
+        Integer,
+        ForeignKey("usuarios.id"),
+        nullable=True
+    )
+
+    # ✅ NOVO
+    avaliacoes = relationship(
+        "Avaliacao",
+        back_populates="empresa",
+        cascade="all, delete"
+    )
