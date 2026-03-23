@@ -32,20 +32,14 @@ class Empresa(Base):
         nullable=True
     )
 
-    # ✅ NOVO
     avaliacoes = relationship(
         "Avaliacao",
         back_populates="empresa",
         cascade="all, delete"
     )
 
-    # Incluir fotos 
-    
     fotos = relationship(
-    "Foto",
-    back_populates="empresa",
-    cascade="all, delete"
-)
-    
-    from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
-from sqlalchemy.orm import relationship
+        "Foto",
+        back_populates="empresa",
+        cascade="all, delete"
+    )
