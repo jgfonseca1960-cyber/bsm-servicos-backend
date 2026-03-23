@@ -293,3 +293,39 @@ def listar_fotos(empresa_id: int, db: Session = Depends(get_db)):
     ).all()
 
     return fotos
+
+@router.post("/foto_principal/{foto_id}")
+def foto_principal(foto_id: int, db: Session = Depends(get_db)):
+
+    foto = db.query(Foto).filter(
+        Foto.id == foto_id
+    ).first()
+
+    if not foto:
+        return {"erro": "foto não encontrada"}
+
+    # remover principal das outras
+    db.query(Foto).filter(
+        Foto.empresa_id == foto.empresa_id
+    ).update({"principal": False})
+
+    foto.principal = True
+
+    db.commit()
+
+    return {"msg": "foto principal definida"}
+
+@router.delete("/foto/{foto_id}")
+def deletar_foto(foto_id: int, db: Session = Depends(get_db)):
+
+    foto = db.query(Foto).filter(
+        Foto.id == foto_id
+    ).first()
+
+    if not foto:
+        return {"erro": "não encontrada"}
+
+    db.delete(foto)
+    db.commit()
+
+    return {"msg": "foto deletada"}
