@@ -139,3 +139,27 @@ def add_principal():
         conn.commit()
 
     return {"msg": "ok"}
+
+from sqlalchemy import text
+from app.database import engine
+
+
+@app.get("/debug/add_principal_foto")
+def add_principal_foto():
+
+    try:
+
+        with engine.connect() as conn:
+
+            conn.execute(text("""
+                ALTER TABLE fotos
+                ADD COLUMN principal BOOLEAN DEFAULT false
+            """))
+
+            conn.commit()
+
+        return {"msg": "coluna principal criada"}
+
+    except Exception as e:
+
+        return {"erro": str(e)}
