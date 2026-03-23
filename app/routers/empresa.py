@@ -279,3 +279,17 @@ def upload_foto(
         "msg": "Foto enviada",
         "path": caminho
     }
+
+### Incluir Fotos
+
+from app.models.foto_model import Foto
+
+
+@router.get("/fotos/{empresa_id}")
+def listar_fotos(empresa_id: int, db: Session = Depends(get_db)):
+
+    fotos = db.query(Foto).filter(
+        Foto.empresa_id == empresa_id
+    ).all()
+
+    return fotos

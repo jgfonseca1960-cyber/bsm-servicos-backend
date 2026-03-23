@@ -81,10 +81,10 @@ def tabelas():
 
         return [r[0] for r in result]
     
-    from app.models.foto_model import Foto
-from sqlalchemy import text
+# Criar Tabela Fotos
 
-# Criar Tabela Fotos 
+from app.models.foto_model import Foto
+from sqlalchemy import text
 
 @app.get("/debug/criar_fotos")
 def criar_fotos():
