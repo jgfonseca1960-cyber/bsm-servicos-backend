@@ -184,3 +184,29 @@ def listar_fotos(
         }
         for f in fotos
     ]
+
+## FOTO PRINCIPAL
+
+@router.post("/foto_principal/{foto_id}")
+def foto_principal(
+    foto_id: int,
+    db: Session = Depends(get_db)
+):
+
+    foto = db.query(Foto).filter(
+        Foto.id == foto_id
+    ).first()
+
+    if not foto:
+        return {"erro": "foto não encontrada"}
+
+    # remove principal das outras
+    db.query(Foto).filter(
+        Foto.empresa_id == foto.empresa_id
+    ).update({"principal": False})
+
+    foto.principal = True
+
+    db.commit()
+
+    return {"msg": "foto principal definida"}
