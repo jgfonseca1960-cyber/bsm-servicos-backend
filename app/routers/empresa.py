@@ -360,3 +360,59 @@ def empresas_proximas(
     resultado.sort(key=lambda x: x["distancia"])
 
     return resultado
+
+
+###  HOME COMPLETO
+
+
+@router.get("/home")
+def home(
+    request: Request,
+    db: Session = Depends(get_db),
+    limite: int = 20
+):
+
+    empresas = db.query(Empresa).limit(limite).all()
+
+    base_url = str(request.base_url)
+
+    resultado = []
+
+    for e in empresas:
+
+        categoria = db.query(Categoria).filter(
+            Categoria.id == e.categoria_id
+        ).first()
+
+        foto = db.query(Foto).filter(
+            Foto.empresa_id == e.id,
+            Foto.principal == True
+        ).first()
+
+        avaliacoes = db.query(Avaliacao).filter(
+            Avaliacao.empresa_id == e.id
+        ).all()
+
+        media = 0
+
+        if avaliacoes:
+            media = sum([a.nota for a in avaliacoes]) / len(avaliacoes)
+
+        resultado.append({
+
+            "id": e.id,
+            "nome": e.nome,
+            "cidade": e.cidade,
+            "bairro": e.bairro,
+
+            "categoria": categoria.nome if categoria else None,
+
+            "media": media,
+
+            "foto":
+                base_url + foto.caminho
+                if foto else None
+
+        })
+
+    return resultado
