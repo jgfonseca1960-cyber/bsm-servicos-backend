@@ -356,7 +356,7 @@ def deletar_foto(foto_id: int, db: Session = Depends(get_db)):
 
     return {"msg": "foto deletada"}
 
-from fastapi import Request
+from fastapi import Query, Request
 from sqlalchemy.orm import Session
 from fastapi import Depends
 
@@ -366,14 +366,41 @@ from app.models.categoria_model import Categoria
 from app.models.foto_model import Foto
 from app.models.avaliacao_model import Avaliacao
 
-
 @router.get("/listar")
 def listar_empresas(
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+
+    pagina: int = 1,
+    limite: int = 10,
+
+    categoria_id: int | None = None,
+    cidade: str | None = None,
+
+    ordenar: str = "nome"
 ):
 
-    empresas = db.query(Empresa).all()
+    query = db.query(Empresa)
+
+    if categoria_id:
+        query = query.filter(
+            Empresa.categoria_id == categoria_id
+        )
+
+    if cidade:
+        query = query.filter(
+            Empresa.cidade.ilike(f"%{cidade}%")
+        )
+
+    if ordenar == "nome":
+        query = query.order_by(Empresa.nome)
+
+    if ordenar == "id":
+        query = query.order_by(Empresa.id)
+
+    offset = (pagina - 1) * limite
+
+    empresas = query.offset(offset).limit(limite).all()
 
     base_url = str(request.base_url)
 
