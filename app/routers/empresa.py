@@ -272,3 +272,47 @@ def detalhe_empresa(
 
         "fotos": lista_fotos
     }
+
+@router.get("/por_categoria/{categoria_id}")
+def por_categoria(
+    categoria_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+
+    empresas = db.query(Empresa).filter(
+        Empresa.categoria_id == categoria_id
+    ).all()
+
+    base_url = str(request.base_url)
+
+    resultado = []
+
+    for e in empresas:
+
+        foto = db.query(Foto).filter(
+            Foto.empresa_id == e.id,
+            Foto.principal == True
+        ).first()
+
+        avaliacoes = db.query(Avaliacao).filter(
+            Avaliacao.empresa_id == e.id
+        ).all()
+
+        media = 0
+
+        if avaliacoes:
+            media = sum([a.nota for a in avaliacoes]) / len(avaliacoes)
+
+        resultado.append({
+
+            "id": e.id,
+            "nome": e.nome,
+            "cidade": e.cidade,
+            "bairro": e.bairro,
+            "media": media,
+            "foto": base_url + foto.caminho if foto else None
+
+        })
+
+    return resultado
