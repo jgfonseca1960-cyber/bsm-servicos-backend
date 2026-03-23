@@ -283,16 +283,33 @@ def upload_foto(
 ### Incluir Fotos
 
 from app.models.foto_model import Foto
-
+from fastapi import Request
 
 @router.get("/fotos/{empresa_id}")
-def listar_fotos(empresa_id: int, db: Session = Depends(get_db)):
+def listar_fotos(
+    empresa_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
 
     fotos = db.query(Foto).filter(
         Foto.empresa_id == empresa_id
     ).all()
 
-    return fotos
+    base_url = str(request.base_url)
+
+    resultado = []
+
+    for f in fotos:
+
+        resultado.append({
+            "id": f.id,
+            "empresa_id": f.empresa_id,
+            "principal": f.principal,
+            "url": base_url + f.caminho
+        })
+
+    return resultado
 
 @router.post("/foto_principal/{foto_id}")
 def foto_principal(foto_id: int, db: Session = Depends(get_db)):
