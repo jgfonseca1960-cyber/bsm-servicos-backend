@@ -10,6 +10,7 @@ from app.models.usuario_model import Usuario
 from app.models.empresa_model import Empresa
 from app.models.avaliacao_model import Avaliacao
 from app.models.categoria_model import Categoria
+from app.models.foto_model import Foto
 
 # routers
 from app.routers import auth

@@ -38,3 +38,11 @@ class Empresa(Base):
         back_populates="empresa",
         cascade="all, delete"
     )
+
+    # Incluir fotos 
+    
+    fotos = relationship(
+    "Foto",
+    back_populates="empresa",
+    cascade="all, delete"
+)
