@@ -210,3 +210,65 @@ def foto_principal(
     db.commit()
 
     return {"msg": "foto principal definida"}
+
+@router.get("/detalhe/{empresa_id}")
+def detalhe_empresa(
+    empresa_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+
+    empresa = db.query(Empresa).filter(
+        Empresa.id == empresa_id
+    ).first()
+
+    if not empresa:
+        return {"erro": "empresa não encontrada"}
+
+    categoria = db.query(Categoria).filter(
+        Categoria.id == empresa.categoria_id
+    ).first()
+
+    fotos = db.query(Foto).filter(
+        Foto.empresa_id == empresa.id
+    ).all()
+
+    avaliacoes = db.query(Avaliacao).filter(
+        Avaliacao.empresa_id == empresa.id
+    ).all()
+
+    base_url = str(request.base_url)
+
+    lista_fotos = []
+
+    for f in fotos:
+
+        lista_fotos.append({
+            "id": f.id,
+            "principal": f.principal,
+            "url": base_url + f.caminho
+        })
+
+    media = 0
+
+    if avaliacoes:
+        media = sum([a.nota for a in avaliacoes]) / len(avaliacoes)
+
+    return {
+
+        "id": empresa.id,
+        "nome": empresa.nome,
+        "responsavel": empresa.responsavel,
+        "cidade": empresa.cidade,
+        "bairro": empresa.bairro,
+        "endereco": empresa.endereco,
+        "latitude": empresa.latitude,
+        "longitude": empresa.longitude,
+
+        "categoria": categoria.nome if categoria else None,
+
+        "avaliacao_media": media,
+        "total_avaliacoes": len(avaliacoes),
+
+        "fotos": lista_fotos
+    }
