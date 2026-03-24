@@ -164,6 +164,7 @@ def upload_foto(
 # =========================
 
 @router.get("/fotos/{empresa_id}")
+
 def listar_fotos(
     empresa_id: int,
     request: Request,
@@ -450,26 +451,24 @@ def get_empresa(
 from sqlalchemy import text
 from app.database import engine
 
-@router.get("/empresa/fotos/{empresa_id}")
-def fotos_empresa(empresa_id: int):
+@router.get("/fotos/{empresa_id}")
+def listar_fotos(
+    empresa_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
 
-    with engine.connect() as conn:
+    fotos = db.query(Foto).filter(
+        Foto.empresa_id == empresa_id
+    ).all()
 
-        result = conn.execute(text("""
-            SELECT id, caminho, principal
-            FROM fotos
-            WHERE empresa_id = :empresa_id
-            ORDER BY principal DESC, id DESC
-        """), {"empresa_id": empresa_id})
+    base_url = str(request.base_url)
 
-        fotos = []
-
-        for row in result:
-
-            fotos.append({
-                "id": row.id,
-                "url": f"https://bsm-servicos-backend.onrender.com/{row.caminho}",
-                "principal": row.principal
-            })
-
-        return fotos
+    return [
+        {
+            "id": f.id,
+            "principal": f.principal,
+            "url": base_url + f.caminho
+        }
+        for f in fotos
+    ]

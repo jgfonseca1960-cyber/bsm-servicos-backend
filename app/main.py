@@ -25,6 +25,9 @@ from app.routers import categoria
 
 app = FastAPI()
 
+if not os.path.exists("uploads"):
+    os.makedirs("uploads")
+
 app.mount(
     "/uploads",
     StaticFiles(directory="uploads"),
