@@ -45,6 +45,7 @@ def listar(db: Session = Depends(get_db)):
 
 
 # listar por empresa
+
 @router.get("/empresa/{empresa_id}")
 def por_empresa(empresa_id: int, db: Session = Depends(get_db)):
 
