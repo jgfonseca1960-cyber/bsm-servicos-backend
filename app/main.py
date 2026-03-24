@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
+
 import os
 
 from app.database import Base, engine
@@ -13,6 +14,7 @@ from app.models.avaliacao_model import Avaliacao
 from app.models.categoria_model import Categoria
 from app.models.foto_model import Foto
 
+
 # routers
 from app.routers import auth
 from app.routers import usuario
@@ -22,6 +24,12 @@ from app.routers import categoria
 
 
 app = FastAPI()
+
+app.mount(
+    "/uploads",
+    StaticFiles(directory="uploads"),
+    name="uploads"
+)
 
 origins = ["*"]
 
