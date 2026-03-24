@@ -446,3 +446,42 @@ def get_empresa(
         return {"erro": "Empresa não encontrada"}
 
     return empresa
+
+from fastapi import APIRouter
+from database import get_connection
+
+router = APIRouter()
+
+
+@router.get("/empresa/fotos/{empresa_id}")
+def fotos_empresa(empresa_id: int):
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT id, caminho, principal
+        FROM empresa_fotos
+        WHERE empresa_id = %s
+        ORDER BY principal DESC, id DESC
+        """,
+        (empresa_id,)
+    )
+
+    rows = cur.fetchall()
+
+    fotos = []
+
+    for r in rows:
+
+        fotos.append({
+            "id": r[0],
+            "url": f"https://bsm-servicos-backend.onrender.com{r[1]}",
+            "principal": r[2],
+        })
+
+    cur.close()
+    conn.close()
+
+    return fotos
