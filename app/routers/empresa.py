@@ -431,3 +431,18 @@ def get_empresa(
         return {"erro": "Empresa não encontrada"}
 
     return empresa
+
+@router.get("/{empresa_id}")
+def get_empresa(
+    empresa_id: int,
+    db: Session = Depends(get_db)
+):
+
+    empresa = db.query(Empresa).filter(
+        Empresa.id == empresa_id
+    ).first()
+
+    if not empresa:
+        return {"erro": "Empresa não encontrada"}
+
+    return empresa

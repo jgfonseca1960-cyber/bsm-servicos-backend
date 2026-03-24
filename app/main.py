@@ -138,3 +138,9 @@ def add_principal_foto():
     except Exception as e:
 
         return {"erro": str(e)}
+    
+
+app.include_router(
+    empresa.router,
+    prefix="/empresa"
+)
