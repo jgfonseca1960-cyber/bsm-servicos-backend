@@ -13,7 +13,8 @@ from app.models.avaliacao_model import Avaliacao
 
 from app.schemas.empresa_schema import EmpresaCreate
 from app.core.deps import get_current_user
-
+import cloudinary.uploader
+from app.core.cloudinary_config import *
 
 router = APIRouter(
     prefix="/empresa",
@@ -132,15 +133,9 @@ def upload_foto(
     db: Session = Depends(get_db)
 ):
 
-    pasta = "uploads"
+    resultado = cloudinary.uploader.upload(file.file)
 
-    if not os.path.exists(pasta):
-        os.makedirs(pasta)
-
-    caminho = f"{pasta}/{empresa_id}_{file.filename}"
-
-    with open(caminho, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    url = resultado["secure_url"]
 
     principal = db.query(Foto).filter(
         Foto.empresa_id == empresa_id,
@@ -148,7 +143,7 @@ def upload_foto(
     ).first()
 
     nova = Foto(
-        caminho=caminho,
+        caminho=url,
         empresa_id=empresa_id,
         principal=True if not principal else False
     )
@@ -156,8 +151,7 @@ def upload_foto(
     db.add(nova)
     db.commit()
 
-    return {"msg": "foto enviada"}
-
+    return {"url": url}
 
 # =========================
 # LISTAR FOTOS
