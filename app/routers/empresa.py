@@ -447,41 +447,29 @@ def get_empresa(
 
     return empresa
 
-from fastapi import APIRouter
-from database import get_connection
-
-router = APIRouter()
-
+from sqlalchemy import text
+from app.database import engine
 
 @router.get("/empresa/fotos/{empresa_id}")
 def fotos_empresa(empresa_id: int):
 
-    conn = get_connection()
-    cur = conn.cursor()
+    with engine.connect() as conn:
 
-    cur.execute(
-        """
-        SELECT id, caminho, principal
-        FROM empresa_fotos
-        WHERE empresa_id = %s
-        ORDER BY principal DESC, id DESC
-        """,
-        (empresa_id,)
-    )
+        result = conn.execute(text("""
+            SELECT id, caminho, principal
+            FROM fotos
+            WHERE empresa_id = :empresa_id
+            ORDER BY principal DESC, id DESC
+        """), {"empresa_id": empresa_id})
 
-    rows = cur.fetchall()
+        fotos = []
 
-    fotos = []
+        for row in result:
 
-    for r in rows:
+            fotos.append({
+                "id": row.id,
+                "url": f"https://bsm-servicos-backend.onrender.com/{row.caminho}",
+                "principal": row.principal
+            })
 
-        fotos.append({
-            "id": r[0],
-            "url": f"https://bsm-servicos-backend.onrender.com{r[1]}",
-            "principal": r[2],
-        })
-
-    cur.close()
-    conn.close()
-
-    return fotos
+        return fotos
