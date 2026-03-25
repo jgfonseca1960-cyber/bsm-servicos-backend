@@ -13,6 +13,7 @@ class Empresa(Base):
     cnpj = Column(String)
     cpf = Column(String)
     responsavel = Column(String)
+    telefone = Column(String)
 
     endereco = Column(String)
     bairro = Column(String)

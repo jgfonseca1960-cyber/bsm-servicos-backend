@@ -7,7 +7,7 @@ class EmpresaCreate(BaseModel):
     cnpj: str | None = None
     cpf: str | None = None
     responsavel: str | None = None
-
+    telefone: str | None = None
     endereco: str | None = None
     bairro: str | None = None
     cidade: str | None = None
