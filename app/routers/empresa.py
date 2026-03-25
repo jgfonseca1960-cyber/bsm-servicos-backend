@@ -207,14 +207,11 @@ def foto_principal(
     return {"msg": "foto principal definida"}
 
 @router.get("/detalhe/{empresa_id}")
-
-for f in fotos:
-
-    lista_fotos.append({
-        "id": f.id,
-        "principal": f.principal,
-        "url": f.caminho
-    })
+def detalhe_empresa(
+    empresa_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
 
     empresa = db.query(Empresa).filter(
         Empresa.id == empresa_id
@@ -235,16 +232,13 @@ for f in fotos:
         Avaliacao.empresa_id == empresa.id
     ).all()
 
-    base_url = str(request.base_url)
-
     lista_fotos = []
 
     for f in fotos:
-
         lista_fotos.append({
             "id": f.id,
             "principal": f.principal,
-            "url": base_url + f.caminho
+            "url": f.caminho
         })
 
     media = 0
