@@ -116,7 +116,7 @@ def listar_empresas(
             "cidade": e.cidade,
             "categoria": categoria.nome if categoria else None,
             "avaliacao": media,
-            "foto": "foto": foto.caminho if foto else None
+            "foto": foto.caminho if foto else None
         })
 
     return resultado
