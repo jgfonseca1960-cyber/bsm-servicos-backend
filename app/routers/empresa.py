@@ -1,11 +1,7 @@
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Request, Query
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-from sqlalchemy import text
-import shutil
-import os
 
-from app.database import get_db, engine
-
+from app.database import get_db
 from app.models.empresa_model import Empresa
 from app.models.categoria_model import Categoria
 from app.models.foto_model import Foto
@@ -13,6 +9,7 @@ from app.models.avaliacao_model import Avaliacao
 
 from app.schemas.empresa_schema import EmpresaCreate
 from app.core.deps import get_current_user
+
 import cloudinary.uploader
 from app.core.cloudinary_config import *
 
@@ -60,33 +57,15 @@ def criar(
 
 
 # =========================
-# LISTAR EMPRESAS (COM FOTO + MEDIA)
+# LISTAR EMPRESAS
 # =========================
 
 @router.get("/listar")
 def listar_empresas(
-    request: Request,
     db: Session = Depends(get_db),
-
-    pagina: int = 1,
-    limite: int = 10,
-    categoria_id: int | None = None,
-    cidade: str | None = None,
 ):
 
-    query = db.query(Empresa)
-
-    if categoria_id:
-        query = query.filter(Empresa.categoria_id == categoria_id)
-
-    if cidade:
-        query = query.filter(Empresa.cidade.ilike(f"%{cidade}%"))
-
-    offset = (pagina - 1) * limite
-
-    empresas = query.offset(offset).limit(limite).all()
-
-    base_url = str(request.base_url)
+    empresas = db.query(Empresa).all()
 
     resultado = []
 
@@ -123,7 +102,7 @@ def listar_empresas(
 
 
 # =========================
-# UPLOAD FOTO
+# UPLOAD FOTO CLOUDINARY
 # =========================
 
 @router.post("/upload_foto/{empresa_id}")
@@ -153,15 +132,14 @@ def upload_foto(
 
     return {"url": url}
 
+
 # =========================
 # LISTAR FOTOS
 # =========================
 
 @router.get("/fotos/{empresa_id}")
-
 def listar_fotos(
     empresa_id: int,
-    request: Request,
     db: Session = Depends(get_db)
 ):
 
@@ -169,18 +147,19 @@ def listar_fotos(
         Foto.empresa_id == empresa_id
     ).all()
 
-    base_url = str(request.base_url)
-
     return [
         {
             "id": f.id,
             "principal": f.principal,
-            "url": "foto": foto.caminho
+            "url": f.caminho
         }
         for f in fotos
     ]
 
-## FOTO PRINCIPAL
+
+# =========================
+# FOTO PRINCIPAL
+# =========================
 
 @router.post("/foto_principal/{foto_id}")
 def foto_principal(
@@ -195,7 +174,6 @@ def foto_principal(
     if not foto:
         return {"erro": "foto não encontrada"}
 
-    # remove principal das outras
     db.query(Foto).filter(
         Foto.empresa_id == foto.empresa_id
     ).update({"principal": False})
@@ -206,10 +184,14 @@ def foto_principal(
 
     return {"msg": "foto principal definida"}
 
+
+# =========================
+# DETALHE EMPRESA
+# =========================
+
 @router.get("/detalhe/{empresa_id}")
 def detalhe_empresa(
     empresa_id: int,
-    request: Request,
     db: Session = Depends(get_db)
 ):
 
@@ -247,28 +229,24 @@ def detalhe_empresa(
         media = sum([a.nota for a in avaliacoes]) / len(avaliacoes)
 
     return {
-
         "id": empresa.id,
         "nome": empresa.nome,
-        "responsavel": empresa.responsavel,
         "cidade": empresa.cidade,
         "bairro": empresa.bairro,
         "endereco": empresa.endereco,
-        "latitude": empresa.latitude,
-        "longitude": empresa.longitude,
-
         "categoria": categoria.nome if categoria else None,
-
         "avaliacao_media": media,
-        "total_avaliacoes": len(avaliacoes),
-
         "fotos": lista_fotos
     }
+
+
+# =========================
+# POR CATEGORIA
+# =========================
 
 @router.get("/por_categoria/{categoria_id}")
 def por_categoria(
     categoria_id: int,
-    request: Request,
     db: Session = Depends(get_db)
 ):
 
@@ -276,8 +254,6 @@ def por_categoria(
         Empresa.categoria_id == categoria_id
     ).all()
 
-    base_url = str(request.base_url)
-
     resultado = []
 
     for e in empresas:
@@ -287,179 +263,41 @@ def por_categoria(
             Foto.principal == True
         ).first()
 
-        avaliacoes = db.query(Avaliacao).filter(
-            Avaliacao.empresa_id == e.id
-        ).all()
-
-        media = 0
-
-        if avaliacoes:
-            media = sum([a.nota for a in avaliacoes]) / len(avaliacoes)
-
         resultado.append({
-
             "id": e.id,
             "nome": e.nome,
             "cidade": e.cidade,
-            "bairro": e.bairro,
-            "media": media,
-            "foto": "foto": foto.caminho if foto else None
-
+            "foto": foto.caminho if foto else None
         })
 
     return resultado
 
-@router.get("/proximas")
 
-def empresas_proximas(
-    lat: float,
-    lng: float,
-    request: Request,
-    db: Session = Depends(get_db)
-):
-
-    empresas = db.query(Empresa).all()
-
-    base_url = str(request.base_url)
-
-    resultado = []
-
-    for e in empresas:
-
-        if not e.latitude or not e.longitude:
-            continue
-
-        distancia = (
-            (e.latitude - lat) ** 2 +
-            (e.longitude - lng) ** 2
-        ) ** 0.5
-
-        foto = db.query(Foto).filter(
-            Foto.empresa_id == e.id,
-            Foto.principal == True
-        ).first()
-
-        resultado.append({
-
-            "id": e.id,
-            "nome": e.nome,
-            "cidade": e.cidade,
-            "distancia": distancia,
-            "foto": "foto": foto.caminho if foto else None
-
-        })
-
-    resultado.sort(key=lambda x: x["distancia"])
-
-    return resultado
-
-
-###  HOME COMPLETO
-
+# =========================
+# HOME
+# =========================
 
 @router.get("/home")
 def home(
-    request: Request,
-    db: Session = Depends(get_db),
-    limite: int = 20
+    db: Session = Depends(get_db)
 ):
 
-    empresas = db.query(Empresa).limit(limite).all()
-
-    base_url = str(request.base_url)
+    empresas = db.query(Empresa).limit(20).all()
 
     resultado = []
 
     for e in empresas:
-
-        categoria = db.query(Categoria).filter(
-            Categoria.id == e.categoria_id
-        ).first()
 
         foto = db.query(Foto).filter(
             Foto.empresa_id == e.id,
             Foto.principal == True
         ).first()
 
-        avaliacoes = db.query(Avaliacao).filter(
-            Avaliacao.empresa_id == e.id
-        ).all()
-
-        media = 0
-
-        if avaliacoes:
-            media = sum([a.nota for a in avaliacoes]) / len(avaliacoes)
-
         resultado.append({
-
             "id": e.id,
             "nome": e.nome,
             "cidade": e.cidade,
-            "bairro": e.bairro,
-
-            "categoria": categoria.nome if categoria else None,
-
-            "media": media,
-
-            "foto":
-                "foto": foto.caminho
-                if foto else None
-
+            "foto": foto.caminho if foto else None
         })
 
     return resultado
-
-@router.get("/empresa/{empresa_id}")
-def get_empresa(
-    empresa_id: int,
-    db: Session = Depends(get_db)
-):
-
-    empresa = db.query(Empresa).filter(
-        Empresa.id == empresa_id
-    ).first()
-
-    if not empresa:
-        return {"erro": "Empresa não encontrada"}
-
-    return empresa
-
-@router.get("/{empresa_id}")
-def get_empresa(
-    empresa_id: int,
-    db: Session = Depends(get_db)
-):
-
-    empresa = db.query(Empresa).filter(
-        Empresa.id == empresa_id
-    ).first()
-
-    if not empresa:
-        return {"erro": "Empresa não encontrada"}
-
-    return empresa
-
-from sqlalchemy import text
-from app.database import engine
-
-@router.get("/fotos/{empresa_id}")
-def listar_fotos(
-    empresa_id: int,
-    request: Request,
-    db: Session = Depends(get_db)
-):
-
-    fotos = db.query(Foto).filter(
-        Foto.empresa_id == empresa_id
-    ).all()
-
-    base_url = str(request.base_url)
-
-    return [
-        {
-            "id": f.id,
-            "principal": f.principal,
-            "url": "foto": foto.caminho
-        }
-        for f in fotos
-    ]
