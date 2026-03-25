@@ -116,7 +116,7 @@ def listar_empresas(
             "cidade": e.cidade,
             "categoria": categoria.nome if categoria else None,
             "avaliacao": media,
-            "foto": base_url + foto.caminho if foto else None
+            "foto": "foto": foto.caminho if foto else None
         })
 
     return resultado
@@ -175,7 +175,7 @@ def listar_fotos(
         {
             "id": f.id,
             "principal": f.principal,
-            "url": base_url + f.caminho
+            "url": "foto": foto.caminho
         }
         for f in fotos
     ]
@@ -303,7 +303,7 @@ def por_categoria(
             "cidade": e.cidade,
             "bairro": e.bairro,
             "media": media,
-            "foto": base_url + foto.caminho if foto else None
+            "foto": "foto": foto.caminho if foto else None
 
         })
 
@@ -345,7 +345,7 @@ def empresas_proximas(
             "nome": e.nome,
             "cidade": e.cidade,
             "distancia": distancia,
-            "foto": base_url + foto.caminho if foto else None
+            "foto": "foto": foto.caminho if foto else None
 
         })
 
@@ -402,7 +402,7 @@ def home(
             "media": media,
 
             "foto":
-                base_url + foto.caminho
+                "foto": foto.caminho
                 if foto else None
 
         })
@@ -459,7 +459,7 @@ def listar_fotos(
         {
             "id": f.id,
             "principal": f.principal,
-            "url": base_url + f.caminho
+            "url": "foto": foto.caminho
         }
         for f in fotos
     ]
