@@ -1,19 +1,14 @@
+import os
 from pathlib import Path
-from urllib.parse import quote_plus
 
 BASE_DIR = Path(__file__).resolve().parent
 
-# 🔥 CONFIGURAÇÃO DIRETA (sem .env)
-DB_USER = "postgres"
-DB_PASSWORD_RAW = "brg7573x"
-DB_HOST = "localhost"
-DB_PORT = "5432"
-DB_NAME = "bsm_servicos"
+# 🔥 Pega do Render (ESSENCIAL)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Codifica senha (IMPORTANTE)
-DB_PASSWORD = quote_plus(DB_PASSWORD_RAW)
-
-DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+# 🔧 Ajuste automático (compatibilidade Render)
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
 
 # Segurança e JWT (opcional)
 SECRET_KEY = "minha_chave_super_secreta"
