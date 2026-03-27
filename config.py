@@ -13,7 +13,7 @@ DB_NAME = "bsm_servicos"
 # Codifica senha (IMPORTANTE)
 DB_PASSWORD = quote_plus(DB_PASSWORD_RAW)
 
-DATABASE_URL = f"postgresql+psycopg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 # Segurança e JWT (opcional)
 SECRET_KEY = "minha_chave_super_secreta"
