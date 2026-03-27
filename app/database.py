@@ -37,7 +37,6 @@ def init_db():
 
     import app.models
 
-    Base.metadata.drop_all(bind=engine)   # 🔥 APAGA TUDO
     Base.metadata.create_all(bind=engine)
 
     print("✅ Banco recriado!")
