@@ -22,11 +22,12 @@ from app.config import DATABASE_URL
 # Base dos modelos
 Base = declarative_base()
 
-# Engine
 engine = create_engine(
     DATABASE_URL,
     echo=True,
-    future=True
+    future=True,
+    pool_pre_ping=True,
+    connect_args={"sslmode": "require"}
 )
 
 # Sessão
