@@ -44,7 +44,7 @@ class UsuarioBase(BaseModel):
 
 class UsuarioCreate(UsuarioBase):
     senha: str
-
+    tipo: str  = "False' # 👈 ADICIONE ISSO
 
 class UsuarioResponse(UsuarioBase):
     id: int
