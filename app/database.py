@@ -5,6 +5,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.orm import Session
+from app.config import DATABASE_URL
 
 def get_db():
     db = SessionLocal()
@@ -16,7 +17,7 @@ def get_db():
 # 🔹 Ajuste do path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
 
-from config import DATABASE_URL
+from app.config import DATABASE_URL
 
 # Base dos modelos
 Base = declarative_base()
