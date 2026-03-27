@@ -1,157 +1,56 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from sqlalchemy import text
+from fastapi.responses import Response
 
-import os
+from app.database import init_db
 
-from app.database import Base, engine
-
-# models
-from app.models.usuario_model import Usuario
-from app.models.empresa_model import Empresa
-from app.models.avaliacao_model import Avaliacao
-from app.models.categoria_model import Categoria
-from app.models.foto_model import Foto
-
-
-# routers
-from app.routers import auth
-from app.routers import usuario
-from app.routers import empresa
-from app.routers import avaliacao
-from app.routers import categoria
-
-
-app = FastAPI()
-
-if not os.path.exists("uploads"):
-    os.makedirs("uploads")
-
-app.mount(
-    "/uploads",
-    StaticFiles(directory="uploads"),
-    name="uploads"
+# controllers
+from app.controllers import (
+    empresa_controller,
+    servico_controller,
+    usuario_controller
 )
 
-origins = ["*"]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# =========================
-# CRIAR TABELAS
-# =========================
-
-Base.metadata.create_all(bind=engine)
-
-
-# =========================
-# PASTA UPLOADS
-# =========================
-
-if not os.path.exists("uploads"):
-    os.makedirs("uploads")
-
-
-app.mount(
-    "/uploads",
-    StaticFiles(directory="uploads"),
-    name="uploads"
+app = FastAPI(
+    title="BSM Serviços API",
+    version="1.0.0"
 )
 
 
-# =========================
-# ROUTERS
-# =========================
-
-app.include_router(auth.router)
-app.include_router(usuario.router)
-app.include_router(empresa.router)
-app.include_router(avaliacao.router)
-app.include_router(categoria.router)
+# 🔥 CRIA AS TABELAS NO STARTUP (FORMA CORRETA)
+@app.on_event("startup")
+def on_startup():
+    init_db()
 
 
-# =========================
-# DEBUG
-# =========================
-
-@app.get("/debug/database")
-def debug_database():
-    return {
-        "DATABASE_URL": os.getenv("DATABASE_URL")
-    }
-
-
-@app.get("/debug/usuarios")
-def debug_usuarios():
-
-    with engine.connect() as conn:
-
-        result = conn.execute(
-            text("SELECT * FROM usuarios")
-        )
-
-        return [dict(row._mapping) for row in result]
-
-
-@app.get("/debug/tabelas")
-def tabelas():
-
-    with engine.connect() as conn:
-
-        result = conn.execute(text(
-            "SELECT tablename FROM pg_tables WHERE schemaname='public'"
-        ))
-
-        return [r[0] for r in result]
+# 🔧 evita erro favicon no navegador
+@app.get("/favicon.ico")
+def favicon():
+    return Response(status_code=204)
 
 
 # =========================
-# DEBUG FOTO
+# ROTAS
 # =========================
-
-@app.get("/debug/criar_fotos")
-def criar_fotos():
-
-    try:
-
-        Foto.__table__.create(bind=engine)
-
-        return {"msg": "tabela fotos criada"}
-
-    except Exception as e:
-
-        return {"erro": str(e)}
-
-
-@app.get("/debug/add_principal_foto")
-def add_principal_foto():
-
-    try:
-
-        with engine.connect() as conn:
-
-            conn.execute(text("""
-                ALTER TABLE fotos
-                ADD COLUMN principal BOOLEAN DEFAULT false
-            """))
-
-            conn.commit()
-
-        return {"msg": "coluna principal criada"}
-
-    except Exception as e:
-
-        return {"erro": str(e)}
-    
+app.include_router(
+    empresa_controller.router,
+    prefix="/empresas",
+    tags=["Empresas"]
+)
 
 app.include_router(
-    empresa.router,
-    prefix="/empresa"
+    servico_controller.router,
+    prefix="/servicos",
+    tags=["Serviços"]
 )
+
+app.include_router(
+    usuario_controller.router,
+    prefix="/usuarios",
+    tags=["Usuários"]
+)
+
+
+# rota teste
+@app.get("/")
+def root():
+    return {"msg": "API BSM Serviços rodando 🚀"}
