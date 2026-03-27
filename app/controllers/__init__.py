@@ -1,1 +1,0 @@
-from . import foto_controller
