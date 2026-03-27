@@ -1,6 +1,5 @@
-from fastapi import FastAPI
-from fastapi.responses import Response
-
+from fastapi import FastAPI, Response
+from contextlib import asynccontextmanager
 from app.database import init_db
 
 # controllers
@@ -10,23 +9,18 @@ from app.controllers import (
     usuario_controller
 )
 
-app = FastAPI(
-    title="BSM Serviços API",
-    version="1.0.0"
-)
-
-
-# 🔥 CRIA AS TABELAS NO STARTUP (FORMA CORRETA)
-@app.on_event("startup")
-def on_startup():
+# 🔥 startup moderno (substitui on_event)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     init_db()
+    yield
 
+app = FastAPI(lifespan=lifespan)
 
-# 🔧 evita erro favicon no navegador
+# 🔧 evita erro favicon
 @app.get("/favicon.ico")
 def favicon():
     return Response(status_code=204)
-
 
 # =========================
 # ROTAS
@@ -48,7 +42,6 @@ app.include_router(
     prefix="/usuarios",
     tags=["Usuários"]
 )
-
 
 # rota teste
 @app.get("/")
