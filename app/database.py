@@ -31,11 +31,13 @@ def get_db():
         db.close()
 
 # Inicialização do banco
+
 def init_db():
-    print("🔥 Criando todas as tabelas...")
+    print("🔥 Recriando banco...")
 
-    import app.models  # importa models
+    import app.models
 
+    Base.metadata.drop_all(bind=engine)   # 🔥 APAGA TUDO
     Base.metadata.create_all(bind=engine)
 
-    print("✅ Todas as tabelas foram criadas!")
+    print("✅ Banco recriado!")
