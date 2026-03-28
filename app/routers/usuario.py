@@ -18,7 +18,7 @@ def criar(dados: UsuarioCreate, db: Session = Depends(get_db)):
 
     novo = Usuario(
         email=dados.email,
-        senha=gerar_hash(dados.senha),
+        senha_hash=gerar_hash(dados.senha),  # ✅ correto
         nome=dados.nome,
         is_admin=dados.is_admin
     )
