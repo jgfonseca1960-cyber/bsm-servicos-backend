@@ -26,13 +26,14 @@ def get_db():
     finally:
         db.close()
 
-def init_db():
+    def init_db():
     print("🔥 Recriando banco...")
 
-    # 👇 IMPORT AQUI (CORRETO)
     import app.models.usuario_model
     import app.models.empresa_model
     import app.models.empresa_foto_model
+    import app.models.servico_model
+    import app.models.tipo_servico_model  # 👈 NOVO
 
     Base.metadata.create_all(bind=engine)
 
