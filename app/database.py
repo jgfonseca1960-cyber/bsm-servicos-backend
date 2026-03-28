@@ -27,14 +27,15 @@ def get_db():
         db.close()
 
     def init_db():
-    print("🔥 Recriando banco...")
+        
+        print("🔥 Recriando banco...")
 
-    import app.models.usuario_model
-    import app.models.empresa_model
-    import app.models.empresa_foto_model
-    import app.models.servico_model
-    import app.models.tipo_servico_model  # 👈 NOVO
+        import app.models.usuario_model
+        import app.models.empresa_model
+        import app.models.empresa_foto_model
+        import app.models.servico_model
+        import app.models.tipo_servico_model
 
-    Base.metadata.create_all(bind=engine)
+        Base.metadata.create_all(bind=engine)
 
-    print("✅ Banco recriado!")
+        print("✅ Banco recriado!")
