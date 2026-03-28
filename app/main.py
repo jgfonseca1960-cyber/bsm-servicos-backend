@@ -4,18 +4,20 @@ from sqlalchemy import text
 
 app = FastAPI()
 
-@app.on_event("startup")
-def startup():
+def ajustar_banco():
+    print("🔥 Ajustando banco...")
+
     with engine.connect() as conn:
-        try:
-            conn.execute(text("""
-                ALTER TABLE usuarios 
-                ADD COLUMN IF NOT EXISTS senha_hash VARCHAR;
-            """))
-            conn.commit()
-            print("✅ Coluna senha_hash verificada/criada!")
-        except Exception as e:
-            print("❌ Erro ao criar coluna:", e)
+        conn.execute(text("""
+            ALTER TABLE usuarios 
+            ADD COLUMN IF NOT EXISTS senha_hash VARCHAR;
+        """))
+        conn.commit()
+
+    print("✅ Banco pronto!")
+
+# 👇 EXECUTA ANTES DE SUBIR A API
+ajustar_banco()
 
 
 
