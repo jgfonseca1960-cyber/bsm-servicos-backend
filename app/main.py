@@ -1,3 +1,25 @@
+from fastapi import FastAPI
+from app.database import engine
+from sqlalchemy import text
+
+app = FastAPI()
+
+@app.on_event("startup")
+def startup():
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("""
+                ALTER TABLE usuarios 
+                ADD COLUMN IF NOT EXISTS senha_hash VARCHAR;
+            """))
+            conn.commit()
+            print("✅ Coluna senha_hash verificada/criada!")
+        except Exception as e:
+            print("❌ Erro ao criar coluna:", e)
+
+
+
+
 from fastapi import FastAPI, Response
 from contextlib import asynccontextmanager
 from app.database import init_db
