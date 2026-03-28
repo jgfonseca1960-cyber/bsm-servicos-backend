@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from app.models import Empresa, EmpresaFoto
+from app.models.empresa_model import Empresa
+from app.models.empresa_foto_model import EmpresaFoto
 
 def create_empresa(db: Session, empresa: Empresa):
     db.add(empresa)

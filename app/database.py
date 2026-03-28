@@ -2,6 +2,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.config import DATABASE_URL
 
+import app.models.usuario_model
+import app.models.empresa_model
+import app.models.empresa_foto_model
+
 # Base dos modelos
 Base = declarative_base()
 

@@ -1,4 +1,5 @@
-from app.models import Empresa, EmpresaFoto
+from app.models.empresa_model import Empresa
+from app.models.empresa_foto_model import EmpresaFoto
 from sqlalchemy.orm import Session
 
 from app.repositories import empresa_repo
