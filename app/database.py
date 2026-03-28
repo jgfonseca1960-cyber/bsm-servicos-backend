@@ -2,14 +2,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.config import DATABASE_URL
 
-import app.models.usuario_model
-import app.models.empresa_model
-import app.models.empresa_foto_model
-
-# Base dos modelos
 Base = declarative_base()
 
-# Engine
 engine = create_engine(
     DATABASE_URL,
     echo=True,
@@ -18,7 +12,6 @@ engine = create_engine(
     connect_args={"sslmode": "require"}
 )
 
-# Sessão
 SessionLocal = sessionmaker(
     bind=engine,
     autoflush=False,
@@ -26,7 +19,6 @@ SessionLocal = sessionmaker(
     future=True
 )
 
-# Dependência do FastAPI
 def get_db():
     db = SessionLocal()
     try:
@@ -34,12 +26,13 @@ def get_db():
     finally:
         db.close()
 
-# Inicialização do banco
-
 def init_db():
     print("🔥 Recriando banco...")
 
-    import app.models
+    # 👇 IMPORT AQUI (CORRETO)
+    import app.models.usuario_model
+    import app.models.empresa_model
+    import app.models.empresa_foto_model
 
     Base.metadata.create_all(bind=engine)
 
