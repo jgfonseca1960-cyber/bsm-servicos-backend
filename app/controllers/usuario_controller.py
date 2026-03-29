@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 
-# ✅ IMPORT DIRETO (evita erro de __init__)
+# 🔹 IMPORT DIRETO DOS SERVICES (OK)
 from app.services.usuario_service import (
     criar_usuario,
     listar_usuarios,
@@ -12,7 +12,7 @@ from app.services.usuario_service import (
     deletar_usuario
 )
 
-# ✅ Schemas
+# 🔹 SCHEMAS
 from app.schemas.usuario_schema import (
     UsuarioCreate,
     UsuarioResponse,
@@ -32,6 +32,9 @@ def criar_novo_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
         return criar_usuario(db, usuario)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        # 🔥 evita erro 500 sem explicação
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 
 # 🔹 LISTAR TODOS
@@ -51,27 +54,35 @@ def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
     return usuario
 
 
-# 🔹 ATUALIZAR (CORRIGIDO COM UsuarioUpdate)
+# 🔹 ATUALIZAR
 @router.put("/{usuario_id}", response_model=UsuarioResponse)
 def atualizar_usuario_existente(
     usuario_id: int,
     usuario: UsuarioUpdate,
     db: Session = Depends(get_db)
 ):
-    updated = atualizar_usuario(db, usuario_id, usuario)
+    try:
+        updated = atualizar_usuario(db, usuario_id, usuario)
 
-    if not updated:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        if not updated:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
-    return updated
+        return updated
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar: {str(e)}")
 
 
 # 🔹 DELETAR
 @router.delete("/{usuario_id}", response_model=UsuarioResponse)
 def deletar_usuario_existente(usuario_id: int, db: Session = Depends(get_db)):
-    deleted = deletar_usuario(db, usuario_id)
+    try:
+        deleted = deletar_usuario(db, usuario_id)
 
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
-    return deleted
+        return deleted
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao deletar: {str(e)}")

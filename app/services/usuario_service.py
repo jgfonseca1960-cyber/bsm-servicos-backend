@@ -37,20 +37,27 @@ def get_usuario_por_id(db, usuario_id):
     return db.query(Usuario).filter(Usuario.id == usuario_id).first()
 
 
-# 🔹 ATUALIZAR
+# 🔹 ATUALIZAR (CORRIGIDO)
 def atualizar_usuario(db, usuario_id, data):
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
 
     if not usuario:
         return None
 
-    if data.nome:
+    # 🔥 VALIDA EMAIL DUPLICADO
+    if data.email:
+        existente = db.query(Usuario).filter(Usuario.email == data.email).first()
+        if existente and existente.id != usuario_id:
+            raise ValueError("Email já cadastrado")
+
+    # 🔥 ATUALIZA SOMENTE SE NÃO FOR NONE
+    if data.nome is not None:
         usuario.nome = data.nome
 
-    if data.email:
+    if data.email is not None:
         usuario.email = data.email
 
-    if data.senha:
+    if data.senha is not None:
         usuario.senha_hash = hash_senha(data.senha)
 
     db.commit()
