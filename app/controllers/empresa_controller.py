@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
+from app.schemas.empresa_schema import EmpresaCreate, EmpresaResponse
+from app.schemas.empresa_foto_schema import FotoResponse
 import os
 from app.database import get_db
 from app.services import empresa_service
