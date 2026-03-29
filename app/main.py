@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from app.database import engine
 from sqlalchemy import text
+from app.database import init_db
+
+init_db()
 
 app = FastAPI()
 
