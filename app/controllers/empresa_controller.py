@@ -5,7 +5,9 @@ from app.schemas.empresa_foto_schema import FotoResponse
 import os
 from app.database import get_db
 from app.services import empresa_service
-from app.schemas import EmpresaCreate, EmpresaResponse, FotoResponse
+from app.schemas.empresa_schema import EmpresaCreate, EmpresaResponse
+from app.schemas.empresa_foto_schema import FotoResponse
+
 from app.config import UPLOAD_DIR
 
 router = APIRouter(prefix="/empresas", tags=["Empresas"])
