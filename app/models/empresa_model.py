@@ -38,4 +38,3 @@ class Empresa(Base):
     # Relacionamentos
     servicos = relationship("Servico", back_populates="empresa")
     fotos = relationship("EmpresaFoto", back_populates="empresa")
-⭐ SOBRE AVALIAÇÕES (IMPORTANTE)
