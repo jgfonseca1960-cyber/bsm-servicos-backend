@@ -2,25 +2,27 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 
-# 🔹 Base (campos comuns)
+# 🔹 Base
 class UsuarioBase(BaseModel):
     nome: str
     email: EmailStr
+    is_admin: Optional[bool] = False
 
 
-# 🔹 Para criação (entrada da API)
+# 🔹 Criação
 class UsuarioCreate(UsuarioBase):
     senha: str
 
 
-# 🔹 Para atualização (PARCIAL)
+# 🔹 Atualização
 class UsuarioUpdate(BaseModel):
     nome: Optional[str] = None
     email: Optional[EmailStr] = None
     senha: Optional[str] = None
+    is_admin: Optional[bool] = None
 
 
-# 🔹 Para resposta (saída da API)
+# 🔹 Resposta
 class UsuarioResponse(UsuarioBase):
     id: int
 

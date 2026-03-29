@@ -1,34 +1,88 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.schemas.empresa_schema import EmpresaCreate, EmpresaResponse
-from app.schemas.empresa_foto_schema import FotoResponse
-import os
+from typing import List
+
 from app.database import get_db
-from app.services import empresa_service
-from app.schemas.empresa_schema import EmpresaCreate, EmpresaResponse
-from app.schemas.empresa_foto_schema import FotoResponse
 
-from app.config import UPLOAD_DIR
+# 🔹 SERVICE
+from app.services.empresa_service import (
+    criar_empresa,
+    listar_empresas,
+    get_empresa_por_id,
+    atualizar_empresa,
+    deletar_empresa
+)
 
-router = APIRouter(prefix="/empresas", tags=["Empresas"])
+# 🔹 SCHEMAS
+from app.schemas.empresa_schema import (
+    EmpresaCreate,
+    EmpresaResponse,
+    EmpresaUpdate
+)
 
+# 🔥 AUTH (AQUI ESTÁ O CONTROLE DE ADMIN)
+from app.dependencies.auth import get_current_admin
+
+
+router = APIRouter(
+    prefix="/empresas",
+    tags=["Empresas"]
+)
+
+
+# 🔥 CRIAR EMPRESA (SOMENTE ADMIN)
 @router.post("/", response_model=EmpresaResponse)
-def criar_empresa(empresa: EmpresaCreate, db: Session = Depends(get_db)):
-    return empresa_service.criar_empresa(db, empresa)
+def criar_nova_empresa(
+    empresa: EmpresaCreate,
+    db: Session = Depends(get_db),
+    admin = Depends(get_current_admin)  # 🔥 PROTEÇÃO
+):
+    return criar_empresa(db, empresa)
 
-@router.get("/", response_model=list[EmpresaResponse])
-def listar_empresas(db: Session = Depends(get_db)):
-    return empresa_service.listar_empresas(db)
 
-@router.post("/{empresa_id}/fotos", response_model=FotoResponse)
-def upload_foto(empresa_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
-    if not os.path.exists(UPLOAD_DIR):
-        os.makedirs(UPLOAD_DIR)
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
-    with open(file_path, "wb") as f:
-        f.write(file.file.read())
-    return empresa_service.adicionar_foto(db, empresa_id, file_path)
+# 🔹 LISTAR TODAS (PODE SER PÚBLICO)
+@router.get("/", response_model=List[EmpresaResponse])
+def listar_todas_empresas(db: Session = Depends(get_db)):
+    return listar_empresas(db)
 
-@router.get("/{empresa_id}/fotos", response_model=list[FotoResponse])
-def listar_fotos(empresa_id: int, db: Session = Depends(get_db)):
-    return empresa_service.listar_fotos(db, empresa_id)
+
+# 🔹 BUSCAR POR ID
+@router.get("/{empresa_id}", response_model=EmpresaResponse)
+def buscar_empresa(empresa_id: int, db: Session = Depends(get_db)):
+    empresa = get_empresa_por_id(db, empresa_id)
+
+    if not empresa:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+
+    return empresa
+
+
+# 🔥 ATUALIZAR (SOMENTE ADMIN)
+@router.put("/{empresa_id}", response_model=EmpresaResponse)
+def atualizar_empresa_existente(
+    empresa_id: int,
+    empresa: EmpresaUpdate,
+    db: Session = Depends(get_db),
+    admin = Depends(get_current_admin)  # 🔥 PROTEÇÃO
+):
+    updated = atualizar_empresa(db, empresa_id, empresa)
+
+    if not updated:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+
+    return updated
+
+
+# 🔥 DELETAR (SOMENTE ADMIN)
+@router.delete("/{empresa_id}", response_model=EmpresaResponse)
+def deletar_empresa_existente(
+    empresa_id: int,
+    db: Session = Depends(get_db),
+    admin = Depends(get_current_admin)  # 🔥 PROTEÇÃO
+):
+    deleted = deletar_empresa(db, empresa_id)
+
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+
+    return deleted

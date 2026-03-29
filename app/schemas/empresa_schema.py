@@ -2,18 +2,44 @@ from pydantic import BaseModel
 from typing import Optional
 
 
-# 🔹 BASE
+# 🔹 Base
 class EmpresaBase(BaseModel):
     nome: str
     descricao: Optional[str] = None
+    telefone: Optional[str] = None
+    whatsapp: Optional[str] = None
+    email: Optional[str] = None
+    endereco: Optional[str] = None
+    cidade: Optional[str] = None
+    estado: Optional[str] = None
+    cep: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    ativo: Optional[bool] = True
 
 
-# 🔹 CREATE
+# 🔹 Criação
 class EmpresaCreate(EmpresaBase):
     pass
 
 
-# 🔹 RESPONSE
+# 🔹 Atualização
+class EmpresaUpdate(BaseModel):
+    nome: Optional[str] = None
+    descricao: Optional[str] = None
+    telefone: Optional[str] = None
+    whatsapp: Optional[str] = None
+    email: Optional[str] = None
+    endereco: Optional[str] = None
+    cidade: Optional[str] = None
+    estado: Optional[str] = None
+    cep: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    ativo: Optional[bool] = None
+
+
+# 🔹 Resposta
 class EmpresaResponse(EmpresaBase):
     id: int
 
