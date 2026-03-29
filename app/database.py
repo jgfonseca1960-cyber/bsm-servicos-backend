@@ -1,11 +1,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.config import DATABASE_URL
-from app.models.servico_model import Servico
 
 Base = declarative_base()
 
 engine = create_engine(
+
     DATABASE_URL,
     echo=True,
     future=True,
