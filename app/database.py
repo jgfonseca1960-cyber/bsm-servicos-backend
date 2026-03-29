@@ -5,35 +5,21 @@ import os
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_engine(DATABASE_URL)
-
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
+SessionLocal = sessionmaker(bind=engine)
 
 Base = declarative_base()
 
 
-# Dependency do FastAPI
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+def init_db():
+    print("Recriando banco...")
 
-# 🚀 Função para criar tabelas
-
-    def init_db():
     from app.models.usuario_model import Usuario
     from app.models.empresa_model import Empresa
     from app.models.empresa_foto_model import EmpresaFoto
     from app.models.servico_model import Servico
     from app.models.tipo_servico_model import TipoServico
 
-    # 🔥 APAGA TUDO
-    Base.metadata.drop_all(bind=engine)
-
-    # ✅ CRIA TUDO NOVO
+    Base.metadata.drop_all(bind=engine)   # (pode deixar por enquanto)
     Base.metadata.create_all(bind=engine)
+
+    print("Banco recriado!")
