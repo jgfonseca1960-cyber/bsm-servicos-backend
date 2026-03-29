@@ -23,15 +23,17 @@ def get_db():
     finally:
         db.close()
 
-
 # 🚀 Função para criar tabelas
-def init_db():
+
+    def init_db():
     from app.models.usuario_model import Usuario
     from app.models.empresa_model import Empresa
     from app.models.empresa_foto_model import EmpresaFoto
     from app.models.servico_model import Servico
-    from app.models.tipo_servico_model import TipoServico  # 👈 ADICIONE
+    from app.models.tipo_servico_model import TipoServico
 
+    # 🔥 APAGA TUDO
+    Base.metadata.drop_all(bind=engine)
+
+    # ✅ CRIA TUDO NOVO
     Base.metadata.create_all(bind=engine)
-    
-    print("✅ Banco recriado!")
