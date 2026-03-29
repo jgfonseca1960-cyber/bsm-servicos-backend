@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.config import DATABASE_URL
+from app.models.servico_model import Servico
 
 Base = declarative_base()
 
@@ -35,7 +36,7 @@ def get_db():
         import app.models.empresa_foto_model
         import app.models.servico_model
         import app.models.tipo_servico_model
-
+        
         Base.metadata.create_all(bind=engine)
 
         print("✅ Banco recriado!")
