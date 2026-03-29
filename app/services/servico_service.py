@@ -1,5 +1,8 @@
 from sqlalchemy.orm import Session
-from app.models import Servico
+from app.models.servico_model import Servico
+from app.models.empresa_model import Empresa
+from app.models.empresa_foto_model import EmpresaFoto
+from app.models.usuario_model import Usuario
 from app.repositories import servico_repo
 
 def criar_servico(db: Session, data):

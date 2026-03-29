@@ -1,28 +1,21 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
-from app.config import DATABASE_URL
+from sqlalchemy.orm import sessionmaker, declarative_base
+import os
 
-# Base
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+engine = create_engine(DATABASE_URL)
+
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
+
 Base = declarative_base()
 
-# Engine
-engine = create_engine(
-    DATABASE_URL,
-    echo=True,
-    future=True,
-    pool_pre_ping=True,
-    connect_args={"sslmode": "require"}
-)
 
-# Sessão
-SessionLocal = sessionmaker(
-    bind=engine,
-    autoflush=False,
-    autocommit=False,
-    future=True
-)
-
-# Dependência
+# Dependency do FastAPI
 def get_db():
     db = SessionLocal()
     try:
@@ -30,16 +23,14 @@ def get_db():
     finally:
         db.close()
 
-# 🔥 FUNÇÃO QUE ESTAVA FALTANDO / QUEBROU
-def init_db():
-    print("🔥 Recriando banco...")
 
-    import app.models.usuario_model
-    import app.models.empresa_model
-    import app.models.empresa_foto_model
-    import app.models.servico_model
-    import app.models.tipo_servico_model
+# 🚀 Função para criar tabelas
+def init_db():
+    from app.models.usuario_model import Usuario
+    from app.models.empresa_model import Empresa
+    from app.models.empresa_foto_model import EmpresaFoto
+    from app.models.servico_model import Servico
 
     Base.metadata.create_all(bind=engine)
-
+    
     print("✅ Banco recriado!")
