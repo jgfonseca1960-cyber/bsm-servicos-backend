@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models import Usuario
+from app.models.usuario_model import Usuario
 from app.repositories import usuario_repo
 from passlib.context import CryptContext
 from fastapi import HTTPException
