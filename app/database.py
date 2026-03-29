@@ -25,7 +25,7 @@ def get_db():
 
 
 def init_db():
-    print("Recriando banco...")
+    print("Criando banco (SEM apagar dados)...")
 
     from app.models.usuario_model import Usuario
     from app.models.empresa_model import Empresa
@@ -33,12 +33,6 @@ def init_db():
     from app.models.servico_model import Servico
     from app.models.tipo_servico_model import TipoServico
 
-    # 💥 reset total (dev)
-    with engine.connect() as conn:
-        conn.execute(text("DROP SCHEMA public CASCADE"))
-        conn.execute(text("CREATE SCHEMA public"))
-        conn.commit()
-
     Base.metadata.create_all(bind=engine)
 
-    print("Banco recriado do ZERO!")
+    print("Banco pronto!")
