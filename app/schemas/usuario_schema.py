@@ -2,16 +2,16 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 
-# 🔹 Base
+# 🔹 Base (campos comuns)
 class UsuarioBase(BaseModel):
     nome: str
     email: EmailStr
-    is_admin: Optional[bool] = False
 
 
 # 🔹 Criação
 class UsuarioCreate(UsuarioBase):
     senha: str
+    is_admin: Optional[bool] = False
 
 
 # 🔹 Atualização
@@ -25,6 +25,7 @@ class UsuarioUpdate(BaseModel):
 # 🔹 Resposta
 class UsuarioResponse(UsuarioBase):
     id: int
+    is_admin: bool
 
     class Config:
         from_attributes = True
