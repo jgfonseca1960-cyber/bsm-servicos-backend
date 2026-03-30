@@ -15,10 +15,10 @@ def criar_usuario(db, data):
         raise ValueError("Email já cadastrado")
 
     novo = Usuario(
-    nome=data.nome,
-    email=data.email,
-    senha_hash=hash_senha(data.senha),
-    is_admin=data.is_admin if data.is_admin is not None else False
+        nome=data.nome,
+        email=data.email,
+        senha_hash=hash_senha(data.senha),
+        is_admin=data.is_admin if data.is_admin is not None else False
     )
 
     db.add(novo)
@@ -62,7 +62,7 @@ def atualizar_usuario(db, usuario_id, data):
         usuario.senha_hash = hash_senha(data.senha)
 
     if data.is_admin is not None:
-    usuario.is_admin = data.is_admin
+        usuario.is_admin = data.is_admin
 
     db.commit()
     db.refresh(usuario)
