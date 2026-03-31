@@ -24,7 +24,7 @@ if DATABASE_URL.startswith("postgres://"):
 # =========================
 # 🔐 SEGURANÇA (JWT)
 # =========================
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("brg7573xpxp0376x")
 
 if not SECRET_KEY:
     raise ValueError("❌ SECRET_KEY não definida no ambiente! (Render ou .env)")

@@ -1,6 +1,6 @@
 from fastapi import Request, HTTPException
 from jose import jwt, JWTError
-from app.config import SECRET_KEY, ALGORITHM
+from app.core.config import SECRET_KEY, ALGORITHM
 
 async def auth_middleware(request: Request, call_next):
     if "Authorization" not in request.headers:
