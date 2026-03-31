@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
+from pydantic import BaseModel
 
 from app.database import get_db
 from app.models.usuario_model import Usuario
@@ -10,14 +11,19 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
+class LoginRequest(BaseModel):
+    email: str
+    senha: str
+
+
 @router.post("/login")
-def login(email: str, senha: str, db: Session = Depends(get_db)):
-    usuario = db.query(Usuario).filter(Usuario.email == email).first()
+def login(data: LoginRequest, db: Session = Depends(get_db)):
+    usuario = db.query(Usuario).filter(Usuario.email == data.email).first()
 
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
-    if not pwd_context.verify(senha, usuario.senha_hash):
+    if not pwd_context.verify(data.senha, usuario.senha_hash):
         raise HTTPException(status_code=401, detail="Senha inválida")
 
     return {
