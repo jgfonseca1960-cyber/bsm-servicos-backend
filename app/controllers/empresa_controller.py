@@ -20,8 +20,8 @@ from app.schemas.empresa_schema import (
     EmpresaUpdate
 )
 
-# 🔥 AUTH (AQUI ESTÁ O CONTROLE DE ADMIN)
-from app.dependencies.auth import get_current_admin
+# 🔥 AUTH (JWT + ADMIN)
+from app.dependencies.auth import somente_admin
 
 
 router = APIRouter(
@@ -35,12 +35,12 @@ router = APIRouter(
 def criar_nova_empresa(
     empresa: EmpresaCreate,
     db: Session = Depends(get_db),
-    admin = Depends(get_current_admin)  # 🔥 PROTEÇÃO
+    user=Depends(somente_admin)
 ):
     return criar_empresa(db, empresa)
 
 
-# 🔹 LISTAR TODAS (PODE SER PÚBLICO)
+# 🔹 LISTAR TODAS (PÚBLICO)
 @router.get("/", response_model=List[EmpresaResponse])
 def listar_todas_empresas(db: Session = Depends(get_db)):
     return listar_empresas(db)
@@ -48,7 +48,10 @@ def listar_todas_empresas(db: Session = Depends(get_db)):
 
 # 🔹 BUSCAR POR ID
 @router.get("/{empresa_id}", response_model=EmpresaResponse)
-def buscar_empresa(empresa_id: int, db: Session = Depends(get_db)):
+def buscar_empresa(
+    empresa_id: int,
+    db: Session = Depends(get_db)
+):
     empresa = get_empresa_por_id(db, empresa_id)
 
     if not empresa:
@@ -63,7 +66,7 @@ def atualizar_empresa_existente(
     empresa_id: int,
     empresa: EmpresaUpdate,
     db: Session = Depends(get_db),
-    admin = Depends(get_current_admin)  # 🔥 PROTEÇÃO
+    user=Depends(somente_admin)
 ):
     updated = atualizar_empresa(db, empresa_id, empresa)
 
@@ -78,7 +81,7 @@ def atualizar_empresa_existente(
 def deletar_empresa_existente(
     empresa_id: int,
     db: Session = Depends(get_db),
-    admin = Depends(get_current_admin)  # 🔥 PROTEÇÃO
+    user=Depends(somente_admin)
 ):
     deleted = deletar_empresa(db, empresa_id)
 

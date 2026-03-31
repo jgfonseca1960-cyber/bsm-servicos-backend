@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from app.database import get_db
 from app.models.usuario_model import Usuario
+from app.core.security import criar_token
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -26,8 +27,13 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     if not pwd_context.verify(data.senha, usuario.senha_hash):
         raise HTTPException(status_code=401, detail="Senha inválida")
 
-    return {
-        "msg": "Login realizado com sucesso",
-        "usuario_id": usuario.id,
+    # 🔥 CRIA TOKEN
+    token = criar_token({
+        "sub": str(usuario.id),
         "is_admin": usuario.is_admin
+    })
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
     }

@@ -1,44 +1,24 @@
 from fastapi import Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
-from sqlalchemy.orm import Session
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jose import jwt, JWTError
 
-from app.database import get_db
-from app.models.usuario_model import Usuario
-from app.core.security import SECRET_KEY, ALGORITHM
+SECRET_KEY = "SUA_CHAVE_SUPER_SECRETA"
+ALGORITHM = "HS256"
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+security = HTTPBearer()
 
 
-# 🔹 USUÁRIO LOGADO
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-):
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("sub")
-
-        if user_id is None:
-            raise HTTPException(status_code=401, detail="Token inválido")
-
+        return payload
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido")
 
-    user = db.query(Usuario).filter(Usuario.id == int(user_id)).first()
 
-    if not user:
-        raise HTTPException(status_code=401, detail="Usuário não encontrado")
-
-    return user
-
-
-# 🔥 ADMIN (AQUI É A REGRA DE NEGÓCIO)
-def get_current_admin(user: Usuario = Depends(get_current_user)):
-    if not user.is_admin:
-        raise HTTPException(
-            status_code=403,
-            detail="Acesso restrito a administradores"
-        )
-
+def somente_admin(user=Depends(get_current_user)):
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Apenas admin")
     return user
