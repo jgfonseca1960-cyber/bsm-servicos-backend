@@ -21,8 +21,8 @@ from app.schemas.empresa_schema import (
 )
 
 # 🔥 AUTH (JWT + ADMIN)
-from app.dependencies.auth import somente_admin
 
+from app.dependencies.auth import get_current_admin
 
 router = APIRouter(
     prefix="/empresas",
@@ -35,7 +35,7 @@ router = APIRouter(
 def criar_nova_empresa(
     empresa: EmpresaCreate,
     db: Session = Depends(get_db),
-    user=Depends(somente_admin)
+    admin = Depends(get_current_admin)
 ):
     return criar_empresa(db, empresa)
 
@@ -66,7 +66,7 @@ def atualizar_empresa_existente(
     empresa_id: int,
     empresa: EmpresaUpdate,
     db: Session = Depends(get_db),
-    user=Depends(somente_admin)
+    admin = Depends(get_current_admin)
 ):
     updated = atualizar_empresa(db, empresa_id, empresa)
 
@@ -81,7 +81,7 @@ def atualizar_empresa_existente(
 def deletar_empresa_existente(
     empresa_id: int,
     db: Session = Depends(get_db),
-    user=Depends(somente_admin)
+    admin = Depends(get_current_admin)
 ):
     deleted = deletar_empresa(db, empresa_id)
 
