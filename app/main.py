@@ -1,12 +1,21 @@
-from fastapi import FastAPI
-from app.database import engine
+from fastapi import FastAPI, Response
+from contextlib import asynccontextmanager
 from sqlalchemy import text
-from app.database import init_db
 
-init_db()
+from app.database import engine, init_db
 
-app = FastAPI()
+# controllers
+from app.controllers import (
+    empresa_controller,
+    servico_controller,
+    usuario_controller
+)
 
+# 🔥 IMPORT DO AUTH (ESSENCIAL)
+from app.controllers.auth_controller import router as auth_router
+
+
+# 🔧 AJUSTE DE BANCO
 def ajustar_banco():
     print("🔥 Ajustando banco...")
 
@@ -19,39 +28,29 @@ def ajustar_banco():
 
     print("✅ Banco pronto!")
 
-# 👇 EXECUTA ANTES DE SUBIR A API
-ajustar_banco()
 
-
-
-
-from fastapi import FastAPI, Response
-from contextlib import asynccontextmanager
-from app.database import init_db
-
-# controllers
-from app.controllers import (
-    empresa_controller,
-    servico_controller,
-    usuario_controller
-)
-
-# 🔥 startup moderno (substitui on_event)
+# 🔥 STARTUP MODERNO
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    ajustar_banco()
     yield
 
+
+# 🚀 APP
 app = FastAPI(lifespan=lifespan)
+
 
 # 🔧 evita erro favicon
 @app.get("/favicon.ico")
 def favicon():
     return Response(status_code=204)
 
+
 # =========================
 # ROTAS
 # =========================
+
 app.include_router(
     empresa_controller.router,
     prefix="/empresas",
@@ -69,6 +68,10 @@ app.include_router(
     prefix="/usuarios",
     tags=["Usuários"]
 )
+
+# 🔥 ROTA DE LOGIN (AGORA VAI FUNCIONAR)
+app.include_router(auth_router)
+
 
 # rota teste
 @app.get("/")
