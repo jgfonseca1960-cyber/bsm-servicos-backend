@@ -20,3 +20,5 @@ def verificar_token(token: str):
     except JWTError as e:
         print("ERRO TOKEN:", str(e))  # 🔥 ajuda debug no Render
         return None
+    
+    print("SECRET_KEY USADA:", SECRET_KEY)

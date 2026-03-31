@@ -24,13 +24,14 @@ if DATABASE_URL.startswith("postgres://"):
 # =========================
 # 🔐 SEGURANÇA (JWT)
 # =========================
-SECRET_KEY = os.getenv("brg7573xpxp0376x")
+
+SECRET_KEY = os.getenv("SECRET_KEY", "dev_key")
 
 if not SECRET_KEY:
     raise ValueError("❌ SECRET_KEY não definida no ambiente! (Render ou .env)")
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
 
 
 # =========================
