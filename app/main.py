@@ -1,8 +1,10 @@
 from fastapi import FastAPI, Response
 from contextlib import asynccontextmanager
 from sqlalchemy import text
-
 from app.database import engine, init_db
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.openapi.docs import get_swagger_ui_html
 
 # controllers
 from app.controllers import (
@@ -111,3 +113,13 @@ app.include_router(auth_router)
 @app.get("/")
 def root():
     return {"msg": "API BSM Serviços rodando 🚀"}
+
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+@app.get("/docs", include_in_schema=False)
+def custom_swagger():
+    return get_swagger_ui_html(
+        openapi_url="/openapi.json",
+        title="BSM Serviços API",
+        swagger_js_url="/static/swagger.js",
+    )
