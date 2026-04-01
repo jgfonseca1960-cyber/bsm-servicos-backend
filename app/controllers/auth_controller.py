@@ -1,4 +1,21 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from passlib.context import CryptContext
+
+from app.database import get_db
+from app.models.usuario_model import Usuario
 from app.core.security import criar_token
+from pydantic import BaseModel
+
+router = APIRouter(prefix="/auth", tags=["Auth"])
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+class LoginRequest(BaseModel):
+    email: str
+    senha: str
+
 
 @router.post("/login")
 def login(data: LoginRequest, db: Session = Depends(get_db)):
