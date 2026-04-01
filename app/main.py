@@ -11,11 +11,16 @@ from app.controllers import (
     usuario_controller
 )
 
-# 🔥 IMPORT DO AUTH (ESSENCIAL)
+# 🔥 AUTH
 from app.controllers.auth_controller import router as auth_router
 
+# 🔥 SWAGGER JWT
+from fastapi.openapi.utils import get_openapi
 
+
+# =========================
 # 🔧 AJUSTE DE BANCO
+# =========================
 def ajustar_banco():
     print("🔥 Ajustando banco...")
 
@@ -29,7 +34,9 @@ def ajustar_banco():
     print("✅ Banco pronto!")
 
 
-# 🔥 STARTUP MODERNO
+# =========================
+# 🔥 STARTUP
+# =========================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
@@ -37,43 +44,70 @@ async def lifespan(app: FastAPI):
     yield
 
 
+# =========================
 # 🚀 APP
-app = FastAPI(lifespan=lifespan)
+# =========================
+app = FastAPI(
+    title="BSM Serviços API",
+    version="1.0.0",
+    description="API com autenticação JWT",
+    lifespan=lifespan
+)
 
 
-# 🔧 evita erro favicon
+# =========================
+# 🔐 CONFIG SWAGGER JWT
+# =========================
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title="BSM Serviços API",
+        version="1.0.0",
+        description="API com autenticação JWT",
+        routes=app.routes,
+    )
+
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
+        }
+    }
+
+    openapi_schema["security"] = [{"BearerAuth": []}]
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
+
+
+# =========================
+# 🔧 FAVICON
+# =========================
 @app.get("/favicon.ico")
 def favicon():
     return Response(status_code=204)
 
 
 # =========================
-# ROTAS
+# 📌 ROTAS
 # =========================
 
-app.include_router(
-    empresa_controller.router,
-    prefix="/empresas",
-    tags=["Empresas"]
-)
-
-app.include_router(
-    servico_controller.router,
-    prefix="/servicos",
-    tags=["Serviços"]
-)
-
-app.include_router(
-    usuario_controller.router,
-    prefix="/usuarios",
-    tags=["Usuários"]
-)
-
-# 🔥 ROTA DE LOGIN (AGORA VAI FUNCIONAR)
+# ⚠️ IMPORTANTE: NÃO DUPLICAR PREFIXO
+app.include_router(empresa_controller.router)
+app.include_router(servico_controller.router)
+app.include_router(usuario_controller.router)
 app.include_router(auth_router)
 
 
-# rota teste
+# =========================
+# 🧪 TESTE
+# =========================
 @app.get("/")
 def root():
     return {"msg": "API BSM Serviços rodando 🚀"}
