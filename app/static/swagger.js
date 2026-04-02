@@ -11,9 +11,12 @@ window.onload = function () {
         layout: "StandaloneLayout",
 
         requestInterceptor: (req) => {
-            const token = localStorage.getItem("access_token");
+            let token = localStorage.getItem("access_token");
 
-            if (token && token !== "undefined" && token !== "null") {
+            if (token) {
+                // 🔥 REMOVE ASPAS AUTOMATICAMENTE
+                token = token.replace(/"/g, "");
+
                 req.headers["Authorization"] = "Bearer " + token;
             }
 
@@ -27,8 +30,6 @@ window.onload = function () {
     setTimeout(() => {
         const topbar = document.querySelector(".topbar");
 
-        if (!topbar) return;
-
         const btn = document.createElement("button");
         btn.innerText = "🔐 Login";
         btn.style.marginLeft = "10px";
@@ -41,33 +42,27 @@ window.onload = function () {
 
             if (!email || !senha) return;
 
-            try {
-                const res = await fetch("/auth/login", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ email, senha })
-                });
+            const res = await fetch("/auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ email, senha })
+            });
 
-                if (!res.ok) {
-                    alert("❌ Erro no login");
-                    return;
-                }
-
-                const data = await res.json();
-
-                // 🔥 salva token LIMPO
-                localStorage.setItem("access_token", data.access_token);
-
-                alert("✅ Logado com sucesso!");
-                location.reload();
-
-            } catch (err) {
-                alert("Erro de conexão");
+            if (!res.ok) {
+                alert("Erro no login");
+                return;
             }
+
+            const data = await res.json();
+
+            // 🔥 SALVA TOKEN LIMPO
+            localStorage.setItem("access_token", data.access_token.replace(/"/g, ""));
+
+            alert("✅ Login realizado! Agora teste novamente.");
         };
 
         topbar.appendChild(btn);
-    }, 1500);
+    }, 1000);
 };
