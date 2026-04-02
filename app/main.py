@@ -52,6 +52,31 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# =========================
+# 🔥 REMOVE BOTÃO AUTHORIZE SEM QUEBRAR SWAGGER
+# =========================
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title="BSM Serviços API",
+        version="1.0.0",
+        description="API com login automático",
+        routes=app.routes,
+    )
+
+    # 🔥 remove apenas segurança (não quebra schemas)
+    openapi_schema.pop("security", None)
+
+    if "components" in openapi_schema:
+        openapi_schema["components"].pop("securitySchemes", None)
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
 
 # =========================
 # ❌ REMOVE AUTHORIZE DO SWAGGER
@@ -59,7 +84,7 @@ app = FastAPI(
 
 
     # 🔥 REMOVE SEGURANÇA (ESSENCIAL)
-    openapi_schema.pop("components", None)
+    
 
     app.openapi_schema = openapi_schema
     return app.openapi_schema
