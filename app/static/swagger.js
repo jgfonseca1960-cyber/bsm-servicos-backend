@@ -11,13 +11,10 @@ window.onload = function () {
         layout: "StandaloneLayout",
 
         requestInterceptor: (req) => {
-            let token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("access_token");
 
-            if (token) {
-                // 🔥 REMOVE ASPAS AUTOMATICAMENTE
-                token = token.replace(/"/g, "");
-
-                req.headers["Authorization"] = "Bearer " + token;
+            if (token && token !== "undefined" && token !== "null") {
+                req.headers["Authorization"] = `Bearer ${token}`;
             }
 
             return req;
@@ -29,6 +26,8 @@ window.onload = function () {
     // 🔥 BOTÃO LOGIN
     setTimeout(() => {
         const topbar = document.querySelector(".topbar");
+
+        if (!topbar) return;
 
         const btn = document.createElement("button");
         btn.innerText = "🔐 Login";
@@ -42,25 +41,32 @@ window.onload = function () {
 
             if (!email || !senha) return;
 
-            const res = await fetch("/auth/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ email, senha })
-            });
+            try {
+                const res = await fetch("/auth/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ email, senha })
+                });
 
-            if (!res.ok) {
-                alert("Erro no login");
-                return;
+                const data = await res.json();
+
+                if (!res.ok) {
+                    alert("❌ Login falhou");
+                    return;
+                }
+
+                // 🔥 SALVA SEM ASPAS
+                localStorage.setItem("access_token", data.access_token);
+
+                console.log("TOKEN SALVO:", data.access_token);
+
+                alert("✅ Login OK! Agora teste novamente.");
+
+            } catch (err) {
+                alert("Erro na requisição");
             }
-
-            const data = await res.json();
-
-            // 🔥 SALVA TOKEN LIMPO
-            localStorage.setItem("access_token", data.access_token.replace(/"/g, ""));
-
-            alert("✅ Login realizado! Agora teste novamente.");
         };
 
         topbar.appendChild(btn);
