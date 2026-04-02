@@ -1,10 +1,12 @@
 from fastapi import FastAPI, Response
 from contextlib import asynccontextmanager
 from sqlalchemy import text
+
 from app.database import engine, init_db
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
 
 # controllers
 from app.controllers import (
@@ -15,9 +17,6 @@ from app.controllers import (
 
 # 🔥 AUTH
 from app.controllers.auth_controller import router as auth_router
-
-# 🔥 SWAGGER JWT
-from fastapi.openapi.utils import get_openapi
 
 
 # =========================
@@ -47,18 +46,20 @@ async def lifespan(app: FastAPI):
 
 
 # =========================
-# 🚀 APP
+# 🚀 APP (SWAGGER PADRÃO DESATIVADO)
 # =========================
 app = FastAPI(
     title="BSM Serviços API",
     version="1.0.0",
     description="API com autenticação JWT",
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url=None,     # 🔥 DESATIVA SWAGGER PADRÃO
+    redoc_url=None
 )
 
 
 # =========================
-# 🔐 CONFIG SWAGGER JWT
+# 🔐 OPENAPI (JWT)
 # =========================
 def custom_openapi():
     if app.openapi_schema:
@@ -100,7 +101,7 @@ def favicon():
 # 📌 ROTAS
 # =========================
 
-# ⚠️ IMPORTANTE: NÃO DUPLICAR PREFIXO
+# ⚠️ NÃO usar prefix aqui se já tem no controller
 app.include_router(empresa_controller.router)
 app.include_router(servico_controller.router)
 app.include_router(usuario_controller.router)
@@ -114,8 +115,16 @@ app.include_router(auth_router)
 def root():
     return {"msg": "API BSM Serviços rodando 🚀"}
 
+
+# =========================
+# 📦 STATIC (SWAGGER CUSTOM)
+# =========================
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+
+# =========================
+# 📄 SWAGGER CUSTOM
+# =========================
 @app.get("/docs", include_in_schema=False)
 def custom_swagger():
     return get_swagger_ui_html(
