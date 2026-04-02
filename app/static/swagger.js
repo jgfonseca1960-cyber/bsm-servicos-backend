@@ -1,5 +1,4 @@
 window.onload = function () {
-
     const ui = SwaggerUIBundle({
         url: "/openapi.json",
         dom_id: "#swagger-ui",
@@ -12,16 +11,10 @@ window.onload = function () {
         layout: "StandaloneLayout",
 
         requestInterceptor: (req) => {
-            let token = localStorage.getItem("access_token");
+            const token = localStorage.getItem("access_token");
 
-            // 🔥 REMOVE ASPAS AUTOMATICAMENTE
-            if (token) {
-                token = token.replace(/"/g, "").trim();
-
-                // 🔥 GARANTE QUE É TOKEN VÁLIDO
-                if (token && token.split(".").length === 3) {
-                    req.headers["Authorization"] = "Bearer " + token;
-                }
+            if (token && token !== "undefined" && token !== "null") {
+                req.headers["Authorization"] = "Bearer " + token;
             }
 
             return req;
@@ -41,19 +34,12 @@ window.onload = function () {
         btn.style.marginLeft = "10px";
         btn.style.padding = "5px 10px";
         btn.style.cursor = "pointer";
-        btn.style.background = "#4CAF50";
-        btn.style.color = "white";
-        btn.style.border = "none";
-        btn.style.borderRadius = "4px";
 
         btn.onclick = async () => {
             const email = prompt("Email:");
             const senha = prompt("Senha:");
 
-            if (!email || !senha) {
-                alert("Preencha email e senha");
-                return;
-            }
+            if (!email || !senha) return;
 
             try {
                 const res = await fetch("/auth/login", {
@@ -71,11 +57,17 @@ window.onload = function () {
 
                 const data = await res.json();
 
-                // 🔥 VALIDA TOKEN
-                if (!data.access_token) {
-                    alert("❌ Token não recebido");
-                    return;
-                }
+                // 🔥 salva token LIMPO
+                localStorage.setItem("access_token", data.access_token);
 
-                // 🔥 LIMPA E SALVA CORRETO
-                const tokenLimpo =
+                alert("✅ Logado com sucesso!");
+                location.reload();
+
+            } catch (err) {
+                alert("Erro de conexão");
+            }
+        };
+
+        topbar.appendChild(btn);
+    }, 1500);
+};
