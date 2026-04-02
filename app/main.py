@@ -5,6 +5,7 @@ from app.database import engine, init_db
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
 
 # controllers
 from app.controllers import (
@@ -52,7 +53,33 @@ app = FastAPI(
 )
 
 
-# 🔥 SERVE ARQUIVOS ESTÁTICOS
+# =========================
+# ❌ REMOVE AUTHORIZE DO SWAGGER
+# =========================
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title="BSM Serviços API",
+        version="1.0.0",
+        description="API com login automático",
+        routes=app.routes,
+    )
+
+    # 🔥 REMOVE SEGURANÇA (ESSENCIAL)
+    openapi_schema.pop("components", None)
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
+
+
+# =========================
+# 📁 ARQUIVOS ESTÁTICOS
+# =========================
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 
@@ -68,14 +95,16 @@ def custom_swagger():
     )
 
 
-# 🔧 favicon
+# =========================
+# 🔧 FAVICON
+# =========================
 @app.get("/favicon.ico")
 def favicon():
     return Response(status_code=204)
 
 
 # =========================
-# 📌 ROTAS (SEM DUPLICAR PREFIXO)
+# 📌 ROTAS
 # =========================
 app.include_router(empresa_controller.router)
 app.include_router(servico_controller.router)
@@ -84,7 +113,7 @@ app.include_router(auth_router)
 
 
 # =========================
-# TESTE
+# 🧪 TESTE
 # =========================
 @app.get("/")
 def root():
