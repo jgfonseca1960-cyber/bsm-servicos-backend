@@ -56,16 +56,7 @@ app = FastAPI(
 # =========================
 # ❌ REMOVE AUTHORIZE DO SWAGGER
 # =========================
-def custom_openapi():
-    if app.openapi_schema:
-        return app.openapi_schema
 
-    openapi_schema = get_openapi(
-        title="BSM Serviços API",
-        version="1.0.0",
-        description="API com login automático",
-        routes=app.routes,
-    )
 
     # 🔥 REMOVE SEGURANÇA (ESSENCIAL)
     openapi_schema.pop("components", None)
