@@ -55,6 +55,7 @@ app = FastAPI(
 # =========================
 # 🔥 REMOVE BOTÃO AUTHORIZE SEM QUEBRAR SWAGGER
 # =========================
+
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -66,7 +67,7 @@ def custom_openapi():
         routes=app.routes,
     )
 
-    # 🔥 remove apenas segurança (não quebra schemas)
+    # remove apenas o Authorize
     openapi_schema.pop("security", None)
 
     if "components" in openapi_schema:
