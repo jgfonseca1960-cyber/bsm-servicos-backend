@@ -52,10 +52,10 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# =========================
-# 🔥 REMOVE BOTÃO AUTHORIZE SEM QUEBRAR SWAGGER
-# =========================
 
+# =========================
+# 🔥 REMOVE AUTHORIZE (SEM QUEBRAR)
+# =========================
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -67,25 +67,11 @@ def custom_openapi():
         routes=app.routes,
     )
 
-    # remove apenas o Authorize
+    # remove apenas segurança
     openapi_schema.pop("security", None)
 
     if "components" in openapi_schema:
         openapi_schema["components"].pop("securitySchemes", None)
-
-    app.openapi_schema = openapi_schema
-    return app.openapi_schema
-
-
-app.openapi = custom_openapi
-
-# =========================
-# ❌ REMOVE AUTHORIZE DO SWAGGER
-# =========================
-
-
-    # 🔥 REMOVE SEGURANÇA (ESSENCIAL)
-    
 
     app.openapi_schema = openapi_schema
     return app.openapi_schema
