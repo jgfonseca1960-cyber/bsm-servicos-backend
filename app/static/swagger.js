@@ -26,7 +26,7 @@ window.onload = function () {
 
     window.ui = ui;
 
-    // 🔥 BOTÃO LOGIN
+    // 🔐 BOTÃO LOGIN
     setTimeout(() => {
         const topbar = document.querySelector(".topbar");
 
@@ -57,10 +57,8 @@ window.onload = function () {
 
             const data = await res.json();
 
-            // 🔥 SALVA SEM ASPAS
+            // 🔥 GARANTE QUE SALVA LIMPO
             localStorage.setItem("access_token", data.access_token);
-
-            console.log("TOKEN SALVO:", data.access_token);
 
             alert("✅ Login realizado!");
         };
