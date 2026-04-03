@@ -11,10 +11,13 @@ window.onload = function () {
         layout: "StandaloneLayout",
 
         requestInterceptor: (req) => {
-            const token = localStorage.getItem("access_token");
+            let token = localStorage.getItem("access_token");
 
-            if (token && token !== "undefined" && token !== "null") {
-                req.headers["Authorization"] = `Bearer ${token}`;
+            if (token) {
+                // 🔥 REMOVE ASPAS AUTOMATICAMENTE
+                token = token.replace(/"/g, "");
+
+                req.headers["Authorization"] = "Bearer " + token;
             }
 
             return req;
@@ -26,8 +29,6 @@ window.onload = function () {
     // 🔥 BOTÃO LOGIN
     setTimeout(() => {
         const topbar = document.querySelector(".topbar");
-
-        if (!topbar) return;
 
         const btn = document.createElement("button");
         btn.innerText = "🔐 Login";
@@ -41,32 +42,27 @@ window.onload = function () {
 
             if (!email || !senha) return;
 
-            try {
-                const res = await fetch("/auth/login", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ email, senha })
-                });
+            const res = await fetch("/auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ email, senha })
+            });
 
-                const data = await res.json();
-
-                if (!res.ok) {
-                    alert("❌ Login falhou");
-                    return;
-                }
-
-                // 🔥 SALVA SEM ASPAS
-                localStorage.setItem("access_token", data.access_token);
-
-                console.log("TOKEN SALVO:", data.access_token);
-
-                alert("✅ Login OK! Agora teste novamente.");
-
-            } catch (err) {
-                alert("Erro na requisição");
+            if (!res.ok) {
+                alert("Erro no login");
+                return;
             }
+
+            const data = await res.json();
+
+            // 🔥 SALVA SEM ASPAS
+            localStorage.setItem("access_token", data.access_token);
+
+            console.log("TOKEN SALVO:", data.access_token);
+
+            alert("✅ Login realizado!");
         };
 
         topbar.appendChild(btn);

@@ -1,41 +1,46 @@
-from fastapi import APIRouter, Depends
-from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from app.database import get_db
 from app.models.usuario_model import Usuario
 from app.core.security import verificar_senha, criar_token
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 router = APIRouter(
     prefix="/auth",
     tags=["Auth"]
 )
 
+# 🔥 MODELO PARA RECEBER JSON (ESSENCIAL)
+class LoginRequest(BaseModel):
+    email: str
+    senha: str
+
 
 @router.post("/login")
 def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    dados: LoginRequest,
     db: Session = Depends(get_db)
 ):
-
     user = db.query(Usuario).filter(
-        Usuario.email == form_data.username
+        Usuario.email == dados.email
     ).first()
 
     if not user:
-        return {"erro": "usuario"}
+        raise HTTPException(status_code=401, detail="Usuário não encontrado")
 
+    # 🔥 IMPORTANTE: usar senha_hash (não senha)
     if not verificar_senha(
-        form_data.password,
-        user.senha
+        dados.senha,
+        user.senha_hash
     ):
-        return {"erro": "senha"}
+        raise HTTPException(status_code=401, detail="Senha inválida")
 
     token = criar_token(
-        {"sub": str(user.id)}
+        {
+            "sub": str(user.id),
+            "is_admin": getattr(user, "is_admin", False)
+        }
     )
 
     return {
