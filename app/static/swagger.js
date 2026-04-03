@@ -14,9 +14,7 @@ window.onload = function () {
             let token = localStorage.getItem("access_token");
 
             if (token) {
-                // 🔥 REMOVE ASPAS AUTOMATICAMENTE
                 token = token.replace(/"/g, "");
-
                 req.headers["Authorization"] = "Bearer " + token;
             }
 
@@ -30,37 +28,54 @@ window.onload = function () {
     setTimeout(() => {
         const topbar = document.querySelector(".topbar");
 
+        if (!topbar) return;
+
         const btn = document.createElement("button");
         btn.innerText = "🔐 Login";
         btn.style.marginLeft = "10px";
-        btn.style.padding = "5px 10px";
+        btn.style.padding = "6px 12px";
         btn.style.cursor = "pointer";
 
         btn.onclick = async () => {
-            const email = prompt("Email:");
-            const senha = prompt("Senha:");
+            try {
+                const email = prompt("Email:");
+                const senha = prompt("Senha:");
 
-            if (!email || !senha) return;
+                if (!email || !senha) {
+                    alert("Preencha email e senha");
+                    return;
+                }
 
-            const res = await fetch("/auth/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ email, senha })
-            });
+                const res = await fetch("/auth/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ email, senha })
+                });
 
-            if (!res.ok) {
-                alert("Erro no login");
-                return;
+                const data = await res.json();
+
+                console.log("LOGIN RESPONSE:", data);
+
+                if (!res.ok) {
+                    alert("Erro no login: " + JSON.stringify(data));
+                    return;
+                }
+
+                if (!data.access_token) {
+                    alert("Token não veio na resposta!");
+                    return;
+                }
+
+                // 🔥 SALVA TOKEN
+                localStorage.setItem("access_token", data.access_token);
+
+                alert("✅ Login realizado com sucesso!");
+            } catch (err) {
+                console.error(err);
+                alert("Erro inesperado no login");
             }
-
-            const data = await res.json();
-
-            // 🔥 GARANTE QUE SALVA LIMPO
-            localStorage.setItem("access_token", data.access_token);
-
-            alert("✅ Login realizado!");
         };
 
         topbar.appendChild(btn);
