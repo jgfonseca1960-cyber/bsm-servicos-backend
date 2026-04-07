@@ -2,17 +2,11 @@ from dotenv import load_dotenv
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-load_dotenv()
 
-from app.models.empresa_model import Empresa
-from app.models.servico_model import Servico
-from app.models.tipo_servico_model import TipoServico
-from app.models.empresa_foto_model import EmpresaFoto
-from app.models.usuario_model import Usuario
+load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# 🔥 VALIDAÇÃO (EVITA ESSE ERRO PRA SEMPRE)
 if not DATABASE_URL:
     raise ValueError("❌ DATABASE_URL não está definida!")
 
@@ -35,4 +29,7 @@ def get_db():
 
 
 def init_db():
+    # ✅ IMPORTAÇÃO LOCAL (AQUI SIM)
+    import app.models  # importa todos via __init__.py
+
     Base.metadata.create_all(bind=engine)
