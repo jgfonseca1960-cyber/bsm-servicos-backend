@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 
-
 class Empresa(Base):
     __tablename__ = "empresas"
 
@@ -29,3 +28,5 @@ class Empresa(Base):
     # 🔗 RELACIONAMENTO COM TIPO DE SERVIÇO
     tipo_servico_id = Column(Integer, ForeignKey("tipos_servico.id"))
     tipo_servico = relationship("TipoServico", lazy="joined")
+
+    fotos = relationship("EmpresaFoto", back_populates="empresa")
