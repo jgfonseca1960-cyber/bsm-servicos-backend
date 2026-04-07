@@ -12,6 +12,11 @@ from app.controllers.servico_controller import router as servico_router
 from app.controllers.usuario_controller import router as usuario_router
 
 
+from app.controllers import servico_controller
+
+app.include_router(servico_controller.router)
+
+
 # =========================
 # 🔧 AJUSTE DE BANCO SEGURO
 # =========================
