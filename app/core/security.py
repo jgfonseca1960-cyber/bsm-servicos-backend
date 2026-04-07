@@ -32,9 +32,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
     to_encode.update({"exp": expire})
 
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
-    return encoded_jwt
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
 # ✅ Decodificar token JWT
@@ -44,3 +42,9 @@ def decode_access_token(token: str):
         return payload
     except JWTError:
         return None
+
+
+# 🔥🔥🔥 CORREÇÃO DEFINITIVA (COMPATIBILIDADE)
+# evita quebrar arquivos antigos que usam português
+verificar_senha = verify_password
+criar_token = create_access_token
