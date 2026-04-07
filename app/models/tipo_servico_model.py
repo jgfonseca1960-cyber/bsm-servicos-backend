@@ -1,5 +1,8 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
+from app.database import Base
+
+# ✅ IMPORTAÇÃO DA TABELA DE ASSOCIAÇÃO (CORRETA)
 from app.models.associacoes import empresa_tipo_servico
 
 
@@ -9,6 +12,9 @@ class TipoServico(Base):
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String, nullable=False)
 
+    # =========================
+    # RELACIONAMENTO CORRETO (N:N)
+    # =========================
     empresas = relationship(
         "Empresa",
         secondary=empresa_tipo_servico,
