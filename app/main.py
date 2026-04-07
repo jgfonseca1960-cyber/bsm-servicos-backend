@@ -1,47 +1,60 @@
 from fastapi import FastAPI, Response
 from contextlib import asynccontextmanager
 from sqlalchemy import text
+import traceback
 
 from app.database import engine, init_db
 
-# controllers
-from app.controllers import (
-    empresa_controller,
-    servico_controller,
-    usuario_controller
-)
-
+# ✅ IMPORTS DIRETOS (evita erro de import circular)
 from app.controllers.auth_controller import router as auth_router
+from app.controllers.empresa_controller import router as empresa_router
+from app.controllers.servico_controller import router as servico_router
+from app.controllers.usuario_controller import router as usuario_router
 
 
 # =========================
-# 🔧 AJUSTE DE BANCO
+# 🔧 AJUSTE DE BANCO SEGURO
 # =========================
 def ajustar_banco():
-    print("🔥 Ajustando banco...")
+    try:
+        print("🔥 Ajustando banco...")
 
-    with engine.connect() as conn:
-        conn.execute(text("""
-            ALTER TABLE usuarios 
-            ADD COLUMN IF NOT EXISTS senha_hash VARCHAR;
-        """))
-        conn.commit()
+        with engine.connect() as conn:
+            conn.execute(text("""
+                ALTER TABLE usuarios 
+                ADD COLUMN IF NOT EXISTS senha_hash VARCHAR;
+            """))
+            conn.commit()
 
-    print("✅ Banco pronto!")
+        print("✅ Banco pronto!")
+
+    except Exception:
+        print("❌ ERRO AO AJUSTAR BANCO:")
+        traceback.print_exc()
 
 
 # =========================
-# 🔥 STARTUP
+# 🔥 STARTUP SEGURO
 # =========================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
-    ajustar_banco()
+    try:
+        print("🚀 Iniciando aplicação...")
+
+        init_db()
+        ajustar_banco()
+
+        print("✅ Inicialização concluída!")
+
+    except Exception:
+        print("❌ ERRO NA INICIALIZAÇÃO:")
+        traceback.print_exc()
+
     yield
 
 
 # =========================
-# 🚀 APP LIMPO
+# 🚀 APP
 # =========================
 app = FastAPI(
     title="BSM Serviços API",
@@ -62,10 +75,10 @@ def favicon():
 # =========================
 # 📌 ROTAS
 # =========================
-app.include_router(empresa_controller.router)
-app.include_router(servico_controller.router)
-app.include_router(usuario_controller.router)
 app.include_router(auth_router)
+app.include_router(empresa_router)
+app.include_router(servico_router)
+app.include_router(usuario_router)
 
 
 # =========================
