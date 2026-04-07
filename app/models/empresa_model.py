@@ -25,7 +25,10 @@ class Empresa(Base):
     ativo = Column(Boolean, default=True)
     avaliacao_media = Column(Float, default=0)
 
+    # =========================
     # RELACIONAMENTOS
+    # =========================
+
     fotos = relationship(
         "EmpresaFoto",
         back_populates="empresa",
@@ -34,6 +37,13 @@ class Empresa(Base):
 
     servicos = relationship(
         "Servico",
+        back_populates="empresa",
+        cascade="all, delete-orphan"
+    )
+
+    # ✅ NOVO RELACIONAMENTO (TIPOS DE SERVIÇO)
+    tipos_servico = relationship(
+        "TipoServico",
         back_populates="empresa",
         cascade="all, delete-orphan"
     )

@@ -22,3 +22,5 @@ class TipoServico(Base):
         secondary=empresa_tipo_servico,
         back_populates="tipos_servico"
     )
+
+    empresa = relationship("Empresa", back_populates="tipos_servico")
