@@ -5,20 +5,15 @@ import traceback
 
 from app.database import engine, init_db
 
-# ✅ IMPORTS DIRETOS (evita erro de import circular)
+# Controllers
 from app.controllers.auth_controller import router as auth_router
 from app.controllers.empresa_controller import router as empresa_router
 from app.controllers.servico_controller import router as servico_router
 from app.controllers.usuario_controller import router as usuario_router
 
 
-from app.controllers import servico_controller
-
-app.include_router(servico_controller.router)
-
-
 # =========================
-# 🔧 AJUSTE DE BANCO SEGURO
+# 🔧 AJUSTE DE BANCO
 # =========================
 def ajustar_banco():
     try:
@@ -39,7 +34,7 @@ def ajustar_banco():
 
 
 # =========================
-# 🔥 STARTUP SEGURO
+# 🔥 STARTUP
 # =========================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -59,7 +54,7 @@ async def lifespan(app: FastAPI):
 
 
 # =========================
-# 🚀 APP
+# 🚀 APP (CRIA PRIMEIRO)
 # =========================
 app = FastAPI(
     title="BSM Serviços API",
