@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.usuario_model import Usuario
-from app.core.security import verificar_senha, criar_token
+from app.core.security import verify_password, create_access_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
@@ -26,10 +26,10 @@ def login(
     if not user:
         raise HTTPException(status_code=400, detail="Usuário não encontrado")
 
-    if not verificar_senha(form_data.password, user.senha_hash):
+    if not verify_password(form_data.password, user.senha_hash):
         raise HTTPException(status_code=400, detail="Senha inválida")
 
-    token = criar_token({
+    token = create_access_token({
         "sub": str(user.id)
     })
 
