@@ -1,35 +1,34 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
 
 from app.database import get_db
 from app.models.usuario_model import Usuario
-from app.core.security import criar_token
-from pydantic import BaseModel
+from app.core.security import verify_password, create_access_token
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-class LoginRequest(BaseModel):
-    email: str
-    senha: str
+router = APIRouter(
+    prefix="/auth",
+    tags=["Auth"]
+)
 
 
 @router.post("/login")
-def login(data: LoginRequest, db: Session = Depends(get_db)):
-    usuario = db.query(Usuario).filter(Usuario.email == data.email).first()
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),  # 🔥 ISSO É O SEGREDO
+    db: Session = Depends(get_db)
+):
+    user = db.query(Usuario).filter(
+        Usuario.email == form_data.username
+    ).first()
 
-    if not usuario:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    if not user:
+        raise HTTPException(status_code=400, detail="Usuário não encontrado")
 
-    if not pwd_context.verify(data.senha, usuario.senha_hash):
-        raise HTTPException(status_code=401, detail="Senha inválida")
+    if not verify_password(form_data.password, user.senha_hash):
+        raise HTTPException(status_code=400, detail="Senha inválida")
 
-    token = criar_token({
-        "sub": str(usuario.id),
-        "is_admin": usuario.is_admin
+    token = create_access_token({
+        "sub": str(user.id)
     })
 
     return {

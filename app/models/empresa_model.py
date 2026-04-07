@@ -1,40 +1,31 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
+
 
 class Empresa(Base):
     __tablename__ = "empresas"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # Dados básicos
     nome = Column(String, nullable=False)
-    descricao = Column(String)
+    descricao = Column(String, nullable=True)
+    telefone = Column(String, nullable=True)
 
-    # Contato
-    telefone = Column(String)
-    email = Column(String)
+    cnpj = Column(String, nullable=True)
+    cpf = Column(String, nullable=True)
 
-    # Documento (pode ser CPF ou CNPJ)
-    cnpj = Column(String, unique=True, nullable=True)
-    cpf = Column(String, unique=True, nullable=True)
+    endereco = Column(String, nullable=True)
+    bairro = Column(String, nullable=True)
+    cidade = Column(String, nullable=True)
+    estado = Column(String, nullable=True)
 
-    # Endereço
-    endereco = Column(String)
-    bairro = Column(String)
-    cidade = Column(String)
-    estado = Column(String)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
-    # Localização (para mapa)
-    latitude = Column(Float)
-    longitude = Column(Float)
-
-    # Status
     ativo = Column(Boolean, default=True)
-
-    # Avaliação (média simples)
     avaliacao_media = Column(Float, default=0)
 
-    # Relacionamentos
-    servicos = relationship("Servico", back_populates="empresa")
-    fotos = relationship("EmpresaFoto", back_populates="empresa")
+    # 🔗 RELACIONAMENTO COM TIPO DE SERVIÇO
+    tipo_servico_id = Column(Integer, ForeignKey("tipos_servico.id"))
+    tipo_servico = relationship("TipoServico", lazy="joined")

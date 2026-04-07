@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String
 from app.database import Base
 
-
 class TipoServico(Base):
     __tablename__ = "tipos_servico"
 
