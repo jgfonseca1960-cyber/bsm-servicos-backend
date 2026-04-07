@@ -1,31 +1,39 @@
-from fastapi import Depends, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
 
-from app.core.security import verificar_token
+from app.database import get_db
+from app.models.usuario_model import Usuario
+from app.core.security import verificar_senha, criar_token
 
-security = HTTPBearer(auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
-
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    if not credentials:
-        raise HTTPException(status_code=401, detail="Token não informado")
-
-    token = credentials.credentials
-
-    # 🔥 REMOVE "Bearer " AUTOMATICAMENTE SE VIER JUNTO
-    if token.startswith("Bearer "):
-        token = token.replace("Bearer ", "")
-
-    payload = verificar_token(token)
-
-    if not payload:
-        raise HTTPException(status_code=401, detail="Token inválido")
-
-    return payload
+router = APIRouter(
+    prefix="/auth",
+    tags=["Auth"]
+)
 
 
-def get_current_admin(user=Depends(get_current_user)):
-    if not user.get("is_admin"):
-        raise HTTPException(status_code=403, detail="Acesso negado")
+@router.post("/login")
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    user = db.query(Usuario).filter(
+        Usuario.email == form_data.username
+    ).first()
 
-    return user
+    if not user:
+        raise HTTPException(status_code=400, detail="Usuário não encontrado")
+
+    if not verificar_senha(form_data.password, user.senha_hash):
+        raise HTTPException(status_code=400, detail="Senha inválida")
+
+    token = criar_token({
+        "sub": str(user.id)
+    })
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
