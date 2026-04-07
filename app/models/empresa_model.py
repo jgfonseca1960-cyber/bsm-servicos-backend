@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean
 from sqlalchemy.orm import relationship
 from app.database import Base
-
+from app.models.associacoes import empresa_tipo_servico
 
 class Empresa(Base):
     __tablename__ = "empresas"
@@ -41,9 +41,10 @@ class Empresa(Base):
         cascade="all, delete-orphan"
     )
 
-    # ✅ NOVO RELACIONAMENTO (TIPOS DE SERVIÇO)
+    # ✅ RELACIONAMENTO COM TIPOS DE SERVIÇO
+    
     tipos_servico = relationship(
-        "TipoServico",
-        back_populates="empresa",
-        cascade="all, delete-orphan"
-    )
+    "TipoServico",
+    secondary=empresa_tipo_servico,
+    back_populates="empresas"
+)

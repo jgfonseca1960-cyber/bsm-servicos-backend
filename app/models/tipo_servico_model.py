@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from app.database import Base
+from app.models.associacoes import empresa_tipo_servico
 
 
 class TipoServico(Base):
@@ -11,16 +12,6 @@ class TipoServico(Base):
 
     empresas = relationship(
         "Empresa",
-        secondary="empresa_tipo_servico",
-        back_populates="tipos_servico"
-    )
-
-    from app.models.associacoes import empresa_tipo_servico
-
-    empresas = relationship(
-        "Empresa",
         secondary=empresa_tipo_servico,
         back_populates="tipos_servico"
     )
-
-    empresa = relationship("Empresa", back_populates="tipos_servico")

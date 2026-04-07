@@ -18,7 +18,4 @@ class Foto(Base):
 
     principal = Column(Boolean, default=False)
 
-    empresa = relationship(
-        "Empresa",
-        back_populates="fotos"
-    )
+    

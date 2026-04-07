@@ -14,8 +14,4 @@ class Servico(Base):
     # FK para empresa
     empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
 
-    # RELACIONAMENTO com Empresa
-    empresa = relationship(
-        "Empresa",
-        back_populates="servicos"
-    )
+   

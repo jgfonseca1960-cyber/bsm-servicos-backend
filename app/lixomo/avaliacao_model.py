@@ -21,9 +21,3 @@ class Avaliacao(Base):
         ForeignKey("usuarios.id"),
         nullable=True
     )
-
-    # relacionamento
-    empresa = relationship(
-        "Empresa",
-        back_populates="avaliacoes"
-    )
