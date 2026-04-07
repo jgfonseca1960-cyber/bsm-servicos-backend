@@ -1,15 +1,15 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Boolean
 from sqlalchemy.orm import relationship
 from app.database import Base
+
 
 class Empresa(Base):
     __tablename__ = "empresas"
 
     id = Column(Integer, primary_key=True, index=True)
-
     nome = Column(String, nullable=False)
     descricao = Column(String, nullable=True)
-    telefone = Column(String, nullable=True)
+    telefone = Column(String, nullable=False)
 
     cnpj = Column(String, nullable=True)
     cpf = Column(String, nullable=True)
@@ -25,8 +25,15 @@ class Empresa(Base):
     ativo = Column(Boolean, default=True)
     avaliacao_media = Column(Float, default=0)
 
-    # 🔗 RELACIONAMENTO COM TIPO DE SERVIÇO
-    tipo_servico_id = Column(Integer, ForeignKey("tipos_servico.id"))
-    tipo_servico = relationship("TipoServico", lazy="joined")
+    # RELACIONAMENTOS
+    fotos = relationship(
+        "EmpresaFoto",
+        back_populates="empresa",
+        cascade="all, delete-orphan"
+    )
 
-    fotos = relationship("EmpresaFoto", back_populates="empresa")
+    servicos = relationship(
+        "Servico",
+        back_populates="empresa",
+        cascade="all, delete-orphan"
+    )
