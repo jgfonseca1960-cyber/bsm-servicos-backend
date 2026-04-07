@@ -1,56 +1,43 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.usuario_model import Usuario
-from app.core.security import verify_password, create_access_token
-from app.schemas.auth_schema import LoginRequest
+from app.core.security import decode_access_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["Auth"]
-)
 
-# ✅ LOGIN PARA SWAGGER (FORM-DATA)
-@router.post("/login")
-def login_form(
-    form_data: OAuth2PasswordRequestForm = Depends(),
+# ✅ USUÁRIO LOGADO
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
-    user = db.query(Usuario).filter(
-        Usuario.email == form_data.username
-    ).first()
+    payload = decode_access_token(token)
 
-    if not user or not verify_password(form_data.password, user.senha_hash):
-        raise HTTPException(status_code=400, detail="Email ou senha inválidos")
+    if not payload:
+        raise HTTPException(status_code=401, detail="Token inválido")
 
-    token = create_access_token({"sub": str(user.id)})
+    user_id = payload.get("sub")
 
-    return {
-        "access_token": token,
-        "token_type": "bearer"
-    }
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+    user = db.query(Usuario).filter(Usuario.id == int(user_id)).first()
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Usuário não encontrado")
+
+    return user
 
 
-# ✅ LOGIN PARA FLUTTER (JSON)
-@router.post("/login-json")
-def login_json(
-    data: LoginRequest,
-    db: Session = Depends(get_db)
+# ✅ ADMIN (ESSA FUNÇÃO É O QUE ESTÁ FALTANDO!)
+def get_current_admin(
+    user: Usuario = Depends(get_current_user)
 ):
-    user = db.query(Usuario).filter(
-        Usuario.email == data.email
-    ).first()
+    # evita erro se campo não existir
+    if not hasattr(user, "is_admin") or not user.is_admin:
+        raise HTTPException(status_code=403, detail="Acesso negado")
 
-    if not user or not verify_password(data.password, user.senha_hash):
-        raise HTTPException(status_code=400, detail="Email ou senha inválidos")
-
-    token = create_access_token({"sub": str(user.id)})
-
-    return {
-        "access_token": token,
-        "token_type": "bearer"
-    }
+    return user
