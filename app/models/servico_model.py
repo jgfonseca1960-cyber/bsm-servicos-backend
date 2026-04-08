@@ -7,11 +7,13 @@ class Servico(Base):
     __tablename__ = "servicos"
 
     id = Column(Integer, primary_key=True, index=True)
-
     nome = Column(String, nullable=False)
-    descricao = Column(String, nullable=True)
 
-    # FK para empresa
-    empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
+    # 🔥 CHAVE ESTRANGEIRA (OBRIGATÓRIA)
+    empresa_id = Column(Integer, ForeignKey("empresas.id"))
 
-   
+    # 🔥 RELACIONAMENTO CORRETO (FALTAVA ISSO)
+    empresa = relationship(
+        "Empresa",
+        back_populates="servicos"
+    )

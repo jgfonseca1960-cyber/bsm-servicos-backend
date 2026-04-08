@@ -37,10 +37,10 @@ class Empresa(Base):
     )
 
     servicos = relationship(
-        "Servico",
-        back_populates="empresa",
-        cascade="all, delete-orphan"
-    )
+    "Servico",
+    back_populates="empresa",
+    cascade="all, delete-orphan"
+)
 
     # ✅ RELACIONAMENTO CORRETO MANY-TO-MANY
     tipos_servico = relationship(
