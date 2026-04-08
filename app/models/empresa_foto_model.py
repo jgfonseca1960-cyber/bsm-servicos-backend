@@ -9,8 +9,10 @@ class EmpresaFoto(Base):
     id = Column(Integer, primary_key=True, index=True)
     url = Column(String, nullable=False)
 
-    # 🔥 ESSENCIAL
     empresa_id = Column(Integer, ForeignKey("empresas.id"))
 
-    # 🔥 TEM QUE EXISTIR E BATER COM "fotos"
-    empresa = relationship("Empresa", back_populates="fotos")
+    # 🔥 OBRIGATÓRIO (ESTAVA FALTANDO OU QUEBRADO)
+    empresa = relationship(
+        "Empresa",
+        back_populates="fotos"
+    )

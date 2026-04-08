@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from app.database import Base
 from app.models.associacoes import empresa_tipo_servico
 
+
 class Empresa(Base):
     __tablename__ = "empresas"
 
@@ -41,10 +42,9 @@ class Empresa(Base):
         cascade="all, delete-orphan"
     )
 
-    # ✅ RELACIONAMENTO COM TIPOS DE SERVIÇO
-    
+    # ✅ RELACIONAMENTO CORRETO MANY-TO-MANY
     tipos_servico = relationship(
-    "TipoServico",
-    secondary=empresa_tipo_servico,
-    back_populates="empresas"
-)
+        "TipoServico",
+        secondary=empresa_tipo_servico,
+        back_populates="empresas"
+    )
