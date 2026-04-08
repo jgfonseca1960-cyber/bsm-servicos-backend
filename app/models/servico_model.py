@@ -7,8 +7,9 @@ class Servico(Base):
     __tablename__ = "servicos"
 
     id = Column(Integer, primary_key=True, index=True)
-    nome = Column(String, nullable=False, unique=True)
+    nome = Column(String, nullable=False)
 
+    # 🔥 RELAÇÃO 1:N
     empresas = relationship(
         "Empresa",
         back_populates="servico"
