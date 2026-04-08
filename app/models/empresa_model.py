@@ -11,6 +11,11 @@ class Empresa(Base):
     descricao = Column(String, nullable=True)
     telefone = Column(String, nullable=False)
 
+    # ✅ NOVOS CAMPOS
+    whatsapp = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    cep = Column(String, nullable=True)
+
     cnpj = Column(String, nullable=True)
     cpf = Column(String, nullable=True)
 
@@ -25,16 +30,6 @@ class Empresa(Base):
     ativo = Column(Boolean, default=True)
     avaliacao_media = Column(Float, default=0)
 
-    # 🔥 RELACIONAMENTO CORRETO
+    # 🔥 RELAÇÃO COM SERVIÇO (N:1)
     servico_id = Column(Integer, ForeignKey("servicos.id"))
-
-    servico = relationship(
-        "Servico",
-        back_populates="empresas"
-    )
-
-    fotos = relationship(
-        "EmpresaFoto",
-        back_populates="empresa",
-        cascade="all, delete-orphan"
-    )
+    servico = relationship("Servico", back_populates="empresas")
