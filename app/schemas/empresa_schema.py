@@ -1,8 +1,9 @@
 from pydantic import BaseModel
 from typing import Optional
+from app.schemas.servico_schema import ServicoSimple
 
 
-# 🔹 Base
+# 🔹 BASE
 class EmpresaBase(BaseModel):
     nome: str
     descricao: Optional[str] = None
@@ -18,12 +19,12 @@ class EmpresaBase(BaseModel):
     ativo: Optional[bool] = True
 
 
-# 🔹 Criação
+# 🔹 CRIAÇÃO
 class EmpresaCreate(EmpresaBase):
-    pass
+    servico_id: int  # 🔥 obrigatório na criação
 
 
-# 🔹 Atualização
+# 🔹 ATUALIZAÇÃO
 class EmpresaUpdate(BaseModel):
     nome: Optional[str] = None
     descricao: Optional[str] = None
@@ -37,11 +38,16 @@ class EmpresaUpdate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     ativo: Optional[bool] = None
+    servico_id: Optional[int] = None
 
 
-# 🔹 Resposta
+# 🔹 RESPOSTA
 class EmpresaResponse(EmpresaBase):
     id: int
+    servico_id: int
+
+    # 🔥 Aqui vem o objeto do serviço
+    servico: Optional[ServicoSimple] = None
 
     class Config:
         from_attributes = True

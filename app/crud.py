@@ -35,7 +35,7 @@ def create_servico(db: Session, servico: schemas.ServicoCreate):
     return obj
 
 
-def get_servicos(db: Session):
+def get_servico(db: Session):
     return db.query(models.Servico).all()
 
 

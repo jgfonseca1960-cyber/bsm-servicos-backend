@@ -10,10 +10,10 @@ def create_servico(db: Session, servico: Servico):
     db.refresh(servico)
     return servico
 
-def get_servicos(db: Session):
+def get_servico(db: Session):
     return db.query(Servico).all()
 
-def get_servicos_por_empresa(db: Session, empresa_id: int):
+def get_servico_por_empresa(db: Session, empresa_id: int):
     return db.query(Servico).filter(Servico.empresa_id == empresa_id).all()
 
 def get_servico(db: Session, servico_id: int):

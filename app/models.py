@@ -9,5 +9,5 @@ empresa_servico = Table(
     "empresa_servico",
     Base.metadata,
     Column("empresa_id", Integer, ForeignKey("empresas.id"), primary_key=True),
-    Column("servico_id", Integer, ForeignKey("servicos.id"), primary_key=True),
+    Column("servico_id", Integer, ForeignKey("servico.id"), primary_key=True),
 )

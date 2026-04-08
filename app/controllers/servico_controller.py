@@ -13,10 +13,10 @@ def criar_servico(servico: ServicoCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[ServicoResponse])
-def listar_servicos(db: Session = Depends(get_db)):
-    return servico_service.listar_servicos(db)
+def listar_servico(db: Session = Depends(get_db)):
+    return servico_service.listar_servico(db)
 
-@router.get("/servicos")
-def listar_servicos(db: Session = Depends(get_db)):
+@router.get("/servico")
+def listar_servico(db: Session = Depends(get_db)):
     return db.query(Servico).all()
 

@@ -13,11 +13,11 @@ def criar_servico(db: Session, data):
     )
     return servico_repo.create_servico(db, servico)
 
-def listar_servicos(db: Session):
-    return servico_repo.get_servicos(db)
+def listar_servico(db: Session):
+    return servico_repo.get_servico(db)
 
-def listar_servicos_por_empresa(db: Session, empresa_id: int):
-    return servico_repo.get_servicos_por_empresa(db, empresa_id)
+def listar_servico_por_empresa(db: Session, empresa_id: int):
+    return servico_repo.get_servico_por_empresa(db, empresa_id)
 
 def atualizar_servico(db: Session, servico_id: int, data):
     servico = servico_repo.get_servico(db, servico_id)

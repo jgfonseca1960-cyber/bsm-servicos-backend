@@ -11,12 +11,12 @@ def criar_servico(servico: ServicoCreate, db: Session = Depends(get_db)):
     return servico_service.criar_servico(db, servico)
 
 @router.get("/", response_model=list[ServicoResponse])
-def listar_servicos(db: Session = Depends(get_db)):
-    return servico_service.listar_servicos(db)
+def listar_servico(db: Session = Depends(get_db)):
+    return servico_service.listar_servico(db)
 
 @router.get("/empresa/{empresa_id}", response_model=list[ServicoResponse])
-def listar_servicos_empresa(empresa_id: int, db: Session = Depends(get_db)):
-    return servico_service.listar_servicos_por_empresa(db, empresa_id)
+def listar_servico_empresa(empresa_id: int, db: Session = Depends(get_db)):
+    return servico_service.listar_servico_por_empresa(db, empresa_id)
 
 @router.put("/{servico_id}", response_model=ServicoResponse)
 def atualizar_servico(servico_id: int, servico: ServicoCreate, db: Session = Depends(get_db)):

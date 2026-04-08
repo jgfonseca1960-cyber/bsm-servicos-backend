@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -7,11 +7,9 @@ class Servico(Base):
     __tablename__ = "servicos"
 
     id = Column(Integer, primary_key=True, index=True)
-    nome = Column(String, nullable=False)
+    nome = Column(String, nullable=False, unique=True)
 
-    empresa_id = Column(Integer, ForeignKey("empresas.id"))
-
-    empresa = relationship(
+    empresas = relationship(
         "Empresa",
-        back_populates="servicos"
+        back_populates="servico"
     )

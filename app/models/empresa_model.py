@@ -1,7 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
-from app.models.associacoes import empresa_tipo_servico
 
 
 class Empresa(Base):
@@ -26,25 +25,16 @@ class Empresa(Base):
     ativo = Column(Boolean, default=True)
     avaliacao_media = Column(Float, default=0)
 
-    # =========================
-    # RELACIONAMENTOS
-    # =========================
+    # 🔥 RELACIONAMENTO CORRETO
+    servico_id = Column(Integer, ForeignKey("servicos.id"))
+
+    servico = relationship(
+        "Servico",
+        back_populates="empresas"
+    )
 
     fotos = relationship(
         "EmpresaFoto",
         back_populates="empresa",
         cascade="all, delete-orphan"
-    )
-
-    servicos = relationship(
-    "Servico",
-    back_populates="empresa",
-    cascade="all, delete-orphan"
-)
-
-    # ✅ RELACIONAMENTO CORRETO MANY-TO-MANY
-    tipos_servico = relationship(
-        "TipoServico",
-        secondary=empresa_tipo_servico,
-        back_populates="empresas"
     )
