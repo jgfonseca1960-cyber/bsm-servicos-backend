@@ -32,6 +32,7 @@ router = APIRouter(
 # =========================
 # 🔥 CRIAR (ADMIN)
 # =========================
+
 @router.post("/", response_model=EmpresaResponse)
 def criar_nova_empresa(
     empresa: EmpresaCreate,
@@ -44,10 +45,17 @@ def criar_nova_empresa(
 # =========================
 # 🔹 LISTAR (PÚBLICO)
 # =========================
-@router.get("/", response_model=List[EmpresaResponse])
-def listar_todas_empresas(db: Session = Depends(get_db)):
-    return listar_empresas(db)
+# @router.get("/", response_model=List[EmpresaResponse])
+# def listar_todas_empresas(db: Session = Depends(get_db)):
+#     return listar_empresas(db)
 
+@router.get("/empresas")
+def listar(db: Session = Depends(get_db)):
+    try:
+        return db.query(Empresa).all()
+    except Exception as e:
+        print("🔥 ERRO LISTAR EMPRESAS:", str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 # =========================
 # 🔹 BUSCAR POR ID
