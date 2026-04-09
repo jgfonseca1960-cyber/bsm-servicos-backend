@@ -10,9 +10,6 @@ class Empresa(Base):
     descricao = Column(String)
 
     telefone = Column(String)
-    whatsapp = Column(String)
-    email = Column(String)
-
     endereco = Column(String)
     cep = Column(String)
     cidade = Column(String)
