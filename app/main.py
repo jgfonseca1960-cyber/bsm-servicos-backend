@@ -1,47 +1,7 @@
-from fastapi import FastAPI, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from app.database import get_db
-
-# ✅ 1. CRIA O APP PRIMEIRO
-app = FastAPI()
-
-# ✅ 2. DEPOIS IMPORTA ROUTERS (se tiver)
-# from app.controllers.empresa_controller import router as empresa_router
-# app.include_router(empresa_router)
-
-# ✅ 3. SÓ DEPOIS cria essa rota
-@app.get("/atualizar-banco")
-def atualizar_banco(db: Session = Depends(get_db)):
-
+@app.get("/add-cep")
+def add_cep(db: Session = Depends(get_db)):
     db.execute(text("""
-        ALTER TABLE empresas 
-        ADD COLUMN IF NOT EXISTS servico_id INTEGER
+        ALTER TABLE empresas ADD COLUMN IF NOT EXISTS cep VARCHAR
     """))
-
-    db.execute(text("""
-        CREATE TABLE IF NOT EXISTS empresa_fotos (
-            id SERIAL PRIMARY KEY,
-            url VARCHAR,
-            empresa_id INTEGER REFERENCES empresas(id)
-        )
-    """))
-
     db.commit()
-
-    return {"msg": "Banco atualizado com sucesso!"}
-
-@app.get("/ver-tabelas")
-def ver_tabelas(db: Session = Depends(get_db)):
-    result = db.execute(text("""
-        SELECT table_name 
-        FROM information_schema.tables 
-        WHERE table_schema = 'public'
-    """))
-    return [row[0] for row in result]
-
-@app.get("/remover-tabela-antiga")
-def remover_tabela_antiga(db: Session = Depends(get_db)):
-    db.execute(text("DROP TABLE IF EXISTS fotos"))
-    db.commit()
-    return {"msg": "Tabela fotos removida!"}
+    return {"msg": "CEP adicionado!"}
