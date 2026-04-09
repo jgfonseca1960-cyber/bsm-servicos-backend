@@ -13,4 +13,3 @@ class EmpresaFoto(Base):
     empresa = relationship(
         "Empresa",
         back_populates="fotos"
-    )

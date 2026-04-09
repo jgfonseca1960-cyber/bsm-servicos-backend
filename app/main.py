@@ -11,6 +11,8 @@ from app.controllers.empresa_controller import router as empresa_router
 from app.controllers.servico_controller import router as servico_router
 from app.controllers.usuario_controller import router as usuario_router
 
+from app.models import empresa_model
+from app.models import empresa_foto_model
 
 # =========================
 # 🔧 AJUSTE DE BANCO
