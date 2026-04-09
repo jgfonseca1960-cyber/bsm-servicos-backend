@@ -16,11 +16,12 @@ class Empresa(Base):
 
     servico_id = Column(Integer, ForeignKey("servicos.id"))
 
-    # 🔗 relacionamentos
+    # RELACIONAMENTO COM SERVIÇO
     servico = relationship("Servico", back_populates="empresas")
 
+    # RELACIONAMENTO COM FOTOS (CORRIGIDO)
     fotos = relationship(
-        "Foto",
+        "EmpresaFoto",
         back_populates="empresa",
         cascade="all, delete-orphan"
     )

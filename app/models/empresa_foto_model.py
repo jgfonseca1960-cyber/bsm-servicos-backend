@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 
-
 class EmpresaFoto(Base):
     __tablename__ = "empresa_fotos"
 
@@ -11,7 +10,6 @@ class EmpresaFoto(Base):
 
     empresa_id = Column(Integer, ForeignKey("empresas.id"))
 
-    # 🔥 OBRIGATÓRIO (ESTAVA FALTANDO OU QUEBRADO)
     empresa = relationship(
         "Empresa",
         back_populates="fotos"
