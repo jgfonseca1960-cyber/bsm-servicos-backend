@@ -30,3 +30,12 @@ def atualizar_banco(db: Session = Depends(get_db)):
     db.commit()
 
     return {"msg": "Banco atualizado com sucesso!"}
+
+@app.get("/ver-tabelas")
+def ver_tabelas(db: Session = Depends(get_db)):
+    result = db.execute(text("""
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public'
+    """))
+    return [row[0] for row in result]
