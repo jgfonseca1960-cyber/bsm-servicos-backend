@@ -20,8 +20,6 @@ def criar_empresa(db: Session, data: EmpresaCreate):
         nome=data.nome,
         descricao=data.descricao,
         telefone=data.telefone,
-        whatsapp=data.whatsapp,
-        email=data.email,
         endereco=data.endereco,
         cidade=data.cidade,
         estado=data.estado,
