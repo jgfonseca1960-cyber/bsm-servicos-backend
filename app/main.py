@@ -39,3 +39,9 @@ def ver_tabelas(db: Session = Depends(get_db)):
         WHERE table_schema = 'public'
     """))
     return [row[0] for row in result]
+
+@app.get("/remover-tabela-antiga")
+def remover_tabela_antiga(db: Session = Depends(get_db)):
+    db.execute(text("DROP TABLE IF EXISTS fotos"))
+    db.commit()
+    return {"msg": "Tabela fotos removida!"}
