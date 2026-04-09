@@ -11,6 +11,7 @@ class Empresa(Base):
     telefone = Column(String)
     whatsapp = Column(String)
     email = Column(String)
+    endereco = Column(String)
     cidade = Column(String)
     estado = Column(String)
 
