@@ -8,19 +8,20 @@ class Empresa(Base):
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String, nullable=False)
     descricao = Column(String)
+
     telefone = Column(String)
     whatsapp = Column(String)
     email = Column(String)
+
     endereco = Column(String)
+    cep = Column(String)
     cidade = Column(String)
     estado = Column(String)
 
     servico_id = Column(Integer, ForeignKey("servicos.id"))
 
-    # RELACIONAMENTO COM SERVIÇO
     servico = relationship("Servico", back_populates="empresas")
 
-    # RELACIONAMENTO COM FOTOS (CORRIGIDO)
     fotos = relationship(
         "EmpresaFoto",
         back_populates="empresa",
