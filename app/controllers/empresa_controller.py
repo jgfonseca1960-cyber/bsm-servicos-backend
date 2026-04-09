@@ -45,10 +45,14 @@ def criar_nova_empresa(
 # =========================
 # 🔹 LISTAR (PÚBLICO)
 # =========================
-@router.get("/", response_model=List[EmpresaResponse])
-def listar_todas_empresas(db: Session = Depends(get_db)):
-    return listar_empresas(db)
 
+@router.get("/")
+def listar_todas_empresas(db: Session = Depends(get_db)):
+    try:
+        return db.query(Empresa).all()
+    except Exception as e:
+        print("ERRO LISTAR:", str(e))
+        raise
 
 # =========================
 # 🔹 BUSCAR POR ID
