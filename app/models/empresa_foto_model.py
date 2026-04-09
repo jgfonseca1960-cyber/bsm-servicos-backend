@@ -11,5 +11,6 @@ class EmpresaFoto(Base):
     empresa_id = Column(Integer, ForeignKey("empresas.id"))
 
     empresa = relationship(
-        "Empresa",
-        back_populates="fotos"
+    "Empresa",
+    back_populates="fotos"
+)
