@@ -1,7 +1,6 @@
 from sqlalchemy import create_engine, text
 import os
 
-# Pegando a URL do banco (Render normalmente fornece isso)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
@@ -13,10 +12,13 @@ queries = {
     "FKs que dependem de tipos_servico": """
         SELECT conname, conrelid::regclass AS table_name
         FROM pg_constraint
-        WHERE confrelid = 'tipos_servico'::regclass;
+        WHERE confrelid = (
+            SELECT oid FROM pg_class WHERE relname = 'tipos_servico'
+            AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+        );
     """,
 
-    "Foreign keys apontando para tipos_servico": """
+    "Foreign keys apontando para tipos_servico (seguro)": """
         SELECT
             tc.constraint_name,
             tc.table_name,
@@ -28,7 +30,7 @@ queries = {
         AND ccu.table_name = 'tipos_servico';
     """,
 
-    "Constraints da tabela empresa_tipo_servico": """
+    "Constraints da empresa_tipo_servico": """
         SELECT
             tc.constraint_name,
             tc.table_name,
@@ -43,7 +45,7 @@ queries = {
 with engine.connect() as conn:
     for title, query in queries.items():
         print("\n==============================")
-        print(f"{title}")
+        print(title)
         print("==============================")
 
         result = conn.execute(text(query))

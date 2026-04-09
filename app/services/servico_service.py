@@ -1,5 +1,7 @@
+from sqlalchemy.orm import Session
 from app.models.servico_model import Servico
 from app.schemas.servico_schema import ServicoCreate
+
 
 
 def criar_servico(db: Session, data: ServicoCreate):
