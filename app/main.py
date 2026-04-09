@@ -3,10 +3,14 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.database import get_db
 
-# 👇 PRIMEIRO cria o app
+# ✅ 1. CRIA O APP PRIMEIRO
 app = FastAPI()
 
-# 👇 DEPOIS as rotas
+# ✅ 2. DEPOIS IMPORTA ROUTERS (se tiver)
+# from app.controllers.empresa_controller import router as empresa_router
+# app.include_router(empresa_router)
+
+# ✅ 3. SÓ DEPOIS cria essa rota
 @app.get("/atualizar-banco")
 def atualizar_banco(db: Session = Depends(get_db)):
 
