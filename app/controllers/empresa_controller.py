@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
+
 from app.database import get_db
 from app.models.empresa_model import Empresa
 
@@ -8,7 +9,7 @@ from app.models.empresa_model import Empresa
 from app.services.empresa_service import (
     criar_empresa,
     listar_empresas,
-    buscar_empresa,  # 🔥 nome alinhado com service
+    buscar_empresa,
     atualizar_empresa,
     deletar_empresa
 )
@@ -32,12 +33,11 @@ router = APIRouter(
 # =========================
 # 🔥 CRIAR (ADMIN)
 # =========================
-
 @router.post("/", response_model=EmpresaResponse)
 def criar_nova_empresa(
     empresa: EmpresaCreate,
     db: Session = Depends(get_db),
-    admin = Depends(get_current_admin)
+    admin=Depends(get_current_admin)
 ):
     return criar_empresa(db, empresa)
 
@@ -45,17 +45,10 @@ def criar_nova_empresa(
 # =========================
 # 🔹 LISTAR (PÚBLICO)
 # =========================
-# @router.get("/", response_model=List[EmpresaResponse])
-# def listar_todas_empresas(db: Session = Depends(get_db)):
-#     return listar_empresas(db)
+@router.get("/", response_model=List[EmpresaResponse])
+def listar_todas_empresas(db: Session = Depends(get_db)):
+    return listar_empresas(db)
 
-@router.get("/empresas")
-def listar(db: Session = Depends(get_db)):
-    try:
-        return db.query(Empresa).all()
-    except Exception as e:
-        print("🔥 ERRO LISTAR EMPRESAS:", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
 
 # =========================
 # 🔹 BUSCAR POR ID
@@ -65,7 +58,7 @@ def buscar_empresa_por_id(
     empresa_id: int,
     db: Session = Depends(get_db)
 ):
-    return buscar_empresa(db, empresa_id)  # 🔥 service já trata erro
+    return buscar_empresa(db, empresa_id)
 
 
 # =========================
@@ -76,7 +69,7 @@ def atualizar_empresa_existente(
     empresa_id: int,
     empresa: EmpresaUpdate,
     db: Session = Depends(get_db),
-    admin = Depends(get_current_admin)
+    admin=Depends(get_current_admin)
 ):
     return atualizar_empresa(db, empresa_id, empresa)
 
@@ -88,6 +81,6 @@ def atualizar_empresa_existente(
 def deletar_empresa_existente(
     empresa_id: int,
     db: Session = Depends(get_db),
-    admin = Depends(get_current_admin)
+    admin=Depends(get_current_admin)
 ):
     return deletar_empresa(db, empresa_id)
