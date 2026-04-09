@@ -2,35 +2,49 @@ from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 
+
 class Empresa(Base):
     __tablename__ = "empresas"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    nome = Column(String)
-    descricao = Column(String)
-    telefone = Column(String)
+    # 🔹 dados básicos
+    nome = Column(String, nullable=False)
+    descricao = Column(String, nullable=True)
+    telefone = Column(String, nullable=True)
 
-    endereco = Column(String)
-    bairro = Column(String)
-    cidade = Column(String)
-    estado = Column(String)
-    cep = Column(String)  # ✅ adicionando CEP
+    # 🔹 endereço
+    endereco = Column(String, nullable=True)
+    bairro = Column(String, nullable=True)
+    cidade = Column(String, nullable=True)
+    estado = Column(String, nullable=True)
+    cep = Column(String, nullable=True)
 
-    latitude = Column(String)
-    longitude = Column(String)
+    # 🔹 localização (melhor manter como Float)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
-    ativo = Column(Boolean)
-    avaliacao_media = Column(Float)
+    # 🔹 status
+    ativo = Column(Boolean, default=True)
+    avaliacao_media = Column(Float, nullable=True)
 
-    cpf = Column(String)
-    cnpj = Column(String)
+    # 🔹 documentos
+    cpf = Column(String, nullable=True)
+    cnpj = Column(String, nullable=True)
 
-    # relacionamento com serviço
-    servico_id = Column(Integer, ForeignKey("servicos.id"))
-    servico = relationship("Servico", back_populates="empresas")
+    # ✅ relacionamento (1 serviço → N empresas)
+    servico_id = Column(
+        Integer,
+        ForeignKey("servicos.id"),
+        nullable=True  # pode mudar para False depois
+    )
 
-    # relacionamento com fotos
+    servico = relationship(
+        "Servico",
+        back_populates="empresas"
+    )
+
+    # ✅ relacionamento com fotos
     fotos = relationship(
         "EmpresaFoto",
         back_populates="empresa",

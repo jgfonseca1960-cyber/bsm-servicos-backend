@@ -1,31 +1,30 @@
-import os
 from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config, pool
+import os
+from sqlalchemy import engine_from_config
+from sqlalchemy import pool
 from alembic import context
+
+# ✅ IMPORTANTE: caminhos corretos do seu projeto
+from app.database import Base
+import app.models  # garante que os models sejam carregados
 
 config = context.config
 
-# pegar DATABASE_URL do ambiente (Render)
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if DATABASE_URL:
-    # Render usa postgres:// e SQLAlchemy precisa postgresql://
-    if DATABASE_URL.startswith("postgres://"):
-        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-
-    config.set_main_option("sqlalchemy.url", DATABASE_URL)
-
-# logging
+# logs
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = None
+# ✅ ESSENCIAL
+target_metadata = Base.metadata
+
+# ✅ pega a URL do .env ou Render
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL:
+    config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
 
-def run_migrations_offline() -> None:
+def run_migrations_offline():
     url = config.get_main_option("sqlalchemy.url")
-
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -37,9 +36,9 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def run_migrations_online() -> None:
+def run_migrations_online():
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        config.get_section(config.config_ini_section),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
