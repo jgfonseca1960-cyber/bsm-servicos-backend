@@ -79,22 +79,27 @@ def atualizar_empresa(
     db: Session = Depends(get_db),
     admin=Depends(get_current_admin)
 ):
+    print("DEBUG DADOS RECEBIDOS:", dados)
+
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
     if not empresa:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Empresa com id {empresa_id} não encontrada"
-        )
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-    for key, value in dados.dict(exclude_unset=True).items():
-        setattr(empresa, key, value)
+    try:
+        for key, value in dados.dict(exclude_unset=True).items():
+            setattr(empresa, key, value)
 
-    db.commit()
-    db.refresh(empresa)
+        db.commit()
+        db.refresh(empresa)
 
-    return empresa
+        return empresa
 
+    except Exception as e:
+        print("🔥 ERRO AO ATUALIZAR:", str(e))
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    
 # =========================
 # 🔥 DELETAR (ADMIN)
 # =========================
