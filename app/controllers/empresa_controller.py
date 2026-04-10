@@ -4,6 +4,7 @@ from typing import List
 from fastapi import HTTPException
 from app.database import get_db
 from app.models.empresa_model import Empresa
+from app.models.servico_model import Servico
 
 # 🔹 SERVICE
 from app.services.empresa_service import (
@@ -79,26 +80,34 @@ def atualizar_empresa(
     db: Session = Depends(get_db),
     admin=Depends(get_current_admin)
 ):
-    print("DEBUG DADOS RECEBIDOS:", dados)
-
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-    try:
-        for key, value in dados.dict(exclude_unset=True).items():
-            setattr(empresa, key, value)
+    # 🔥 VALIDAÇÃO FK (CORREÇÃO DO ERRO)
+    if dados.servico_id is not None:
+        if dados.servico_id == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="servico_id não pode ser 0"
+            )
 
-        db.commit()
-        db.refresh(empresa)
+        servico = db.query(Servico).filter(Servico.id == dados.servico_id).first()
 
-        return empresa
+        if not servico:
+            raise HTTPException(
+                status_code=400,
+                detail="servico_id inválido (não existe na tabela servicos)"
+            )
 
-    except Exception as e:
-        print("🔥 ERRO AO ATUALIZAR:", str(e))
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+    for key, value in dados.dict(exclude_unset=True).items():
+        setattr(empresa, key, value)
+
+    db.commit()
+    db.refresh(empresa)
+
+    return empresa
     
 # =========================
 # 🔥 DELETAR (ADMIN)
