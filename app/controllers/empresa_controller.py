@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
-
+from fastapi import HTTPException
 from app.database import get_db
 from app.models.empresa_model import Empresa
 
@@ -58,9 +58,6 @@ def listar_todas_empresas(db: Session = Depends(get_db)):
 # 🔹 BUSCAR POR ID
 # =========================
 @router.get("/{empresa_id}", response_model=EmpresaResponse)
-
-from fastapi import HTTPException
-
 def buscar_empresa(db, empresa_id: int):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
