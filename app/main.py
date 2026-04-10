@@ -11,8 +11,10 @@ from app.controllers.empresa_controller import router as empresa_router
 from app.controllers.servico_controller import router as servico_router
 from app.controllers.usuario_controller import router as usuario_router
 
+# 🔥 IMPORTANTE: garantir carregamento dos models
 from app.models import empresa_model
 from app.models import empresa_foto_model
+
 
 # =========================
 # 🔧 AJUSTE DE BANCO
@@ -21,12 +23,11 @@ def ajustar_banco():
     try:
         print("🔥 Ajustando banco...")
 
-        with engine.connect() as conn:
+        with engine.begin() as conn:  # 🔥 melhor que connect()
             conn.execute(text("""
                 ALTER TABLE usuarios 
                 ADD COLUMN IF NOT EXISTS senha_hash VARCHAR;
             """))
-            conn.commit()
 
         print("✅ Banco pronto!")
 
@@ -43,8 +44,8 @@ async def lifespan(app: FastAPI):
     try:
         print("🚀 Iniciando aplicação...")
 
-        init_db()
-        ajustar_banco()
+        init_db()  # cria tabelas
+        ajustar_banco()  # ajustes extras
 
         print("✅ Inicialização concluída!")
 
@@ -56,7 +57,7 @@ async def lifespan(app: FastAPI):
 
 
 # =========================
-# 🚀 APP (CRIA PRIMEIRO)
+# 🚀 APP
 # =========================
 app = FastAPI(
     title="BSM Serviços API",
@@ -78,9 +79,9 @@ def favicon():
 # 📌 ROTAS
 # =========================
 app.include_router(auth_router)
-app.include_router(empresa_router)
-app.include_router(servico_router)
-app.include_router(usuario_router)
+app.include_router(empresa_router, prefix="/empresas", tags=["Empresas"])
+app.include_router(servico_router, prefix="/servicos", tags=["Serviços"])
+app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
 
 
 # =========================

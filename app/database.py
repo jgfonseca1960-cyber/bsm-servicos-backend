@@ -1,46 +1,39 @@
-from dotenv import load_dotenv
-import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-load_dotenv()
+# 🔥 URL fixa (temporário pra garantir que funciona)
+DATABASE_URL = "postgresql+psycopg2://bsm_user:CFFwJtRUdOODyLDWy4mwY8ZDX4iJ77iS@dpg-d7b6jjkvjg8s73etqljg-a.oregon-postgres.render.com/bsm_servicos_4ccv?sslmode=require"
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if not DATABASE_URL:
-    raise ValueError("❌ DATABASE_URL não está definida!")
-
-# 🔥 GARANTE SSL AUTOMATICAMENTE (MESMO SE ESQUECER NA URL)
-if "sslmode" not in DATABASE_URL:
-    DATABASE_URL += "?sslmode=require"
 
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True,   # evita conexão morta
-    pool_recycle=300,     # recicla conexão (Render precisa disso)
-    pool_size=5,
-    max_overflow=10
+    pool_pre_ping=True
 )
 
 SessionLocal = sessionmaker(
-    bind=engine,
+    autocommit=False,
     autoflush=False,
-    autocommit=False
+    bind=engine
 )
 
 Base = declarative_base()
 
+# 🔥 FUNÇÃO QUE O MAIN PRECISA
+def init_db():
+    from app.models import (
+        empresa_model,
+        empresa_foto_model,
+        usuario_model,
+        servico_model,
+    )
+    Base.metadata.create_all(bind=engine)
 
+    # =========================
+# 🔥 DEPENDÊNCIA DO FASTAPI
+# =========================
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-
-
-def init_db():
-    # ✅ IMPORTAÇÃO LOCAL (EVITA IMPORT CIRCULAR)
-    import app.models
-
-    Base.metadata.create_all(bind=engine)

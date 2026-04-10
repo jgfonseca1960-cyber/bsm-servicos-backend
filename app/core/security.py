@@ -1,28 +1,42 @@
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from fastapi.security import OAuth2PasswordBearer
 import os
 
-# 🔐 Configurações JWT
+# =========================
+# 🔐 CONFIGURAÇÕES JWT
+# =========================
 SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 dia
 
-# 🔑 Hash de senha
+# 🔥 IMPORTANTE (corrige o Authorize)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+# =========================
+# 🔑 HASH DE SENHA
+# =========================
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-# ✅ Gerar hash da senha
+# =========================
+# ✅ GERAR HASH
+# =========================
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-# ✅ Verificar senha
+# =========================
+# ✅ VERIFICAR SENHA
+# =========================
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-# ✅ Criar token JWT
+# =========================
+# ✅ CRIAR TOKEN
+# =========================
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
 
@@ -35,7 +49,9 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-# ✅ Decodificar token JWT
+# =========================
+# ✅ DECODIFICAR TOKEN
+# =========================
 def decode_access_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -44,7 +60,8 @@ def decode_access_token(token: str):
         return None
 
 
-# 🔥🔥🔥 CORREÇÃO DEFINITIVA (COMPATIBILIDADE)
-# evita quebrar arquivos antigos que usam português
+# =========================
+# 🔥 COMPATIBILIDADE
+# =========================
 verificar_senha = verify_password
 criar_token = create_access_token
