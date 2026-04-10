@@ -42,12 +42,10 @@ class EmpresaUpdate(BaseModel):
 
 
 # 🔹 RESPOSTA
-class EmpresaResponse(EmpresaBase):
+class EmpresaResponse(BaseModel):
     id: int
-    servico_id: int
-
-    # 🔥 Aqui vem o objeto do serviço
-    servico: Optional[ServicoSimple] = None
+    nome: str
+    servico_id: Optional[int] = None  # 🔥 CORREÇÃO AQUI
 
     class Config:
         from_attributes = True
