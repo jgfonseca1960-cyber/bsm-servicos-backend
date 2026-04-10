@@ -56,7 +56,6 @@ def buscar_empresa(db: Session, empresa_id: int):
 
     return empresa
 
-
 # =========================
 # 🔹 ATUALIZAR
 # =========================
