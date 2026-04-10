@@ -58,54 +58,33 @@ def listar_todas_empresas(db: Session = Depends(get_db)):
 # 🔹 BUSCAR POR ID
 # =========================
 @router.get("/{empresa_id}", response_model=EmpresaResponse)
-def buscar_empresa(db, empresa_id: int):
-    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
+def buscar_empresa_por_id(
+    empresa_id: int,
+    db: Session = Depends(get_db)  # ✔ obrigatório
+):
+    return buscar_empresa(db, empresa_id)
 
-    if not empresa:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Empresa com id {empresa_id} não encontrada"
-        )
-
-    return empresa
 
 # =========================
 # 🔥 ATUALIZAR (ADMIN)
 # =========================
+
 @router.put("/{empresa_id}", response_model=EmpresaResponse)
-def atualizar_empresa(db, empresa_id: int, dados):
-    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
-
-    if not empresa:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Empresa com id {empresa_id} não encontrada"
-        )
-
-    for key, value in dados.dict(exclude_unset=True).items():
-        setattr(empresa, key, value)
-
-    db.commit()
-    db.refresh(empresa)
-
-    return empresa
+def atualizar_empresa_existente(
+    empresa_id: int,
+    empresa: EmpresaUpdate,  # ✔ body
+    db: Session = Depends(get_db),
+    admin=Depends(get_current_admin)
+):
+    return atualizar_empresa(db, empresa_id, empresa)
 
 # =========================
 # 🔥 DELETAR (ADMIN)
 # =========================
 @router.delete("/{empresa_id}")
-def deletar_empresa(db, empresa_id: int):
-    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
-
-    if not empresa:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Empresa com id {empresa_id} não encontrada"
-        )
-
-    db.delete(empresa)
-    db.commit()
-
-    return {
-        "message": f"Empresa {empresa_id} deletada com sucesso"
-    }
+def deletar_empresa_existente(
+    empresa_id: int,
+    db: Session = Depends(get_db),  # ✔ obrigatório
+    admin=Depends(get_current_admin)
+):
+    return deletar_empresa(db, empresa_id)
