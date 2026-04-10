@@ -73,7 +73,12 @@ def buscar_empresa_por_id(empresa_id: int, db: Session = Depends(get_db)):
 # =========================
 
 @router.put("/{empresa_id}", response_model=EmpresaResponse)
-def atualizar_empresa(db, empresa_id: int, dados):
+def atualizar_empresa(
+    empresa_id: int,
+    dados: EmpresaUpdate,
+    db: Session = Depends(get_db),
+    admin=Depends(get_current_admin)
+):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
     if not empresa:
