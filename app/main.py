@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 from sqlalchemy import text
 import traceback
 
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.database import engine, init_db
 
 # Controllers
@@ -13,38 +15,19 @@ from app.controllers.empresa_controller import router as empresa_router
 from app.controllers.servico_controller import router as servico_router
 from app.controllers.usuario_controller import router as usuario_router
 
-# 🔥 IMPORTANTE: garantir carregamento dos models
+# Models (garante criação no SQLAlchemy)
 from app.models import empresa_model
 from app.models import empresa_foto_model
 
-@app.get("/empresa/listar")
-
-
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5500",
-        "http://127.0.0.1:5500",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-def debug_rota_errada():
 
 # =========================
-# 🔧 AJUSTE DE BANCO
+# 🔧 BANCO
 # =========================
 def ajustar_banco():
     try:
         print("🔥 Ajustando banco...")
 
-        with engine.begin() as conn:  # 🔥 melhor que connect()
+        with engine.begin() as conn:
             conn.execute(text("""
                 ALTER TABLE usuarios 
                 ADD COLUMN IF NOT EXISTS senha_hash VARCHAR;
@@ -58,15 +41,15 @@ def ajustar_banco():
 
 
 # =========================
-# 🔥 STARTUP
+# 🚀 LIFESPAN
 # =========================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
         print("🚀 Iniciando aplicação...")
 
-        init_db()  # cria tabelas
-        ajustar_banco()  # ajustes extras
+        init_db()
+        ajustar_banco()
 
         print("✅ Inicialização concluída!")
 
@@ -75,6 +58,7 @@ async def lifespan(app: FastAPI):
         traceback.print_exc()
 
     yield
+
 
 # =========================
 # 🚀 APP
@@ -86,17 +70,23 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# 🔥 ADICIONE AQUI
 
-from fastapi.middleware.cors import CORSMiddleware
-
+# =========================
+# 🌐 CORS (CORRETO E ÚNICO)
+# =========================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # =========================
 # 🔧 FAVICON
