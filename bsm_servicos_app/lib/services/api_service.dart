@@ -65,20 +65,28 @@ class ApiService {
   // =========================
   // 🏢 LISTAR EMPRESAS
   // =========================
-  static Future<List<Empresa>> getEmpresas() async {
-    final response = await http.get(
-      Uri.parse("$baseUrl/empresas/"),
-      headers: await _headers(),
-    );
 
-    if (response.statusCode == 200) {
-      List data = jsonDecode(response.body);
-      return data.map((e) => Empresa.fromJson(e)).toList();
-    } else {
-      throw Exception("Erro ao buscar empresas");
-    }
+static Future<List<Empresa>> getEmpresas() async {
+  final url = "https://bsm-servicos-backend.onrender.com/empresas/";
+
+  print("🔥 URL FINAL: $url");
+
+  final response = await http.get(
+    Uri.parse(url),
+    headers: await _headers(),
+  );
+
+  print("🔥 STATUS: ${response.statusCode}");
+  print("🔥 BODY: ${response.body}");
+
+  if (response.statusCode == 200) {
+    List data = jsonDecode(response.body);
+    return data.map((e) => Empresa.fromJson(e)).toList();
+  } else {
+    throw Exception("Erro ao buscar empresas");
   }
-
+}
+ 
   // =========================
   // ➕ CRIAR EMPRESA
   // =========================

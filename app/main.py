@@ -1,4 +1,5 @@
 print("🔥🔥🔥 MAIN CARREGADO 🔥🔥🔥")
+
 from fastapi import FastAPI, Response
 from contextlib import asynccontextmanager
 from sqlalchemy import text
@@ -15,6 +16,12 @@ from app.controllers.usuario_controller import router as usuario_router
 # 🔥 IMPORTANTE: garantir carregamento dos models
 from app.models import empresa_model
 from app.models import empresa_foto_model
+
+@app.get("/empresa/listar")
+def debug_rota_errada():
+    print("🔥 ALGUÉ
+Você atingiu o limite do Free par
+
 
 # =========================
 # 🔧 AJUSTE DE BANCO

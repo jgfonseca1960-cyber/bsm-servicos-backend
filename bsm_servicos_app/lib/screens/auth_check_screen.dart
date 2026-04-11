@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
-import 'home_screen.dart';
-import 'login_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthCheckScreen extends StatefulWidget {
   const AuthCheckScreen({super.key});
@@ -11,38 +9,32 @@ class AuthCheckScreen extends StatefulWidget {
 }
 
 class _AuthCheckScreenState extends State<AuthCheckScreen> {
+
   @override
   void initState() {
     super.initState();
-    checkLogin();
+    _checkLogin();
   }
 
-  Future<void> checkLogin() async {
-    final token = await ApiService.getToken();
+  Future<void> _checkLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("token");
 
-    await Future.delayed(const Duration(seconds: 1)); // splash leve
+    await Future.delayed(const Duration(milliseconds: 500));
 
     if (!mounted) return;
 
-    if (token != null && token.isNotEmpty) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
+    if (token != null) {
+      Navigator.pushReplacementNamed(context, "/home");
     } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      Navigator.pushReplacementNamed(context, "/login");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
+      body: Center(child: CircularProgressIndicator()),
     );
   }
 }
