@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from fastapi import HTTPException
+
 from app.database import get_db
 from app.models.empresa_model import Empresa
 from app.models.servico_model import Servico
@@ -11,7 +11,6 @@ from app.services.empresa_service import (
     criar_empresa,
     listar_empresas,
     buscar_empresa,
-    atualizar_empresa,
     deletar_empresa
 )
 
@@ -30,7 +29,6 @@ router = APIRouter(
     tags=["Empresas"]
 )
 
-
 # =========================
 # 🔥 CRIAR (ADMIN)
 # =========================
@@ -46,19 +44,18 @@ def criar_nova_empresa(
 # =========================
 # 🔹 LISTAR (PÚBLICO)
 # =========================
-
-@router.get("/")
+@router.get("/", response_model=List[EmpresaResponse])
 def listar_todas_empresas(db: Session = Depends(get_db)):
     try:
-        return db.query(Empresa).all()
+        return listar_empresas(db)
     except Exception as e:
-        print("ERRO LISTAR:", str(e))
-        raise
+        print("🔥 ERRO LISTAR:", str(e))
+        raise HTTPException(status_code=500, detail="Erro ao listar empresas")
+
 
 # =========================
 # 🔹 BUSCAR POR ID
 # =========================
-
 @router.get("/{empresa_id}", response_model=EmpresaResponse)
 def buscar_empresa_por_id(empresa_id: int, db: Session = Depends(get_db)):
     try:
@@ -69,55 +66,62 @@ def buscar_empresa_por_id(empresa_id: int, db: Session = Depends(get_db)):
         print("🔥 ERRO AO BUSCAR EMPRESA:", str(e))
         raise HTTPException(status_code=500, detail="Erro interno ao buscar empresa")
 
+
 # =========================
 # 🔥 ATUALIZAR (ADMIN)
 # =========================
-
 @router.put("/{empresa_id}", response_model=EmpresaResponse)
-def atualizar_empresa(
+def atualizar_empresa_existente(
     empresa_id: int,
     dados: EmpresaUpdate,
     db: Session = Depends(get_db),
     admin=Depends(get_current_admin)
 ):
-    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
+    try:
+        empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+        if not empresa:
+            raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-    # 🔥 VALIDAÇÃO FK (CORREÇÃO DO ERRO)
-    if dados.servico_id is not None:
-        if dados.servico_id == 0:
-            raise HTTPException(
-                status_code=400,
-                detail="servico_id não pode ser 0"
-            )
+        update_data = dados.dict(exclude_unset=True)
 
-        servico = db.query(Servico).filter(Servico.id == dados.servico_id).first()
+        for key, value in update_data.items():
 
-        if not servico:
-            raise HTTPException(
-                status_code=400,
-                detail="servico_id inválido (não existe na tabela servicos)"
-            )
+            # 🔥 validação forte
+            if key == "servico_id":
+                if value is not None:
+                    servico = db.query(Servico).filter(Servico.id == value).first()
+                    if not servico:
+                        raise HTTPException(
+                            status_code=400,
+                            detail="servico_id inválido"
+                        )
 
-    for key, value in dados.dict(exclude_unset=True).items():
-        setattr(empresa, key, value)
+            setattr(empresa, key, value)
 
-    db.commit()
-    db.refresh(empresa)
+        db.commit()
+        db.refresh(empresa)
 
-    return empresa
-    
+        return empresa
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("🔥 ERRO AO ATUALIZAR:", str(e))
+        raise HTTPException(status_code=500, detail="Erro ao atualizar empresa")
+
+
 # =========================
 # 🔥 DELETAR (ADMIN)
 # =========================
 @router.delete("/{empresa_id}")
 def deletar_empresa_existente(
     empresa_id: int,
-    db: Session = Depends(get_db),  # ✔ obrigatório
+    db: Session = Depends(get_db),
     admin=Depends(get_current_admin)
 ):
-    return deletar_empresa(db, empresa_id)
-
-
+    try:
+        return deletar_empresa(db, empresa_id)
+    except Exception as e:
+        print("🔥 ERRO AO DELETAR:", str(e))
+        raise HTTPException(status_code=500, detail="Erro ao deletar empresa")

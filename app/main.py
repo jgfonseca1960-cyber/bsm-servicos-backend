@@ -1,3 +1,4 @@
+print("🔥🔥🔥 MAIN CARREGADO 🔥🔥🔥")
 from fastapi import FastAPI, Response
 from contextlib import asynccontextmanager
 from sqlalchemy import text
@@ -14,7 +15,6 @@ from app.controllers.usuario_controller import router as usuario_router
 # 🔥 IMPORTANTE: garantir carregamento dos models
 from app.models import empresa_model
 from app.models import empresa_foto_model
-
 
 # =========================
 # 🔧 AJUSTE DE BANCO
@@ -66,6 +66,16 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# 🔥 ADICIONE AQUI
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # =========================
 # 🔧 FAVICON
@@ -79,7 +89,7 @@ def favicon():
 # 📌 ROTAS
 # =========================
 app.include_router(auth_router)
-app.include_router(empresa_router, prefix="/empresas", tags=["Empresas"])
+app.include_router(empresa_router)
 app.include_router(servico_router, prefix="/servicos", tags=["Serviços"])
 app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
 
