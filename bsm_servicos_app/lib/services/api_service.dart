@@ -53,40 +53,48 @@ class ApiService {
   // =========================
   // 🔥 HEADERS AUTH
   // =========================
+  
   static Future<Map<String, String>> _headers() async {
-    final token = await getToken();
+  final token = await getToken();
 
-    return {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer $token",
-    };
+  final headers = {
+    "Content-Type": "application/json",
+  };
+
+  if (token != null && token.isNotEmpty) {
+    headers["Authorization"] = "Bearer $token";
   }
 
-  // =========================
+  return headers;
+}
+ 
+   // =========================
   // 🏢 LISTAR EMPRESAS
   // =========================
 
 static Future<List<Empresa>> getEmpresas() async {
-  final url = "https://bsm-servicos-backend.onrender.com/empresas/";
+  final url = Uri.parse("$baseUrl/empresas/");
 
   print("🔥 URL FINAL: $url");
 
-  final response = await http.get(
-    Uri.parse(url),
-    headers: await _headers(),
-  );
+  final response = await http.get(url);
 
   print("🔥 STATUS: ${response.statusCode}");
   print("🔥 BODY: ${response.body}");
 
   if (response.statusCode == 200) {
-    List data = jsonDecode(response.body);
+    final decoded = jsonDecode(response.body);
+
+    print("🔥 TYPE: ${decoded.runtimeType}");
+
+    List data = decoded is List ? decoded : decoded["empresas"];
+
     return data.map((e) => Empresa.fromJson(e)).toList();
   } else {
     throw Exception("Erro ao buscar empresas");
   }
 }
- 
+
   // =========================
   // ➕ CRIAR EMPRESA
   // =========================

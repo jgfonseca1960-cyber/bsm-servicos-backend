@@ -3,6 +3,13 @@ import 'screens/auth_check_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 
+
+## Temporario
+
+home: TesteEmpresas(),
+
+##
+
 void main() {
   throw Exception("🔥 TESTE MAIN 🔥");
 }
