@@ -19,10 +19,7 @@ from app.models import empresa_foto_model
 
 @app.get("/empresa/listar")
 def debug_rota_errada():
-    print("🔥 ALGUÉ
-Você atingiu o limite do Free par
-
-
+   
 # =========================
 # 🔧 AJUSTE DE BANCO
 # =========================
