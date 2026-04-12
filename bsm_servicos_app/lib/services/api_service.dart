@@ -39,79 +39,79 @@ class ApiService {
       },
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
       final data = jsonDecode(response.body);
       final token = data["access_token"];
 
       await saveToken(token);
       return token;
     } else {
-      throw Exception("Erro no login");
+      throw Exception("Erro no login: ${response.body}");
     }
   }
 
   // =========================
   // 🔥 HEADERS AUTH
   // =========================
-  
   static Future<Map<String, String>> _headers() async {
-  final token = await getToken();
+    final token = await getToken();
 
-  final headers = {
-    "Content-Type": "application/json",
-  };
+    final headers = {
+      "Content-Type": "application/json",
+    };
 
-  if (token != null && token.isNotEmpty) {
-    headers["Authorization"] = "Bearer $token";
+    if (token != null && token.isNotEmpty) {
+      headers["Authorization"] = "Bearer $token";
+    }
+
+    return headers;
   }
 
-  return headers;
-}
- 
-   // =========================
+  // =========================
   // 🏢 LISTAR EMPRESAS
   // =========================
+  static Future<List<Empresa>> getEmpresas() async {
+    final url = Uri.parse("$baseUrl/empresas");
 
-static Future<List<Empresa>> getEmpresas() async {
-  final url = Uri.parse("$baseUrl/empresas/");
+    print("🔥 URL FINAL: $url");
 
-  print("🔥 URL FINAL: $url");
+    final response = await http.get(
+      url,
+      headers: await _headers(),
+    );
 
-  final response = await http.get(url);
+    print("🔥 STATUS: ${response.statusCode}");
+    print("🔥 BODY: ${response.body}");
 
-  print("🔥 STATUS: ${response.statusCode}");
-  print("🔥 BODY: ${response.body}");
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body);
 
-  if (response.statusCode == 200) {
-    final decoded = jsonDecode(response.body);
+      final List data = decoded is List
+          ? decoded
+          : decoded["empresas"] ?? [];
 
-    print("🔥 TYPE: ${decoded.runtimeType}");
-
-    List data = decoded is List ? decoded : decoded["empresas"];
-
-    return data.map((e) => Empresa.fromJson(e)).toList();
-  } else {
-    throw Exception("Erro ao buscar empresas");
+      return data.map((e) => Empresa.fromJson(e)).toList();
+    } else {
+      throw Exception("Erro ao buscar empresas: ${response.body}");
+    }
   }
-}
 
   // =========================
   // ➕ CRIAR EMPRESA
   // =========================
   static Future<void> createEmpresa(Map<String, dynamic> data) async {
-    // 🔥 REMOVE servico_id = 0 (BUG QUE VOCÊ TEVE)
     if (data["servico_id"] == 0) {
       data.remove("servico_id");
     }
 
     final response = await http.post(
-      Uri.parse("$baseUrl/empresas/"),
+      Uri.parse("$baseUrl/empresas"),
       headers: await _headers(),
       body: jsonEncode(data),
     );
 
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception("Erro ao criar empresa");
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception("Erro ao criar empresa: ${response.body}");
     }
   }
 
@@ -132,8 +132,8 @@ static Future<List<Empresa>> getEmpresas() async {
       body: jsonEncode(data),
     );
 
-    if (response.statusCode != 200) {
-      throw Exception("Erro ao atualizar empresa");
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception("Erro ao atualizar empresa: ${response.body}");
     }
   }
 
@@ -146,8 +146,8 @@ static Future<List<Empresa>> getEmpresas() async {
       headers: await _headers(),
     );
 
-    if (response.statusCode != 200) {
-      throw Exception("Erro ao deletar empresa");
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception("Erro ao deletar empresa: ${response.body}");
     }
   }
 }
