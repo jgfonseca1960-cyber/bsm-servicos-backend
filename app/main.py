@@ -72,13 +72,11 @@ app = FastAPI(
 
 
 # =========================
-# 🌐 CORS (CORRETO E ÚNICO)
+# 🌐 CORS
 # =========================
-
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 🔥 TEMPORÁRIO PARA TESTE
+    allow_origins=["*"],  # 🔥 temporário (produção: restringir)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -96,8 +94,8 @@ def favicon():
 # =========================
 # 📌 ROTAS
 # =========================
-app.include_router(auth_router)
-app.include_router(empresa_router)
+app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+app.include_router(empresa_router, prefix="/empresa", tags=["Empresa"])
 app.include_router(servico_router, prefix="/servicos", tags=["Serviços"])
 app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
 

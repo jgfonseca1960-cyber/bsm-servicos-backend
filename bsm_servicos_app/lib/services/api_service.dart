@@ -28,18 +28,23 @@ class ApiService {
   // 🔐 LOGIN
   // =========================
   static Future<String> login(String email, String password) async {
-    final response = await http
-        .post(
-          Uri.parse("$baseUrl/auth/login"),
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: {
-            "username": email,
-            "password": password,
-          },
-        )
-        .timeout(Duration(seconds: 10));
+    final url = Uri.parse("$baseUrl/auth/login");
+
+    print("🌐 LOGIN:");
+    print("➡️ URL: $url");
+    print("📍 STACK TRACE:");
+    print(StackTrace.current);
+
+    final response = await http.post(
+      url,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: {
+        "username": email,
+        "password": password,
+      },
+    ).timeout(const Duration(seconds: 10));
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final data = jsonDecode(response.body);
@@ -76,12 +81,12 @@ class ApiService {
     try {
       final url = Uri.parse("$baseUrl/empresas/");
 
-      print("🔥 URL FINAL: $url");
-      print("🔥 TOKEN: ${await getToken()}");
+      print("🌐 GET EMPRESAS:");
+      print("➡️ URL: $url");
+      print("📍 STACK TRACE:");
+      print(StackTrace.current);
 
-      final response = await http
-          .get(url, headers: await _headers())
-          .timeout(Duration(seconds: 10));
+      final response = await http.get(url, headers: await _headers());
 
       print("🔥 STATUS: ${response.statusCode}");
       print("🔥 BODY: ${response.body}");
@@ -97,8 +102,10 @@ class ApiService {
       } else {
         throw Exception("Erro ${response.statusCode}: ${response.body}");
       }
-    } catch (e) {
-      print("❌ ERRO COMPLETO: $e");
+    } catch (e, stack) {
+      print("❌ ERRO: $e");
+      print("📍 STACK TRACE ERRO:");
+      print(stack);
       throw Exception("Falha ao carregar empresas");
     }
   }
@@ -107,17 +114,18 @@ class ApiService {
   // ➕ CRIAR EMPRESA
   // =========================
   static Future<void> createEmpresa(Map<String, dynamic> data) async {
-    if (data["servico_id"] == 0) {
-      data.remove("servico_id");
-    }
+    final url = Uri.parse("$baseUrl/empresas/");
 
-    final response = await http
-        .post(
-          Uri.parse("$baseUrl/empresas/"),
-          headers: await _headers(),
-          body: jsonEncode(data),
-        )
-        .timeout(Duration(seconds: 10));
+    print("🌐 CREATE EMPRESA:");
+    print("➡️ URL: $url");
+    print("📍 STACK TRACE:");
+    print(StackTrace.current);
+
+    final response = await http.post(
+      url,
+      headers: await _headers(),
+      body: jsonEncode(data),
+    );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception("Erro ao criar empresa: ${response.body}");
@@ -127,21 +135,19 @@ class ApiService {
   // =========================
   // ✏️ ATUALIZAR EMPRESA
   // =========================
-  static Future<void> updateEmpresa(
-    int id,
-    Map<String, dynamic> data,
-  ) async {
-    if (data["servico_id"] == 0) {
-      data.remove("servico_id");
-    }
+  static Future<void> updateEmpresa(int id, Map<String, dynamic> data) async {
+    final url = Uri.parse("$baseUrl/empresas/$id");
 
-    final response = await http
-        .put(
-          Uri.parse("$baseUrl/empresas/$id"),
-          headers: await _headers(),
-          body: jsonEncode(data),
-        )
-        .timeout(Duration(seconds: 10));
+    print("🌐 UPDATE EMPRESA:");
+    print("➡️ URL: $url");
+    print("📍 STACK TRACE:");
+    print(StackTrace.current);
+
+    final response = await http.put(
+      url,
+      headers: await _headers(),
+      body: jsonEncode(data),
+    );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception("Erro ao atualizar empresa: ${response.body}");
@@ -152,12 +158,17 @@ class ApiService {
   // ❌ DELETAR EMPRESA
   // =========================
   static Future<void> deleteEmpresa(int id) async {
-    final response = await http
-        .delete(
-          Uri.parse("$baseUrl/empresas/$id"),
-          headers: await _headers(),
-        )
-        .timeout(Duration(seconds: 10));
+    final url = Uri.parse("$baseUrl/empresas/$id");
+
+    print("🌐 DELETE EMPRESA:");
+    print("➡️ URL: $url");
+    print("📍 STACK TRACE:");
+    print(StackTrace.current);
+
+    final response = await http.delete(
+      url,
+      headers: await _headers(),
+    );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception("Erro ao deletar empresa: ${response.body}");
@@ -170,14 +181,14 @@ class ApiService {
   static Future<List<dynamic>> getServicos() async {
     final url = Uri.parse("$baseUrl/servicos/");
 
-    print("🔥 BUSCANDO SERVIÇOS: $url");
+    print("🌐 GET SERVIÇOS:");
+    print("➡️ URL: $url");
+    print("📍 STACK TRACE:");
+    print(StackTrace.current);
 
-    final response = await http
-        .get(url, headers: await _headers())
-        .timeout(Duration(seconds: 10));
+    final response = await http.get(url, headers: await _headers());
 
     print("🔥 STATUS SERVIÇOS: ${response.statusCode}");
-    print("🔥 BODY SERVIÇOS: ${response.body}");
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return jsonDecode(response.body);
