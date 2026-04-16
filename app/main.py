@@ -106,3 +106,5 @@ app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
 @app.get("/")
 def root():
     return {"msg": "API BSM Serviços rodando 🚀"}
+
+print("🔥🔥🔥 BACKEND NOVO RODANDO 🔥🔥🔥")
