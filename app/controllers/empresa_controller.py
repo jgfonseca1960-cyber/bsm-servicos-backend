@@ -4,124 +4,106 @@ from typing import List
 
 from app.database import get_db
 from app.models.empresa_model import Empresa
-from app.models.servico_model import Servico
-
-# 🔹 SERVICE
-from app.services.empresa_service import (
-    criar_empresa,
-    listar_empresas,
-    buscar_empresa,
-    deletar_empresa
-)
-
-# 🔹 SCHEMAS
-from app.schemas.empresa_schema import (
-    EmpresaCreate,
-    EmpresaResponse,
-    EmpresaUpdate
-)
-
-# 🔥 AUTH
-from app.dependencies.auth import get_current_admin
 
 router = APIRouter(
-    prefix="/empresas",
+    prefix="/empresa",
     tags=["Empresas"]
 )
 
 # =========================
-# 🔥 CRIAR (ADMIN)
+# 📌 LISTAR EMPRESAS (ROTA NOVA)
 # =========================
-@router.post("/", response_model=EmpresaResponse)
-def criar_nova_empresa(
-    empresa: EmpresaCreate,
-    db: Session = Depends(get_db),
-    admin=Depends(get_current_admin)
-):
-    return criar_empresa(db, empresa)
+@router.get("/empresas", response_model=List[dict])
+def listar_empresas(db: Session = Depends(get_db)):
+    empresas = db.query(Empresa).all()
 
-
-# =========================
-# 🔹 LISTAR (PÚBLICO)
-# =========================
-@router.get("/", response_model=List[EmpresaResponse])
-def listar_todas_empresas(db: Session = Depends(get_db)):
-    try:
-        return listar_empresas(db)
-    except Exception as e:
-        print("🔥 ERRO LISTAR:", str(e))
-        raise HTTPException(status_code=500, detail="Erro ao listar empresas")
+    return [
+        {
+            "id": e.id,
+            "nome": e.nome,
+            "telefone": e.telefone,
+            "email": e.email,
+            "endereco": e.endereco,
+            "latitude": e.latitude,
+            "longitude": e.longitude,
+        }
+        for e in empresas
+    ]
 
 
 # =========================
-# 🔹 BUSCAR POR ID
+# 🔥 ROTA ANTIGA (COMPATIBILIDADE)
 # =========================
-@router.get("/{empresa_id}", response_model=EmpresaResponse)
-def buscar_empresa_por_id(empresa_id: int, db: Session = Depends(get_db)):
-    try:
-        return buscar_empresa(db, empresa_id)
-    except HTTPException:
-        raise
-    except Exception as e:
-        print("🔥 ERRO AO BUSCAR EMPRESA:", str(e))
-        raise HTTPException(status_code=500, detail="Erro interno ao buscar empresa")
+@router.get("/listar")
+def listar_empresas_compat(db: Session = Depends(get_db)):
+    return listar_empresas(db)
 
 
 # =========================
-# 🔥 ATUALIZAR (ADMIN)
+# 🔍 DETALHAR EMPRESA
 # =========================
-@router.put("/{empresa_id}", response_model=EmpresaResponse)
-def atualizar_empresa_existente(
-    empresa_id: int,
-    dados: EmpresaUpdate,
-    db: Session = Depends(get_db),
-    admin=Depends(get_current_admin)
-):
-    try:
-        empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
+@router.get("/detalhe/{empresa_id}")
+def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
+    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
-        if not empresa:
-            raise HTTPException(status_code=404, detail="Empresa não encontrada")
+    if not empresa:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-        update_data = dados.dict(exclude_unset=True)
-
-        for key, value in update_data.items():
-
-            # 🔥 validação forte
-            if key == "servico_id":
-                if value is not None:
-                    servico = db.query(Servico).filter(Servico.id == value).first()
-                    if not servico:
-                        raise HTTPException(
-                            status_code=400,
-                            detail="servico_id inválido"
-                        )
-
-            setattr(empresa, key, value)
-
-        db.commit()
-        db.refresh(empresa)
-
-        return empresa
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        print("🔥 ERRO AO ATUALIZAR:", str(e))
-        raise HTTPException(status_code=500, detail="Erro ao atualizar empresa")
+    return {
+        "id": empresa.id,
+        "nome": empresa.nome,
+        "telefone": empresa.telefone,
+        "email": empresa.email,
+        "endereco": empresa.endereco,
+        "latitude": empresa.latitude,
+        "longitude": empresa.longitude,
+    }
 
 
 # =========================
-# 🔥 DELETAR (ADMIN)
+# ➕ CRIAR EMPRESA
+# =========================
+@router.post("/")
+def criar_empresa(data: dict, db: Session = Depends(get_db)):
+    empresa = Empresa(**data)
+
+    db.add(empresa)
+    db.commit()
+    db.refresh(empresa)
+
+    return {"msg": "Empresa criada com sucesso", "id": empresa.id}
+
+
+# =========================
+# ✏️ ATUALIZAR EMPRESA
+# =========================
+@router.put("/{empresa_id}")
+def atualizar_empresa(empresa_id: int, data: dict, db: Session = Depends(get_db)):
+    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
+
+    if not empresa:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+
+    for key, value in data.items():
+        setattr(empresa, key, value)
+
+    db.commit()
+    db.refresh(empresa)
+
+    return {"msg": "Empresa atualizada com sucesso"}
+
+
+# =========================
+# ❌ DELETAR EMPRESA
 # =========================
 @router.delete("/{empresa_id}")
-def deletar_empresa_existente(
-    empresa_id: int,
-    db: Session = Depends(get_db),
-    admin=Depends(get_current_admin)
-):
-    try:
-        return deletar_empresa(db, empresa_id)
-    except Exception as e:
-        print("🔥 ERRO AO DELETAR:", str(e))
-        raise HTTPException(status_code=500, detail="Erro ao deletar empresa")
+def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
+    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
+
+    if not empresa:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+
+    db.delete(empresa)
+    db.commit()
+
+    return {"msg": "Empresa deletada com sucesso"}

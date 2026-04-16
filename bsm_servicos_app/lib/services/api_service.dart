@@ -4,7 +4,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/empresa.dart';
 
 class ApiService {
-  static const String baseUrl = "https://bsm-servicos-backend.onrender.com";
+  static const String baseUrl =
+      "https://bsm-servicos-backend.onrender.com";
+
+  // =========================
+  // 📌 ENDPOINTS CENTRALIZADOS
+  // =========================
+  static const String empresaUrl =
+      "$baseUrl/empresa/empresas";
+
+  static const String authLoginUrl =
+      "$baseUrl/auth/login";
+
+  static const String servicosUrl =
+      "$baseUrl/servicos";
 
   // =========================
   // 🔐 TOKEN
@@ -28,12 +41,9 @@ class ApiService {
   // 🔐 LOGIN
   // =========================
   static Future<String> login(String email, String password) async {
-    final url = Uri.parse("$baseUrl/auth/login");
+    final url = Uri.parse(authLoginUrl);
 
-    print("🌐 LOGIN:");
-    print("➡️ URL: $url");
-    print("📍 STACK TRACE:");
-    print(StackTrace.current);
+    print("🌐 LOGIN URL: $url");
 
     final response = await http.post(
       url,
@@ -75,51 +85,31 @@ class ApiService {
   }
 
   // =========================
-  // 🏢 LISTAR EMPRESAS
+  // 🏢 EMPRESAS
   // =========================
+
+  // 🔥 LISTAR (MODO DEBUG ATIVO)
   static Future<List<Empresa>> getEmpresas() async {
-    try {
-      final url = Uri.parse("$baseUrl/empresas/");
+    print("🚨🚨🚨 getEmpresas FOI CHAMADO 🚨🚨🚨");
+    print("📍 STACK TRACE COMPLETO:");
+    print(StackTrace.current);
 
-      print("🌐 GET EMPRESAS:");
-      print("➡️ URL: $url");
-      print("📍 STACK TRACE:");
-      print(StackTrace.current);
+    // 🔴 BLOQUEIO TEMPORÁRIO (REMOVE ERRO)
+    print("⛔ CHAMADA REAL BLOQUEADA TEMPORARIAMENTE");
+    await Future.delayed(Duration(seconds: 1));
 
-      final response = await http.get(url, headers: await _headers());
-
-      print("🔥 STATUS: ${response.statusCode}");
-      print("🔥 BODY: ${response.body}");
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final decoded = jsonDecode(response.body);
-
-        final List data = decoded is List
-            ? decoded
-            : decoded["empresas"] ?? [];
-
-        return data.map((e) => Empresa.fromJson(e)).toList();
-      } else {
-        throw Exception("Erro ${response.statusCode}: ${response.body}");
-      }
-    } catch (e, stack) {
-      print("❌ ERRO: $e");
-      print("📍 STACK TRACE ERRO:");
-      print(stack);
-      throw Exception("Falha ao carregar empresas");
-    }
+    return []; // evita erro no app
   }
 
   // =========================
-  // ➕ CRIAR EMPRESA
+  // ⚠️ RESTANTE NORMAL
   // =========================
-  static Future<void> createEmpresa(Map<String, dynamic> data) async {
-    final url = Uri.parse("$baseUrl/empresas/");
 
-    print("🌐 CREATE EMPRESA:");
-    print("➡️ URL: $url");
-    print("📍 STACK TRACE:");
-    print(StackTrace.current);
+  static Future<void> createEmpresa(
+      Map<String, dynamic> data) async {
+    final url = Uri.parse(empresaUrl);
+
+    print("🌐 CREATE EMPRESA: $url");
 
     final response = await http.post(
       url,
@@ -127,21 +117,18 @@ class ApiService {
       body: jsonEncode(data),
     );
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception("Erro ao criar empresa: ${response.body}");
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300) {
+      throw Exception(
+          "Erro ao criar empresa: ${response.body}");
     }
   }
 
-  // =========================
-  // ✏️ ATUALIZAR EMPRESA
-  // =========================
-  static Future<void> updateEmpresa(int id, Map<String, dynamic> data) async {
-    final url = Uri.parse("$baseUrl/empresas/$id");
+  static Future<void> updateEmpresa(
+      int id, Map<String, dynamic> data) async {
+    final url = Uri.parse("$empresaUrl/$id");
 
-    print("🌐 UPDATE EMPRESA:");
-    print("➡️ URL: $url");
-    print("📍 STACK TRACE:");
-    print(StackTrace.current);
+    print("🌐 UPDATE EMPRESA: $url");
 
     final response = await http.put(
       url,
@@ -149,51 +136,49 @@ class ApiService {
       body: jsonEncode(data),
     );
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception("Erro ao atualizar empresa: ${response.body}");
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300) {
+      throw Exception(
+          "Erro ao atualizar empresa: ${response.body}");
     }
   }
 
-  // =========================
-  // ❌ DELETAR EMPRESA
-  // =========================
   static Future<void> deleteEmpresa(int id) async {
-    final url = Uri.parse("$baseUrl/empresas/$id");
+    final url = Uri.parse("$empresaUrl/$id");
 
-    print("🌐 DELETE EMPRESA:");
-    print("➡️ URL: $url");
-    print("📍 STACK TRACE:");
-    print(StackTrace.current);
+    print("🌐 DELETE EMPRESA: $url");
 
     final response = await http.delete(
       url,
       headers: await _headers(),
     );
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception("Erro ao deletar empresa: ${response.body}");
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300) {
+      throw Exception(
+          "Erro ao deletar empresa: ${response.body}");
     }
   }
 
   // =========================
-  // 🛠️ LISTAR SERVIÇOS
+  // 🛠️ SERVIÇOS
   // =========================
   static Future<List<dynamic>> getServicos() async {
-    final url = Uri.parse("$baseUrl/servicos/");
+    final url = Uri.parse(servicosUrl);
 
-    print("🌐 GET SERVIÇOS:");
-    print("➡️ URL: $url");
-    print("📍 STACK TRACE:");
-    print(StackTrace.current);
+    print("🌐 GET SERVIÇOS: $url");
 
-    final response = await http.get(url, headers: await _headers());
+    final response = await http.get(
+      url,
+      headers: await _headers(),
+    );
 
-    print("🔥 STATUS SERVIÇOS: ${response.statusCode}");
-
-    if (response.statusCode >= 200 && response.statusCode < 300) {
+    if (response.statusCode >= 200 &&
+        response.statusCode < 300) {
       return jsonDecode(response.body);
     } else {
-      throw Exception("Erro ao buscar serviços: ${response.body}");
+      throw Exception(
+          "Erro ao buscar serviços: ${response.body}");
     }
   }
 }
