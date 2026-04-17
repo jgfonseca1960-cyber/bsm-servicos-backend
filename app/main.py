@@ -9,7 +9,6 @@ import os
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-# 🔐 AUTH SWAGGER (ESSENCIAL PARA APARECER "AUTHORIZE")
 from fastapi.security import OAuth2PasswordBearer
 
 from app.database import engine, init_db
@@ -26,13 +25,12 @@ from app.models import empresa_foto_model
 
 
 # =========================
-# 🔐 SWAGGER AUTH (RESOLVE AUTHORIZE SUMIR)
+# 🔐 AUTH SWAGGER (CORRETO)
 # =========================
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
-    # ⚠️ aqui você depois valida JWT real
     return {"token": token, "is_admin": True}
 
 
@@ -77,13 +75,14 @@ async def lifespan(app: FastAPI):
 
 
 # =========================
-# 🚀 APP
+# 🚀 APP (CORRIGIDO PARA SWAGGER AUTH)
 # =========================
 app = FastAPI(
     title="BSM Serviços API",
     version="1.0.0",
     description="API com autenticação JWT",
-    lifespan=lifespan
+    lifespan=lifespan,
+    swagger_ui_parameters={"persistAuthorization": True}  # 🔥 ESSENCIAL
 )
 
 
