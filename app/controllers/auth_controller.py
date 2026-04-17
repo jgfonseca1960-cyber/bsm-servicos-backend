@@ -6,7 +6,7 @@ from app.database import get_db
 from app.models.usuario_model import Usuario
 from app.core.security import verify_password, create_access_token
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter(tags=["Auth"])
 
 # =========================
 # 🔐 LOGIN
