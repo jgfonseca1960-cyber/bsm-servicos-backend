@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import Optional
 from pydantic import BaseModel
@@ -18,7 +18,7 @@ UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # =========================
-# 📦 SCHEMAS (NÃO QUEBRA SWAGGER)
+# 📦 SCHEMAS
 # =========================
 class EmpresaCreate(BaseModel):
     nome: str
@@ -67,7 +67,7 @@ class EmpresaUpdate(BaseModel):
 
 
 # =========================
-# 📌 LISTAGEM (ORIGINAL + FILTROS OPCIONAIS)
+# 📌 LISTAGEM (FLUTTER SAFE)
 # =========================
 @router.get("/")
 def listar_empresas(
@@ -117,7 +117,7 @@ def listar_empresas(
 
             "fotos": [
                 {"id": f.id, "url": f.url}
-                for f in e.fotos
+                for f in (e.fotos or [])
             ]
         }
         for e in empresas
@@ -125,7 +125,7 @@ def listar_empresas(
 
 
 # =========================
-# 🔍 DETALHE (MANTIDO)
+# 🔍 DETALHE
 # =========================
 @router.get("/{empresa_id}")
 def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
@@ -159,23 +159,28 @@ def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
 
         "fotos": [
             {"id": f.id, "url": f.url}
-            for f in empresa.fotos
+            for f in (empresa.fotos or [])
         ]
     }
 
 
 # =========================
-# ➕ CRIAR (SEGURO PARA FLUTTER)
+# ➕ CRIAR (SEM QUEBRAR FLUTTER)
 # =========================
 @router.post("/")
 def criar_empresa(data: EmpresaCreate, db: Session = Depends(get_db)):
-    empresa = Empresa(**data.model_dump())
+    try:
+        empresa = Empresa(**data.model_dump())
 
-    db.add(empresa)
-    db.commit()
-    db.refresh(empresa)
+        db.add(empresa)
+        db.commit()
+        db.refresh(empresa)
 
-    return {"msg": "Empresa criada com sucesso", "id": empresa.id}
+        return {"msg": "Empresa criada com sucesso", "id": empresa.id}
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # =========================
@@ -253,11 +258,9 @@ async def upload_foto(
 
 
 # =========================================================
-# 🚀 EVOLUÇÕES SEGURAS (NOVAS FUNCIONALIDADES SEM QUEBRAR)
+# 🚀 EVOLUÇÕES SEGURAS (NÃO QUEBRAM FLUTTER)
 # =========================================================
 
-
-# 📊 ESTATÍSTICAS
 @router.get("/_stats/overview")
 def estatisticas(db: Session = Depends(get_db)):
     total = db.query(Empresa).count()
@@ -270,7 +273,6 @@ def estatisticas(db: Session = Depends(get_db)):
     }
 
 
-# 🏆 RANKING
 @router.get("/ranking")
 def ranking(db: Session = Depends(get_db)):
     empresas = db.query(Empresa).order_by(
@@ -288,7 +290,6 @@ def ranking(db: Session = Depends(get_db)):
     ]
 
 
-# 🔎 BUSCA AVANÇADA
 @router.get("/buscar")
 def buscar(
     q: str,
@@ -310,13 +311,11 @@ def buscar(
     return query.limit(50).all()
 
 
-# 📊 CONTAGEM
 @router.get("/count")
 def count(db: Session = Depends(get_db)):
     return {"total": db.query(Empresa).count()}
 
 
-# 📍 EMPRESAS PRÓXIMAS (BÁSICO)
 @router.get("/proximas")
 def proximas(lat: float, lng: float, raio: float = 10, db: Session = Depends(get_db)):
     empresas = db.query(Empresa).all()
@@ -340,11 +339,10 @@ def proximas(lat: float, lng: float, raio: float = 10, db: Session = Depends(get
     return resultado
 
 
-# 🧪 STATUS
 @router.get("/_health")
 def health():
     return {
         "module": "empresa",
         "status": "ok",
-        "version": "stable-v3"
+        "version": "stable-v4-safe"
     }

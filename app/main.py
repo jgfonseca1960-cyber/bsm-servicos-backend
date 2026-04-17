@@ -1,6 +1,6 @@
 print("🔥🔥🔥 MAIN CARREGADO 🔥🔥🔥")
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, Depends
 from contextlib import asynccontextmanager
 from sqlalchemy import text
 import traceback
@@ -8,6 +8,9 @@ import os
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+
+# 🔐 AUTH SWAGGER (ESSENCIAL PARA APARECER "AUTHORIZE")
+from fastapi.security import OAuth2PasswordBearer
 
 from app.database import engine, init_db
 
@@ -17,9 +20,20 @@ from app.controllers.empresa_controller import router as empresa_router
 from app.controllers.servico_controller import router as servico_router
 from app.controllers.usuario_controller import router as usuario_router
 
-# Models (garante criação no SQLAlchemy)
+# Models
 from app.models import empresa_model
 from app.models import empresa_foto_model
+
+
+# =========================
+# 🔐 SWAGGER AUTH (RESOLVE AUTHORIZE SUMIR)
+# =========================
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    # ⚠️ aqui você depois valida JWT real
+    return {"token": token, "is_admin": True}
 
 
 # =========================
@@ -63,7 +77,7 @@ async def lifespan(app: FastAPI):
 
 
 # =========================
-# 🚀 APP (DEVE SER PRIMEIRO)
+# 🚀 APP
 # =========================
 app = FastAPI(
     title="BSM Serviços API",
@@ -78,7 +92,7 @@ app = FastAPI(
 # =========================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # produção: restringir depois
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -86,7 +100,7 @@ app.add_middleware(
 
 
 # =========================
-# 📁 STATIC FILES (UPLOADS)
+# 📁 UPLOADS
 # =========================
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
