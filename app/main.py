@@ -8,7 +8,6 @@ import os
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-
 from fastapi.security import OAuth2PasswordBearer
 
 from app.database import engine, init_db
@@ -19,16 +18,11 @@ from app.controllers.empresa_controller import router as empresa_router
 from app.controllers.servico_controller import router as servico_router
 from app.controllers.usuario_controller import router as usuario_router
 
-# Models
-from app.models import empresa_model
-from app.models import empresa_foto_model
-
 
 # =========================
 # 🔐 AUTH SWAGGER (CORRETO)
 # =========================
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     return {"token": token, "is_admin": True}
@@ -59,12 +53,11 @@ def ajustar_banco():
 # =========================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        print("🚀 Iniciando aplicação...")
+    print("🚀 Iniciando aplicação...")
 
+    try:
         init_db()
         ajustar_banco()
-
         print("✅ Inicialização concluída!")
 
     except Exception:
@@ -73,16 +66,21 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    print("🛑 Encerrando aplicação...")
+
 
 # =========================
-# 🚀 APP (CORRIGIDO PARA SWAGGER AUTH)
+# 🚀 FASTAPI APP
 # =========================
 app = FastAPI(
     title="BSM Serviços API",
     version="1.0.0",
     description="API com autenticação JWT",
     lifespan=lifespan,
-    swagger_ui_parameters={"persistAuthorization": True}  # 🔥 ESSENCIAL
+    swagger_ui_parameters={
+        "persistAuthorization": True,
+        "displayRequestDuration": True
+    }
 )
 
 
@@ -99,7 +97,7 @@ app.add_middleware(
 
 
 # =========================
-# 📁 UPLOADS
+# 📁 STATIC FILES
 # =========================
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -120,7 +118,7 @@ def favicon():
 
 
 # =========================
-# 📌 ROTAS
+# 📌 ROUTERS (IMPORTANTE: SEM DUPLICAR)
 # =========================
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(empresa_router, prefix="/empresa", tags=["Empresa"])
@@ -129,7 +127,7 @@ app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
 
 
 # =========================
-# 🧪 TESTE
+# 🧪 ROOT
 # =========================
 @app.get("/")
 def root():

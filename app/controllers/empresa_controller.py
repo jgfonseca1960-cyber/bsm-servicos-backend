@@ -104,7 +104,85 @@ def listar_empresas(db: Session = Depends(get_db), skip: int = 0, limit: int = 5
 
 
 # =========================
-# 🔍 DETALHE
+# 🔥 ROTAS FIXAS (ANTES DO ID)
+# =========================
+
+@router.get("/_stats/overview")
+def estatisticas(db: Session = Depends(get_db)):
+    total = db.query(Empresa).count()
+    ativas = db.query(Empresa).filter(Empresa.ativo == True).count()
+
+    return {
+        "total_empresas": total,
+        "empresas_ativas": ativas,
+        "taxa_ativas": round((ativas / total) * 100, 2) if total else 0
+    }
+
+
+@router.get("/ranking")
+def ranking(db: Session = Depends(get_db)):
+    empresas = db.query(Empresa).order_by(
+        Empresa.avaliacao_media.desc().nullslast()
+    ).limit(20).all()
+
+    return [empresa_to_dict(e) for e in empresas]
+
+
+@router.get("/buscar")
+def buscar(
+    q: str,
+    cidade: Optional[str] = None,
+    ativo: Optional[bool] = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(Empresa)
+
+    if q:
+        query = query.filter(Empresa.nome.ilike(f"%{q}%"))
+
+    if cidade:
+        query = query.filter(Empresa.cidade.ilike(f"%{cidade}%"))
+
+    if ativo is not None:
+        query = query.filter(Empresa.ativo == ativo)
+
+    return [empresa_to_dict(e) for e in query.limit(50).all()]
+
+
+@router.get("/proximas")
+def proximas(lat: float, lng: float, raio: float = 10, db: Session = Depends(get_db)):
+    empresas = db.query(Empresa).filter(
+        Empresa.latitude.isnot(None),
+        Empresa.longitude.isnot(None)
+    ).all()
+
+    resultado = []
+
+    for e in empresas:
+        dist = ((e.latitude - lat)**2 + (e.longitude - lng)**2) ** 0.5
+
+        if dist <= raio:
+            resultado.append({
+                "id": e.id,
+                "nome": e.nome,
+                "distancia": round(dist, 4),
+                "cidade": e.cidade
+            })
+
+    return resultado
+
+
+@router.get("/_health")
+def health():
+    return {
+        "module": "empresa",
+        "status": "ok",
+        "version": "stable-v6-fixed-swagger"
+    }
+
+
+# =========================
+# 🔍 DETALHE (SEMPRE POR ÚLTIMO)
 # =========================
 @router.get("/{empresa_id}")
 def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
@@ -125,6 +203,7 @@ def criar_empresa(data: EmpresaCreate, db: Session = Depends(get_db)):
     db.add(empresa)
     db.commit()
     db.refresh(empresa)
+
     return {"msg": "Empresa criada com sucesso", "id": empresa.id}
 
 
@@ -164,10 +243,14 @@ def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
 
 
 # =========================
-# 📸 UPLOAD FOTO (SEGURO)
+# 📸 UPLOAD FOTO
 # =========================
 @router.post("/{empresa_id}/upload-foto")
-async def upload_foto(empresa_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_foto(
+    empresa_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
     if not empresa:
@@ -192,87 +275,3 @@ async def upload_foto(empresa_id: int, file: UploadFile = File(...), db: Session
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# =========================
-# 📊 STATS
-# =========================
-@router.get("/_stats/overview")
-def estatisticas(db: Session = Depends(get_db)):
-    total = db.query(Empresa).count()
-    ativas = db.query(Empresa).filter(Empresa.ativo == True).count()
-
-    return {
-        "total_empresas": total,
-        "empresas_ativas": ativas,
-        "taxa_ativas": round((ativas / total) * 100, 2) if total else 0
-    }
-
-
-# =========================
-# 🏆 RANKING
-# =========================
-@router.get("/ranking")
-def ranking(db: Session = Depends(get_db)):
-    empresas = db.query(Empresa).order_by(
-        Empresa.avaliacao_media.desc().nullslast()
-    ).limit(20).all()
-
-    return [empresa_to_dict(e) for e in empresas]
-
-
-# =========================
-# 🔎 BUSCAR (CORRIGIDO)
-# =========================
-@router.get("/buscar")
-def buscar(q: str, cidade: Optional[str] = None, ativo: Optional[bool] = None, db: Session = Depends(get_db)):
-    query = db.query(Empresa)
-
-    if q:
-        query = query.filter(Empresa.nome.ilike(f"%{q}%"))
-
-    if cidade:
-        query = query.filter(Empresa.cidade.ilike(f"%{cidade}%"))
-
-    if ativo is not None:
-        query = query.filter(Empresa.ativo == ativo)
-
-    return [empresa_to_dict(e) for e in query.limit(50).all()]
-
-
-# =========================
-# 📍 PROXIMAS (OTIMIZADO SIMPLES)
-# =========================
-@router.get("/proximas")
-def proximas(lat: float, lng: float, raio: float = 10, db: Session = Depends(get_db)):
-    empresas = db.query(Empresa).filter(
-        Empresa.latitude.isnot(None),
-        Empresa.longitude.isnot(None)
-    ).all()
-
-    resultado = []
-
-    for e in empresas:
-        dist = ((e.latitude - lat)**2 + (e.longitude - lng)**2) ** 0.5
-
-        if dist <= raio:
-            resultado.append({
-                "id": e.id,
-                "nome": e.nome,
-                "distancia": round(dist, 4),
-                "cidade": e.cidade
-            })
-
-    return resultado
-
-
-# =========================
-# ❤️ HEALTH
-# =========================
-@router.get("/_health")
-def health():
-    return {
-        "module": "empresa",
-        "status": "ok",
-        "version": "stable-v5-clean"
-    }
