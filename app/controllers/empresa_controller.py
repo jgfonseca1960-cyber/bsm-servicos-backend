@@ -1,38 +1,41 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
 
 from app.database import get_db
 from app.models.empresa_model import Empresa
 
-router = APIRouter(
-    prefix="/empresa",
-    tags=["Empresas"]
-)
+router = APIRouter()  # ❗ SEM prefixo aqui
+
 
 # =========================
-# 📌 LISTAR EMPRESAS (ROTA NOVA)
+# 📌 LISTAR EMPRESAS
 # =========================
-@router.get("/empresas", response_model=List[dict])
+@router.get("/empresas")
 def listar_empresas(db: Session = Depends(get_db)):
-    empresas = db.query(Empresa).all()
+    try:
+        empresas = db.query(Empresa).all()
 
-    return [
-        {
-            "id": e.id,
-            "nome": e.nome,
-            "telefone": e.telefone,
-            "email": e.email,
-            "endereco": e.endereco,
-            "latitude": e.latitude,
-            "longitude": e.longitude,
-        }
-        for e in empresas
-    ]
+        resultado = []
+        for e in empresas:
+            resultado.append({
+                "id": e.id,
+                "nome": getattr(e, "nome", ""),
+                "telefone": getattr(e, "telefone", ""),
+                "email": getattr(e, "email", ""),
+                "endereco": getattr(e, "endereco", ""),
+                "latitude": getattr(e, "latitude", None),
+                "longitude": getattr(e, "longitude", None),
+            })
+
+        return resultado
+
+    except Exception as e:
+        print("❌ ERRO LISTAR EMPRESAS:", str(e))
+        return {"erro": str(e)}
 
 
 # =========================
-# 🔥 ROTA ANTIGA (COMPATIBILIDADE)
+# 🔥 ROTA COMPATÍVEL
 # =========================
 @router.get("/listar")
 def listar_empresas_compat(db: Session = Depends(get_db)):
@@ -51,12 +54,12 @@ def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
 
     return {
         "id": empresa.id,
-        "nome": empresa.nome,
-        "telefone": empresa.telefone,
-        "email": empresa.email,
-        "endereco": empresa.endereco,
-        "latitude": empresa.latitude,
-        "longitude": empresa.longitude,
+        "nome": getattr(empresa, "nome", ""),
+        "telefone": getattr(empresa, "telefone", ""),
+        "email": getattr(empresa, "email", ""),
+        "endereco": getattr(empresa, "endereco", ""),
+        "latitude": getattr(empresa, "latitude", None),
+        "longitude": getattr(empresa, "longitude", None),
     }
 
 
@@ -65,13 +68,18 @@ def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
 # =========================
 @router.post("/")
 def criar_empresa(data: dict, db: Session = Depends(get_db)):
-    empresa = Empresa(**data)
+    try:
+        empresa = Empresa(**data)
 
-    db.add(empresa)
-    db.commit()
-    db.refresh(empresa)
+        db.add(empresa)
+        db.commit()
+        db.refresh(empresa)
 
-    return {"msg": "Empresa criada com sucesso", "id": empresa.id}
+        return {"msg": "Empresa criada com sucesso", "id": empresa.id}
+
+    except Exception as e:
+        print("❌ ERRO CRIAR EMPRESA:", str(e))
+        return {"erro": str(e)}
 
 
 # =========================
@@ -84,13 +92,18 @@ def atualizar_empresa(empresa_id: int, data: dict, db: Session = Depends(get_db)
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-    for key, value in data.items():
-        setattr(empresa, key, value)
+    try:
+        for key, value in data.items():
+            setattr(empresa, key, value)
 
-    db.commit()
-    db.refresh(empresa)
+        db.commit()
+        db.refresh(empresa)
 
-    return {"msg": "Empresa atualizada com sucesso"}
+        return {"msg": "Empresa atualizada com sucesso"}
+
+    except Exception as e:
+        print("❌ ERRO ATUALIZAR:", str(e))
+        return {"erro": str(e)}
 
 
 # =========================
@@ -103,7 +116,12 @@ def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-    db.delete(empresa)
-    db.commit()
+    try:
+        db.delete(empresa)
+        db.commit()
 
-    return {"msg": "Empresa deletada com sucesso"}
+        return {"msg": "Empresa deletada com sucesso"}
+
+    except Exception as e:
+        print("❌ ERRO DELETAR:", str(e))
+        return {"erro": str(e)}
