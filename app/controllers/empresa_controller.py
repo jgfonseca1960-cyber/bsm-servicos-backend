@@ -9,8 +9,8 @@ from app.database import get_db
 from app.models.empresa_model import Empresa
 from app.models.empresa_foto_model import EmpresaFoto
 
+# 🔥 SEM PREFIXO AQUI (REGRA DE OURO)
 router = APIRouter(
-    prefix="/empresa",
     tags=["Empresas"]
 )
 
@@ -104,7 +104,7 @@ def listar_empresas(db: Session = Depends(get_db), skip: int = 0, limit: int = 5
 
 
 # =========================
-# 🔥 ROTAS FIXAS (ANTES DO ID)
+# 🔥 ROTAS FIXAS
 # =========================
 
 @router.get("/_stats/overview")
@@ -129,12 +129,7 @@ def ranking(db: Session = Depends(get_db)):
 
 
 @router.get("/buscar")
-def buscar(
-    q: str,
-    cidade: Optional[str] = None,
-    ativo: Optional[bool] = None,
-    db: Session = Depends(get_db)
-):
+def buscar(q: str, cidade: Optional[str] = None, ativo: Optional[bool] = None, db: Session = Depends(get_db)):
     query = db.query(Empresa)
 
     if q:
@@ -174,15 +169,11 @@ def proximas(lat: float, lng: float, raio: float = 10, db: Session = Depends(get
 
 @router.get("/_health")
 def health():
-    return {
-        "module": "empresa",
-        "status": "ok",
-        "version": "stable-v6-fixed-swagger"
-    }
+    return {"status": "ok"}
 
 
 # =========================
-# 🔍 DETALHE (SEMPRE POR ÚLTIMO)
+# 🔍 DETALHE (POR ÚLTIMO)
 # =========================
 @router.get("/{empresa_id}")
 def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
@@ -204,7 +195,7 @@ def criar_empresa(data: EmpresaCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(empresa)
 
-    return {"msg": "Empresa criada com sucesso", "id": empresa.id}
+    return {"msg": "Empresa criada", "id": empresa.id}
 
 
 # =========================
@@ -223,7 +214,7 @@ def atualizar_empresa(empresa_id: int, data: EmpresaUpdate, db: Session = Depend
     db.commit()
     db.refresh(empresa)
 
-    return {"msg": "Empresa atualizada com sucesso"}
+    return {"msg": "Empresa atualizada"}
 
 
 # =========================
@@ -239,18 +230,14 @@ def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
     db.delete(empresa)
     db.commit()
 
-    return {"msg": "Empresa deletada com sucesso"}
+    return {"msg": "Empresa deletada"}
 
 
 # =========================
 # 📸 UPLOAD FOTO
 # =========================
 @router.post("/{empresa_id}/upload-foto")
-async def upload_foto(
-    empresa_id: int,
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db)
-):
+async def upload_foto(empresa_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
     if not empresa:
@@ -259,19 +246,15 @@ async def upload_foto(
     filename = f"{uuid4()}_{file.filename}"
     filepath = os.path.join(UPLOAD_DIR, filename)
 
-    try:
-        with open(filepath, "wb") as buffer:
-            buffer.write(await file.read())
+    with open(filepath, "wb") as buffer:
+        buffer.write(await file.read())
 
-        foto = EmpresaFoto(
-            empresa_id=empresa_id,
-            url=f"/uploads/{filename}"
-        )
+    foto = EmpresaFoto(
+        empresa_id=empresa_id,
+        url=f"/uploads/{filename}"
+    )
 
-        db.add(foto)
-        db.commit()
+    db.add(foto)
+    db.commit()
 
-        return {"msg": "Foto enviada com sucesso", "url": foto.url}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"msg": "Foto enviada", "url": foto.url}

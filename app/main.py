@@ -20,9 +20,10 @@ from app.controllers.usuario_controller import router as usuario_router
 
 
 # =========================
-# 🔐 AUTH SWAGGER (CORRETO)
+# 🔐 AUTH (CORRIGIDO)
 # =========================
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")  # 🔥 SEM /
+
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     return {"token": token, "is_admin": True}
@@ -118,10 +119,18 @@ def favicon():
 
 
 # =========================
-# 📌 ROUTERS (IMPORTANTE: SEM DUPLICAR)
+# 🔐 ROTA PARA ATIVAR AUTHORIZE
+# =========================
+@app.get("/auth-check")
+def auth_check(token: str = Depends(oauth2_scheme)):
+    return {"token": token}
+
+
+# =========================
+# 📌 ROUTERS (PADRONIZADO)
 # =========================
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
-app.include_router(empresa_router, prefix="/empresa", tags=["Empresa"])
+app.include_router(empresa_router, prefix="/empresa", tags=["Empresas"])  # 🔥 PADRÃO
 app.include_router(servico_router, prefix="/servicos", tags=["Serviços"])
 app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
 
