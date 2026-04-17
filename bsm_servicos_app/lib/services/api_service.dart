@@ -1,25 +1,28 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
+
 import '../models/empresa.dart';
 
 class ApiService {
-  static const String baseUrl =
-      "https://bsm-servicos-backend.onrender.com";
+  static const String baseUrl = "https://bsm-servicos-backend.onrender.com";
 
-  // 🔥 ENDPOINT CORRETO
-  static const String empresaUrl =
-      "$baseUrl/empresa/empresas";
-
-  static const String authLoginUrl =
-      "$baseUrl/auth/login";
+  // ✅ ENDPOINTS CORRETOS
+  static const String empresaUrl = "$baseUrl/empresa/";
+  static const String authLoginUrl = "$baseUrl/auth/login";
 
   // =========================
-  // TOKEN
+  // 🔐 TOKEN
   // =========================
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString("token");
+  }
+
+  static Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove("token");
   }
 
   static Future<Map<String, String>> _headers() async {
@@ -32,19 +35,17 @@ class ApiService {
   }
 
   // =========================
-  // LOGIN
+  // 🔐 LOGIN
   // =========================
   static Future<String> login(String email, String password) async {
     final response = await http.post(
       Uri.parse(authLoginUrl),
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: {
-        "username": email,
-        "password": password,
-      },
+      headers: {"Content-Type": "application/x-www-form-urlencoded"},
+      body: {"username": email, "password": password},
     );
+
+    print("🔐 LOGIN STATUS: ${response.statusCode}");
+    print("🔐 LOGIN BODY: ${response.body}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -55,12 +56,12 @@ class ApiService {
 
       return token;
     } else {
-      throw Exception("Erro no login");
+      throw Exception("Erro no login: ${response.body}");
     }
   }
 
   // =========================
-  // 🔥 EMPRESAS
+  // 🏢 LISTAR EMPRESAS
   // =========================
   static Future<List<Empresa>> getEmpresas() async {
     try {
@@ -69,47 +70,47 @@ class ApiService {
         headers: await _headers(),
       );
 
-      print("🔥 URL: $empresaUrl");
-      print("🔥 STATUS: ${response.statusCode}");
-      print("🔥 BODY: ${response.body}");
+      print("📡 GET EMPRESAS: $empresaUrl");
+      print("📡 STATUS: ${response.statusCode}");
 
       if (response.statusCode == 200) {
         final List data = jsonDecode(response.body);
-
         return data.map((e) => Empresa.fromJson(e)).toList();
-      } else {
-        throw Exception("Erro ao buscar empresas");
       }
+
+      // 🔥 TOKEN EXPIRADO
+      if (response.statusCode == 401) {
+        await logout();
+        throw Exception("Sessão expirada. Faça login novamente.");
+      }
+
+      throw Exception("Erro ao buscar empresas: ${response.body}");
     } catch (e) {
       print("❌ ERRO API: $e");
       throw Exception("Falha de conexão com servidor");
     }
   }
-}
 
-import 'package:image_picker/image_picker.dart';
+  // =========================
+  // 📸 UPLOAD FOTO
+  // =========================
+  static Future<void> uploadFoto(int empresaId, XFile imagem) async {
+    final url = "$baseUrl/empresa/$empresaId/upload-foto";
 
-static Future<void> uploadFoto(int empresaId, XFile imagem) async {
-  final url = "$baseUrl/empresa/$empresaId/upload-foto";
+    final request = http.MultipartRequest("POST", Uri.parse(url));
 
-  final request = http.MultipartRequest("POST", Uri.parse(url));
+    final token = await getToken();
 
-  final token = await getToken();
+    if (token != null) {
+      request.headers["Authorization"] = "Bearer $token";
+    }
 
-  if (token != null) {
-    request.headers["Authorization"] = "Bearer $token";
-  }
+    request.files.add(await http.MultipartFile.fromPath("file", imagem.path));
 
-  request.files.add(
-    await http.MultipartFile.fromPath(
-      "file",
-      imagem.path,
-    ),
-  );
+    final response = await request.send();
 
-  final response = await request.send();
-
-  if (response.statusCode != 200) {
-    throw Exception("Erro ao enviar foto");
+    if (response.statusCode != 200) {
+      throw Exception("Erro ao enviar foto");
+    }
   }
 }
