@@ -19,6 +19,9 @@ from app.controllers.usuario_controller import router as usuario_router
 from app.models import empresa_model
 from app.models import empresa_foto_model
 
+from fastapi.staticfiles import StaticFiles
+
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # =========================
 # 🔧 BANCO

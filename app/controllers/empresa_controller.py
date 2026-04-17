@@ -1,49 +1,55 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
+from typing import List
+import os
+from uuid import uuid4
 
 from app.database import get_db
 from app.models.empresa_model import Empresa
+from app.models.empresa_foto_model import EmpresaFoto
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/empresa",
+    tags=["Empresas"]
+)
 
+UPLOAD_DIR = "uploads"
+
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR)
 
 # =========================
 # 📌 LISTAR EMPRESAS
 # =========================
-@router.get("/empresas")
+@router.get("/empresas", response_model=List[dict])
 def listar_empresas(db: Session = Depends(get_db)):
-    try:
-        empresas = db.query(Empresa).all()
+    empresas = db.query(Empresa).all()
 
-        return [
-            {
-                "id": e.id,
-                "nome": e.nome,
-                "descricao": e.descricao,
-                "telefone": e.telefone,
-                "endereco": e.endereco,
-                "bairro": e.bairro,
-                "cidade": e.cidade,
-                "estado": e.estado,
-                "cep": e.cep,
-                "latitude": e.latitude,
-                "longitude": e.longitude,
-                "ativo": e.ativo,
-                "avaliacao_media": e.avaliacao_media,
-                "cpf": e.cpf,
-                "cnpj": e.cnpj,
-                "servico_id": e.servico_id,
-            }
-            for e in empresas
-        ]
+    return [
+        {
+            "id": e.id,
+            "nome": e.nome,
+            "telefone": e.telefone,
+            "email": e.email,
+            "endereco": e.endereco,
+            "latitude": e.latitude,
+            "longitude": e.longitude,
 
-    except Exception as e:
-        print("❌ ERRO LISTAR EMPRESAS:", str(e))
-        return {"erro": str(e)}
+            # 🔥 FOTOS
+            "fotos": [
+                {
+                    "id": f.id,
+                    "url": f.url
+                }
+                for f in e.fotos
+            ]
+        }
+        for e in empresas
+    ]
 
 
 # =========================
-# 🔥 COMPATIBILIDADE
+# 🔄 COMPATIBILIDADE
 # =========================
 @router.get("/listar")
 def listar_empresas_compat(db: Session = Depends(get_db)):
@@ -51,7 +57,7 @@ def listar_empresas_compat(db: Session = Depends(get_db)):
 
 
 # =========================
-# 🔍 DETALHAR
+# 🔍 DETALHE
 # =========================
 @router.get("/detalhe/{empresa_id}")
 def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
@@ -63,20 +69,12 @@ def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
     return {
         "id": empresa.id,
         "nome": empresa.nome,
-        "descricao": empresa.descricao,
         "telefone": empresa.telefone,
+        "email": empresa.email,
         "endereco": empresa.endereco,
-        "bairro": empresa.bairro,
-        "cidade": empresa.cidade,
-        "estado": empresa.estado,
-        "cep": empresa.cep,
         "latitude": empresa.latitude,
         "longitude": empresa.longitude,
-        "ativo": empresa.ativo,
-        "avaliacao_media": empresa.avaliacao_media,
-        "cpf": empresa.cpf,
-        "cnpj": empresa.cnpj,
-        "servico_id": empresa.servico_id,
+        "fotos": [{"id": f.id, "url": f.url} for f in empresa.fotos]
     }
 
 
@@ -85,18 +83,13 @@ def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
 # =========================
 @router.post("/")
 def criar_empresa(data: dict, db: Session = Depends(get_db)):
-    try:
-        empresa = Empresa(**data)
+    empresa = Empresa(**data)
 
-        db.add(empresa)
-        db.commit()
-        db.refresh(empresa)
+    db.add(empresa)
+    db.commit()
+    db.refresh(empresa)
 
-        return {"msg": "Empresa criada", "id": empresa.id}
-
-    except Exception as e:
-        print("❌ ERRO CRIAR:", str(e))
-        return {"erro": str(e)}
+    return {"msg": "Empresa criada", "id": empresa.id}
 
 
 # =========================
@@ -109,18 +102,13 @@ def atualizar_empresa(empresa_id: int, data: dict, db: Session = Depends(get_db)
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-    try:
-        for key, value in data.items():
-            setattr(empresa, key, value)
+    for key, value in data.items():
+        setattr(empresa, key, value)
 
-        db.commit()
-        db.refresh(empresa)
+    db.commit()
+    db.refresh(empresa)
 
-        return {"msg": "Empresa atualizada"}
-
-    except Exception as e:
-        print("❌ ERRO UPDATE:", str(e))
-        return {"erro": str(e)}
+    return {"msg": "Empresa atualizada"}
 
 
 # =========================
@@ -133,12 +121,40 @@ def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-    try:
-        db.delete(empresa)
-        db.commit()
+    db.delete(empresa)
+    db.commit()
 
-        return {"msg": "Empresa deletada"}
+    return {"msg": "Empresa deletada"}
 
-    except Exception as e:
-        print("❌ ERRO DELETE:", str(e))
-        return {"erro": str(e)}
+
+# =========================
+# 📸 UPLOAD FOTO
+# =========================
+@router.post("/{empresa_id}/upload-foto")
+async def upload_foto(
+    empresa_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
+
+    if not empresa:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+
+    filename = f"{uuid4()}_{file.filename}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+
+    with open(filepath, "wb") as buffer:
+        buffer.write(await file.read())
+
+    url = f"https://bsm-servicos-backend.onrender.com/uploads/{filename}"
+
+    foto = EmpresaFoto(
+        empresa_id=empresa_id,
+        url=url
+    )
+
+    db.add(foto)
+    db.commit()
+
+    return {"msg": "Foto enviada", "url": url}

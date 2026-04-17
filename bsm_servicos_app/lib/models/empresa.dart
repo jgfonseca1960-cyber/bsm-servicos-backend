@@ -1,14 +1,12 @@
 class Empresa {
   final int id;
   final String nome;
-
   final String? telefone;
   final String? email;
   final String? endereco;
-
-  // 🗺️ NÍVEL 6 - GEOLOCALIZAÇÃO
   final double? latitude;
   final double? longitude;
+  final List<String> fotos;
 
   Empresa({
     required this.id,
@@ -18,37 +16,28 @@ class Empresa {
     this.endereco,
     this.latitude,
     this.longitude,
+    required this.fotos,
   });
 
   factory Empresa.fromJson(Map<String, dynamic> json) {
     return Empresa(
-      id: json['id'],
-      nome: json['nome'] ?? '',
-
-      telefone: json['telefone'],
-      email: json['email'],
-      endereco: json['endereco'],
-
-      // 🔥 conversão segura (backend pode vir int/double/string)
-      latitude: json['latitude'] != null
-          ? double.tryParse(json['latitude'].toString())
+      id: json["id"],
+      nome: json["nome"] ?? "",
+      telefone: json["telefone"],
+      email: json["email"],
+      endereco: json["endereco"],
+      latitude: json["latitude"] != null
+          ? double.tryParse(json["latitude"].toString())
+          : null,
+      longitude: json["longitude"] != null
+          ? double.tryParse(json["longitude"].toString())
           : null,
 
-      longitude: json['longitude'] != null
-          ? double.tryParse(json['longitude'].toString())
-          : null,
+      // 🔥 TRATAMENTO DE FOTOS
+      fotos: (json["fotos"] as List?)
+              ?.map((f) => f["url"].toString())
+              .toList() ??
+          [],
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      "id": id,
-      "nome": nome,
-      "telefone": telefone,
-      "email": email,
-      "endereco": endereco,
-      "latitude": latitude,
-      "longitude": longitude,
-    };
   }
 }
