@@ -4,8 +4,10 @@ from fastapi import FastAPI, Response
 from contextlib import asynccontextmanager
 from sqlalchemy import text
 import traceback
+import os
 
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.database import engine, init_db
 
@@ -19,9 +21,6 @@ from app.controllers.usuario_controller import router as usuario_router
 from app.models import empresa_model
 from app.models import empresa_foto_model
 
-from fastapi.staticfiles import StaticFiles
-
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # =========================
 # 🔧 BANCO
@@ -64,7 +63,7 @@ async def lifespan(app: FastAPI):
 
 
 # =========================
-# 🚀 APP
+# 🚀 APP (DEVE SER PRIMEIRO)
 # =========================
 app = FastAPI(
     title="BSM Serviços API",
@@ -79,10 +78,23 @@ app = FastAPI(
 # =========================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 🔥 temporário (produção: restringir)
+    allow_origins=["*"],  # produção: restringir depois
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+
+# =========================
+# 📁 STATIC FILES (UPLOADS)
+# =========================
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+app.mount(
+    "/uploads",
+    StaticFiles(directory=UPLOAD_DIR),
+    name="uploads"
 )
 
 
@@ -109,5 +121,6 @@ app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
 @app.get("/")
 def root():
     return {"msg": "API BSM Serviços rodando 🚀"}
+
 
 print("🔥🔥🔥 BACKEND NOVO RODANDO 🔥🔥🔥")
