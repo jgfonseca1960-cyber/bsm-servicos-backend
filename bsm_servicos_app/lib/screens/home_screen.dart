@@ -31,7 +31,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final data = await ApiService.getEmpresas();
-
+      throw Exception("🔥 PAREI AQUI - API SERVICE");
+      print("🔥🔥🔥 API SERVICE NOVO SENDO USADO");
       setState(() {
         empresas = data;
       });
@@ -83,9 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: () async {
           await Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const EmpresaFormScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const EmpresaFormScreen()),
           );
           _refresh();
         },
@@ -129,9 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (empresas.isEmpty) {
-      return const Center(
-        child: Text("Nenhuma empresa cadastrada"),
-      );
+      return const Center(child: Text("Nenhuma empresa cadastrada"));
     }
 
     return RefreshIndicator(
@@ -169,7 +166,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     // 📸 FOTO
                     if (empresa.fotos.isNotEmpty)
                       ClipRRect(
@@ -238,9 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Colors.grey[300],
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Center(
-        child: Icon(Icons.image_not_supported),
-      ),
+      child: const Center(child: Icon(Icons.image_not_supported)),
     );
   }
 }

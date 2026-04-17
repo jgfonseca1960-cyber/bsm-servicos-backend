@@ -9,10 +9,8 @@ from app.database import get_db
 from app.models.empresa_model import Empresa
 from app.models.empresa_foto_model import EmpresaFoto
 
-# 🔥 SEM PREFIXO AQUI (REGRA DE OURO)
-router = APIRouter(
-    tags=["Empresas"]
-)
+# 🔥 SEM PREFIXO (correto)
+router = APIRouter(tags=["Empresas"])
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -98,15 +96,18 @@ def empresa_to_dict(e: Empresa):
 # 📌 LISTAGEM
 # =========================
 @router.get("/")
-def listar_empresas(db: Session = Depends(get_db), skip: int = 0, limit: int = 50):
+def listar_empresas(
+    db: Session = Depends(get_db),
+    skip: int = 0,
+    limit: int = 50
+):
     empresas = db.query(Empresa).offset(skip).limit(limit).all()
     return [empresa_to_dict(e) for e in empresas]
 
 
 # =========================
-# 🔥 ROTAS FIXAS
+# 🔥 ROTAS FIXAS (ANTES DO ID)
 # =========================
-
 @router.get("/_stats/overview")
 def estatisticas(db: Session = Depends(get_db)):
     total = db.query(Empresa).count()
@@ -129,7 +130,12 @@ def ranking(db: Session = Depends(get_db)):
 
 
 @router.get("/buscar")
-def buscar(q: str, cidade: Optional[str] = None, ativo: Optional[bool] = None, db: Session = Depends(get_db)):
+def buscar(
+    q: str,
+    cidade: Optional[str] = None,
+    ativo: Optional[bool] = None,
+    db: Session = Depends(get_db)
+):
     query = db.query(Empresa)
 
     if q:
@@ -145,7 +151,12 @@ def buscar(q: str, cidade: Optional[str] = None, ativo: Optional[bool] = None, d
 
 
 @router.get("/proximas")
-def proximas(lat: float, lng: float, raio: float = 10, db: Session = Depends(get_db)):
+def proximas(
+    lat: float,
+    lng: float,
+    raio: float = 10,
+    db: Session = Depends(get_db)
+):
     empresas = db.query(Empresa).filter(
         Empresa.latitude.isnot(None),
         Empresa.longitude.isnot(None)
@@ -173,10 +184,13 @@ def health():
 
 
 # =========================
-# 🔍 DETALHE (POR ÚLTIMO)
+# 🔍 DETALHE (CORREÇÃO CRÍTICA)
 # =========================
-@router.get("/{empresa_id}")
-def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
+@router.get("/{empresa_id:int}")
+def detalhe_empresa(
+    empresa_id: int,
+    db: Session = Depends(get_db)
+):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
     if not empresa:
@@ -201,8 +215,12 @@ def criar_empresa(data: EmpresaCreate, db: Session = Depends(get_db)):
 # =========================
 # ✏️ ATUALIZAR
 # =========================
-@router.put("/{empresa_id}")
-def atualizar_empresa(empresa_id: int, data: EmpresaUpdate, db: Session = Depends(get_db)):
+@router.put("/{empresa_id:int}")
+def atualizar_empresa(
+    empresa_id: int,
+    data: EmpresaUpdate,
+    db: Session = Depends(get_db)
+):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
     if not empresa:
@@ -220,7 +238,7 @@ def atualizar_empresa(empresa_id: int, data: EmpresaUpdate, db: Session = Depend
 # =========================
 # ❌ DELETAR
 # =========================
-@router.delete("/{empresa_id}")
+@router.delete("/{empresa_id:int}")
 def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
@@ -236,8 +254,12 @@ def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
 # =========================
 # 📸 UPLOAD FOTO
 # =========================
-@router.post("/{empresa_id}/upload-foto")
-async def upload_foto(empresa_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+@router.post("/{empresa_id:int}/upload-foto")
+async def upload_foto(
+    empresa_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
     if not empresa:

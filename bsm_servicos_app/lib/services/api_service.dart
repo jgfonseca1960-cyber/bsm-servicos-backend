@@ -8,8 +8,9 @@ import '../models/empresa.dart';
 class ApiService {
   static const String baseUrl = "https://bsm-servicos-backend.onrender.com";
 
-  // ✅ ENDPOINTS CORRETOS
+  // 🔥 ENDPOINT CORRETO (ÚNICO)
   static const String empresaUrl = "$baseUrl/empresa/";
+
   static const String authLoginUrl = "$baseUrl/auth/login";
 
   // =========================
@@ -64,13 +65,17 @@ class ApiService {
   // 🏢 LISTAR EMPRESAS
   // =========================
   static Future<List<Empresa>> getEmpresas() async {
+    print("🔥 API SERVICE DEFINITIVO USADO");
+
+    final url = empresaUrl;
+
     try {
       final response = await http.get(
-        Uri.parse(empresaUrl),
+        Uri.parse(url),
         headers: await _headers(),
       );
 
-      print("📡 GET EMPRESAS: $empresaUrl");
+      print("📡 URL FINAL: $url");
       print("📡 STATUS: ${response.statusCode}");
 
       if (response.statusCode == 200) {
@@ -78,7 +83,6 @@ class ApiService {
         return data.map((e) => Empresa.fromJson(e)).toList();
       }
 
-      // 🔥 TOKEN EXPIRADO
       if (response.statusCode == 401) {
         await logout();
         throw Exception("Sessão expirada. Faça login novamente.");
@@ -87,8 +91,25 @@ class ApiService {
       throw Exception("Erro ao buscar empresas: ${response.body}");
     } catch (e) {
       print("❌ ERRO API: $e");
-      throw Exception("Falha de conexão com servidor");
+      rethrow;
     }
+  }
+
+  // =========================
+  // 🔍 DETALHE EMPRESA
+  // =========================
+  static Future<Empresa> getEmpresaById(int id) async {
+    final url = "$baseUrl/empresa/$id";
+
+    print("📡 DETALHE URL: $url");
+
+    final response = await http.get(Uri.parse(url), headers: await _headers());
+
+    if (response.statusCode == 200) {
+      return Empresa.fromJson(jsonDecode(response.body));
+    }
+
+    throw Exception("Erro ao buscar empresa");
   }
 
   // =========================
@@ -96,6 +117,8 @@ class ApiService {
   // =========================
   static Future<void> uploadFoto(int empresaId, XFile imagem) async {
     final url = "$baseUrl/empresa/$empresaId/upload-foto";
+
+    print("📸 UPLOAD URL: $url");
 
     final request = http.MultipartRequest("POST", Uri.parse(url));
 
@@ -108,6 +131,8 @@ class ApiService {
     request.files.add(await http.MultipartFile.fromPath("file", imagem.path));
 
     final response = await request.send();
+
+    print("📸 STATUS UPLOAD: ${response.statusCode}");
 
     if (response.statusCode != 200) {
       throw Exception("Erro ao enviar foto");
