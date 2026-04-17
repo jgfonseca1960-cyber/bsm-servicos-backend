@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.empresa_model import Empresa
 
-router = APIRouter()  # ❗ SEM prefixo aqui
+router = APIRouter()
 
 
 # =========================
@@ -15,19 +15,27 @@ def listar_empresas(db: Session = Depends(get_db)):
     try:
         empresas = db.query(Empresa).all()
 
-        resultado = []
-        for e in empresas:
-            resultado.append({
+        return [
+            {
                 "id": e.id,
-                "nome": getattr(e, "nome", ""),
-                "telefone": getattr(e, "telefone", ""),
-                "email": getattr(e, "email", ""),
-                "endereco": getattr(e, "endereco", ""),
-                "latitude": getattr(e, "latitude", None),
-                "longitude": getattr(e, "longitude", None),
-            })
-
-        return resultado
+                "nome": e.nome,
+                "descricao": e.descricao,
+                "telefone": e.telefone,
+                "endereco": e.endereco,
+                "bairro": e.bairro,
+                "cidade": e.cidade,
+                "estado": e.estado,
+                "cep": e.cep,
+                "latitude": e.latitude,
+                "longitude": e.longitude,
+                "ativo": e.ativo,
+                "avaliacao_media": e.avaliacao_media,
+                "cpf": e.cpf,
+                "cnpj": e.cnpj,
+                "servico_id": e.servico_id,
+            }
+            for e in empresas
+        ]
 
     except Exception as e:
         print("❌ ERRO LISTAR EMPRESAS:", str(e))
@@ -35,7 +43,7 @@ def listar_empresas(db: Session = Depends(get_db)):
 
 
 # =========================
-# 🔥 ROTA COMPATÍVEL
+# 🔥 COMPATIBILIDADE
 # =========================
 @router.get("/listar")
 def listar_empresas_compat(db: Session = Depends(get_db)):
@@ -43,7 +51,7 @@ def listar_empresas_compat(db: Session = Depends(get_db)):
 
 
 # =========================
-# 🔍 DETALHAR EMPRESA
+# 🔍 DETALHAR
 # =========================
 @router.get("/detalhe/{empresa_id}")
 def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
@@ -54,17 +62,26 @@ def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
 
     return {
         "id": empresa.id,
-        "nome": getattr(empresa, "nome", ""),
-        "telefone": getattr(empresa, "telefone", ""),
-        "email": getattr(empresa, "email", ""),
-        "endereco": getattr(empresa, "endereco", ""),
-        "latitude": getattr(empresa, "latitude", None),
-        "longitude": getattr(empresa, "longitude", None),
+        "nome": empresa.nome,
+        "descricao": empresa.descricao,
+        "telefone": empresa.telefone,
+        "endereco": empresa.endereco,
+        "bairro": empresa.bairro,
+        "cidade": empresa.cidade,
+        "estado": empresa.estado,
+        "cep": empresa.cep,
+        "latitude": empresa.latitude,
+        "longitude": empresa.longitude,
+        "ativo": empresa.ativo,
+        "avaliacao_media": empresa.avaliacao_media,
+        "cpf": empresa.cpf,
+        "cnpj": empresa.cnpj,
+        "servico_id": empresa.servico_id,
     }
 
 
 # =========================
-# ➕ CRIAR EMPRESA
+# ➕ CRIAR
 # =========================
 @router.post("/")
 def criar_empresa(data: dict, db: Session = Depends(get_db)):
@@ -75,15 +92,15 @@ def criar_empresa(data: dict, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(empresa)
 
-        return {"msg": "Empresa criada com sucesso", "id": empresa.id}
+        return {"msg": "Empresa criada", "id": empresa.id}
 
     except Exception as e:
-        print("❌ ERRO CRIAR EMPRESA:", str(e))
+        print("❌ ERRO CRIAR:", str(e))
         return {"erro": str(e)}
 
 
 # =========================
-# ✏️ ATUALIZAR EMPRESA
+# ✏️ ATUALIZAR
 # =========================
 @router.put("/{empresa_id}")
 def atualizar_empresa(empresa_id: int, data: dict, db: Session = Depends(get_db)):
@@ -99,15 +116,15 @@ def atualizar_empresa(empresa_id: int, data: dict, db: Session = Depends(get_db)
         db.commit()
         db.refresh(empresa)
 
-        return {"msg": "Empresa atualizada com sucesso"}
+        return {"msg": "Empresa atualizada"}
 
     except Exception as e:
-        print("❌ ERRO ATUALIZAR:", str(e))
+        print("❌ ERRO UPDATE:", str(e))
         return {"erro": str(e)}
 
 
 # =========================
-# ❌ DELETAR EMPRESA
+# ❌ DELETAR
 # =========================
 @router.delete("/{empresa_id}")
 def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
@@ -120,8 +137,8 @@ def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
         db.delete(empresa)
         db.commit()
 
-        return {"msg": "Empresa deletada com sucesso"}
+        return {"msg": "Empresa deletada"}
 
     except Exception as e:
-        print("❌ ERRO DELETAR:", str(e))
+        print("❌ ERRO DELETE:", str(e))
         return {"erro": str(e)}
