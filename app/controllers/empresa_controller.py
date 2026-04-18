@@ -9,8 +9,10 @@ from app.database import get_db
 from app.models.empresa_model import Empresa
 from app.models.empresa_foto_model import EmpresaFoto
 
-# 🔥 SEM PREFIXO (correto)
-router = APIRouter(tags=["Empresas"])
+# 🔥 SEM PREFIXO AQUI (CONTROLADO PELO MAIN)
+router = APIRouter(
+    tags=["Empresas"]
+)
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -106,8 +108,9 @@ def listar_empresas(
 
 
 # =========================
-# 🔥 ROTAS FIXAS (ANTES DO ID)
+# 🔥 ROTAS FIXAS (ANTES DO DETALHE)
 # =========================
+
 @router.get("/_stats/overview")
 def estatisticas(db: Session = Depends(get_db)):
     total = db.query(Empresa).count()
@@ -184,9 +187,9 @@ def health():
 
 
 # =========================
-# 🔍 DETALHE (CORREÇÃO CRÍTICA)
+# 🔍 DETALHE (CORREÇÃO DEFINITIVA)
 # =========================
-@router.get("/{empresa_id:int}")
+@router.get("/id/{empresa_id}")
 def detalhe_empresa(
     empresa_id: int,
     db: Session = Depends(get_db)
@@ -215,7 +218,7 @@ def criar_empresa(data: EmpresaCreate, db: Session = Depends(get_db)):
 # =========================
 # ✏️ ATUALIZAR
 # =========================
-@router.put("/{empresa_id:int}")
+@router.put("/id/{empresa_id}")
 def atualizar_empresa(
     empresa_id: int,
     data: EmpresaUpdate,
@@ -238,7 +241,7 @@ def atualizar_empresa(
 # =========================
 # ❌ DELETAR
 # =========================
-@router.delete("/{empresa_id:int}")
+@router.delete("/id/{empresa_id}")
 def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
@@ -254,7 +257,7 @@ def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
 # =========================
 # 📸 UPLOAD FOTO
 # =========================
-@router.post("/{empresa_id:int}/upload-foto")
+@router.post("/id/{empresa_id}/upload-foto")
 async def upload_foto(
     empresa_id: int,
     file: UploadFile = File(...),
