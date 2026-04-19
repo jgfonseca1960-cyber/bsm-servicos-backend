@@ -6,10 +6,13 @@ import 'package:image_picker/image_picker.dart';
 import '../models/empresa.dart';
 
 class ApiService {
-  static const String baseUrl = "https://bsm-servicos-backend.onrender.com";
+#  static const String baseUrl = "https://bsm-servicos-backend.onrender.com";
+#  static const String empresaUrl = "https://ERRO-TESTE-123.com/empresa/";
+static const String baseUrl = "https://ERRO-ABSURDO-123456.com";
 
-  // ✅ ENDPOINT CORRETO (SEM /listar !!!)
+  // ✅ URL CORRETA (SEM /listar)
   static const String empresaUrl = "$baseUrl/empresa";
+
   static const String authLoginUrl = "$baseUrl/auth/login";
 
   // =========================
@@ -61,73 +64,32 @@ class ApiService {
   }
 
   // =========================
-  // 🏢 LISTAR EMPRESAS (FIX REAL)
+  // 📌 LISTAR EMPRESAS (CORRIGIDO)
   // =========================
+
   static Future<List<Empresa>> getEmpresas() async {
-    try {
-      final headers = await _headers();
+    print("🔥🔥🔥 CHAMOU API NOVA 🔥🔥🔥");
 
-      final url = Uri.parse("$empresaUrl/"); // 🔥 GARANTE / no final
+    final response = await http.get(
+      Uri.parse(empresaUrl), // ✅ SEM /listar
+      headers: await _headers(),
+    );
 
-      print("📡 GET EMPRESAS");
-      print("📡 URL: $url");
-      print("📡 HEADERS: $headers");
+    print("STATUS: ${response.statusCode}");
 
-      final response = await http.get(url, headers: headers);
-
-      print("📡 STATUS: ${response.statusCode}");
-      print("📡 BODY: ${response.body}");
-
-      if (response.statusCode == 200) {
-        final List data = jsonDecode(response.body);
-        return data.map((e) => Empresa.fromJson(e)).toList();
-      }
-
-      if (response.statusCode == 401) {
-        await logout();
-        throw Exception("Sessão expirada. Faça login novamente.");
-      }
-
-      throw Exception("Erro API (${response.statusCode}): ${response.body}");
-    } catch (e) {
-      print("❌ ERRO API: $e");
-      throw Exception("Falha de conexão com servidor");
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.map((e) => Empresa.fromJson(e)).toList();
     }
-  }
 
-  // =========================
-  // 🔍 DETALHE EMPRESA (NOVO - IMPORTANTE)
-  // =========================
-  static Future<Empresa> getEmpresaById(int id) async {
-    try {
-      final headers = await _headers();
-
-      final url = Uri.parse("$empresaUrl/$id");
-
-      print("📡 GET DETALHE");
-      print("📡 URL: $url");
-
-      final response = await http.get(url, headers: headers);
-
-      print("📡 STATUS: ${response.statusCode}");
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return Empresa.fromJson(data);
-      }
-
-      throw Exception("Empresa não encontrada");
-    } catch (e) {
-      print("❌ ERRO DETALHE: $e");
-      throw Exception("Erro ao carregar empresa");
-    }
+    throw Exception("Erro ao buscar empresas");
   }
 
   // =========================
   // 📸 UPLOAD FOTO
   // =========================
   static Future<void> uploadFoto(int empresaId, XFile imagem) async {
-    final url = "$empresaUrl/$empresaId/upload-foto";
+    final url = "$baseUrl/empresa/$empresaId/upload-foto";
 
     print("📸 UPLOAD URL: $url");
 
