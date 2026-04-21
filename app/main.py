@@ -1,6 +1,6 @@
 print("🔥🔥🔥 MAIN CARREGADO 🔥🔥🔥")
 
-from fastapi import FastAPI, Response, Depends
+from fastapi import FastAPI, Response, Depends, Request
 from contextlib import asynccontextmanager
 from sqlalchemy import text
 import traceback
@@ -8,6 +8,7 @@ import os
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer
 
 from app.database import engine, init_db
@@ -20,9 +21,9 @@ from app.controllers.usuario_controller import router as usuario_router
 
 
 # =========================
-# 🔐 AUTH (CORRIGIDO)
+# 🔐 AUTH
 # =========================
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")  # 🔥 SEM /
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -59,6 +60,14 @@ async def lifespan(app: FastAPI):
     try:
         init_db()
         ajustar_banco()
+
+        # 🔥 DEBUG: listar arquivos da pasta uploads
+        if os.path.exists("uploads"):
+            arquivos = os.listdir("uploads")
+            print(f"📂 Arquivos em /uploads: {arquivos}")
+        else:
+            print("⚠️ Pasta uploads não existe")
+
         print("✅ Inicialização concluída!")
 
     except Exception:
@@ -98,16 +107,20 @@ app.add_middleware(
 
 
 # =========================
-# 📁 STATIC FILES
+# 📁 STATIC FILES (IMAGENS)
 # =========================
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+print(f"📁 Pasta uploads: {os.path.abspath(UPLOAD_DIR)}")
 
 app.mount(
     "/uploads",
     StaticFiles(directory=UPLOAD_DIR),
     name="uploads"
 )
+
+print("🖼 StaticFiles ativo em /uploads")
 
 
 # =========================
@@ -119,7 +132,7 @@ def favicon():
 
 
 # =========================
-# 🔐 ROTA PARA ATIVAR AUTHORIZE
+# 🔐 AUTH CHECK
 # =========================
 @app.get("/auth-check")
 def auth_check(token: str = Depends(oauth2_scheme)):
@@ -127,10 +140,10 @@ def auth_check(token: str = Depends(oauth2_scheme)):
 
 
 # =========================
-# 📌 ROUTERS (PADRONIZADO)
+# 📌 ROUTERS
 # =========================
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
-app.include_router(empresa_router, prefix="/empresa", tags=["Empresas"])  # 🔥 PADRÃO
+app.include_router(empresa_router, prefix="/empresa", tags=["Empresas"])
 app.include_router(servico_router, prefix="/servicos", tags=["Serviços"])
 app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
 
@@ -141,6 +154,22 @@ app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
 @app.get("/")
 def root():
     return {"msg": "API BSM Serviços rodando 🚀"}
+
+
+# =========================
+# 💥 ERRO GLOBAL (DEBUG FORTE)
+# =========================
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print("\n💥 ERRO GLOBAL:")
+    print(f"URL: {request.url}")
+    print(str(exc))
+    traceback.print_exc()
+
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Erro interno no servidor"}
+    )
 
 
 print("🔥🔥🔥 BACKEND NOVO RODANDO 🔥🔥🔥")
