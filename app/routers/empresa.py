@@ -1,5 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
+import os
+import shutil
+import uuid
 
 from app.database import get_db
 from app.models.empresa_model import Empresa
@@ -12,6 +15,45 @@ router = APIRouter(
     prefix="/empresa",  # 🔥 PADRÃO CORRETO
     tags=["Empresa"]
 )
+
+# =========================
+# 📁 CONFIG UPLOAD
+# =========================
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# =========================
+# 📸 UPLOAD DE FOTO
+# =========================
+@router.post("/{empresa_id}/upload")
+def upload_foto(
+    empresa_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
+
+    if not empresa:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+
+    filename = f"{uuid.uuid4()}_{file.filename}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    foto = Foto(
+        empresa_id=empresa_id,
+        caminho=f"/uploads/{filename}",
+        principal=False
+    )
+
+    db.add(foto)
+    db.commit()
+    db.refresh(foto)
+
+    return {"url": foto.caminho}
+
 
 # =========================
 # ➕ CRIAR EMPRESA
@@ -31,12 +73,11 @@ def criar_empresa(
 
 
 # =========================
-# 📡 LISTAR EMPRESAS (COMPLETO)
+# 📡 LISTAR EMPRESAS
 # =========================
 @router.get("/")
 def listar_empresas(db: Session = Depends(get_db)):
     empresas = db.query(Empresa).all()
-
     resultado = []
 
     for e in empresas:
@@ -147,7 +188,7 @@ def detalhe_empresa(
 
 
 # =========================
-# ✏️ ATUALIZAR EMPRESA (🔥 FIX DEFINITIVO)
+# ✏️ ATUALIZAR EMPRESA
 # =========================
 @router.put("/{empresa_id}")
 def atualizar_empresa(
