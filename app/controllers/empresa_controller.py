@@ -2,16 +2,25 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import Optional
 from pydantic import BaseModel
-import cloudinary.uploader
+import os
+from uuid import uuid4
 
 from app.database import get_db
 from app.models.empresa_model import Empresa
 from app.models.empresa_foto_model import EmpresaFoto
 
-# 🔥 inicializa cloudinary
-import app.utils.cloudinary_config
+# 🔥 UTIL
+from app.utils.files import gerar_url_imagem
 
 router = APIRouter(tags=["Empresas"])
+
+# =========================
+# 📁 PASTAS
+# =========================
+UPLOAD_DIR = "uploads"
+EMPRESA_DIR = os.path.join(UPLOAD_DIR, "empresas")
+
+os.makedirs(EMPRESA_DIR, exist_ok=True)
 
 
 # =========================
@@ -54,9 +63,29 @@ class EmpresaUpdate(BaseModel):
 
 
 # =========================
-# 🔧 SERIALIZER (SIMPLES)
+# 🔧 SERIALIZER (CORRIGIDO)
 # =========================
 def empresa_to_dict(e: Empresa):
+    fotos = []
+
+    for f in (e.fotos or []):
+        try:
+            url = f.url
+
+            # 🔥 CASO 1: já é Cloudinary (correto)
+            if url.startswith("http"):
+                fotos.append({
+                    "id": f.id,
+                    "url": url
+                })
+
+            # 🔥 CASO 2: imagem antiga (ignora)
+            else:
+                continue
+
+        except Exception as ex:
+            print(f"Erro ao processar imagem: {ex}")
+
     return {
         "id": e.id,
         "nome": e.nome,
@@ -74,15 +103,7 @@ def empresa_to_dict(e: Empresa):
         "cpf": e.cpf,
         "cnpj": e.cnpj,
         "servico_id": e.servico_id,
-
-        # 🔥 URL DIRETA CLOUDINARY
-        "fotos": [
-            {
-                "id": f.id,
-                "url": f.url
-            }
-            for f in (e.fotos or [])
-        ]
+        "fotos": fotos
     }
 
 
@@ -157,7 +178,7 @@ def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
 
 
 # =========================
-# 📸 UPLOAD FOTO (CLOUDINARY)
+# 📸 UPLOAD FOTO (CLOUDINARY OK)
 # =========================
 @router.post("/id/{empresa_id}/upload-foto")
 async def upload_foto(
@@ -165,13 +186,12 @@ async def upload_foto(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
+    import cloudinary.uploader
+
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="Arquivo inválido")
 
     try:
         resultado = cloudinary.uploader.upload(
@@ -179,11 +199,11 @@ async def upload_foto(
             folder="empresas"
         )
 
-        url_imagem = resultado.get("secure_url")
+        url = resultado.get("secure_url")
 
         foto = EmpresaFoto(
             empresa_id=empresa_id,
-            url=url_imagem
+            url=url
         )
 
         db.add(foto)
@@ -191,8 +211,9 @@ async def upload_foto(
 
         return {
             "msg": "Foto enviada com sucesso",
-            "url": url_imagem
+            "url": url
         }
 
     except Exception as e:
+        print("Erro Cloudinary:", e)
         raise HTTPException(status_code=500, detail=str(e))
