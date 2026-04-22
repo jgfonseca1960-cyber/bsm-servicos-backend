@@ -2,25 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import Optional
 from pydantic import BaseModel
-import os
-from uuid import uuid4
+import cloudinary.uploader
 
 from app.database import get_db
 from app.models.empresa_model import Empresa
 from app.models.empresa_foto_model import EmpresaFoto
 
-# 🔥 IMPORTANTE (usa função do main)
-from app.utils.files import gerar_url_imagem
+# 🔥 inicializa cloudinary
+import app.utils.cloudinary_config
 
 router = APIRouter(tags=["Empresas"])
-
-# =========================
-# 📁 PASTAS (CORRIGIDO)
-# =========================
-UPLOAD_DIR = "uploads"
-EMPRESA_DIR = os.path.join(UPLOAD_DIR, "empresas")
-
-os.makedirs(EMPRESA_DIR, exist_ok=True)
 
 
 # =========================
@@ -30,22 +21,17 @@ class EmpresaCreate(BaseModel):
     nome: str
     descricao: Optional[str] = None
     telefone: Optional[str] = None
-
     endereco: Optional[str] = None
     bairro: Optional[str] = None
     cidade: Optional[str] = None
     estado: Optional[str] = None
     cep: Optional[str] = None
-
     latitude: Optional[float] = None
     longitude: Optional[float] = None
-
     ativo: Optional[bool] = True
     avaliacao_media: Optional[float] = None
-
     cpf: Optional[str] = None
     cnpj: Optional[str] = None
-
     servico_id: Optional[int] = None
 
 
@@ -53,27 +39,22 @@ class EmpresaUpdate(BaseModel):
     nome: Optional[str] = None
     descricao: Optional[str] = None
     telefone: Optional[str] = None
-
     endereco: Optional[str] = None
     bairro: Optional[str] = None
     cidade: Optional[str] = None
     estado: Optional[str] = None
     cep: Optional[str] = None
-
     latitude: Optional[float] = None
     longitude: Optional[float] = None
-
     ativo: Optional[bool] = None
     avaliacao_media: Optional[float] = None
-
     cpf: Optional[str] = None
     cnpj: Optional[str] = None
-
     servico_id: Optional[int] = None
 
 
 # =========================
-# 🔧 SERIALIZER (CORRIGIDO)
+# 🔧 SERIALIZER (SIMPLES)
 # =========================
 def empresa_to_dict(e: Empresa):
     return {
@@ -94,11 +75,11 @@ def empresa_to_dict(e: Empresa):
         "cnpj": e.cnpj,
         "servico_id": e.servico_id,
 
-        # 🔥 AGORA FUNCIONA NO FLUTTER
+        # 🔥 URL DIRETA CLOUDINARY
         "fotos": [
             {
                 "id": f.id,
-                "url": gerar_url_imagem(f.url)  # converte para URL completa
+                "url": f.url
             }
             for f in (e.fotos or [])
         ]
@@ -112,74 +93,6 @@ def empresa_to_dict(e: Empresa):
 def listar_empresas(db: Session = Depends(get_db), skip: int = 0, limit: int = 50):
     empresas = db.query(Empresa).offset(skip).limit(limit).all()
     return [empresa_to_dict(e) for e in empresas]
-
-
-# =========================
-# 🔥 ROTAS FIXAS
-# =========================
-@router.get("/_stats/overview")
-def estatisticas(db: Session = Depends(get_db)):
-    total = db.query(Empresa).count()
-    ativas = db.query(Empresa).filter(Empresa.ativo == True).count()
-
-    return {
-        "total_empresas": total,
-        "empresas_ativas": ativas,
-        "taxa_ativas": round((ativas / total) * 100, 2) if total else 0
-    }
-
-
-@router.get("/ranking")
-def ranking(db: Session = Depends(get_db)):
-    empresas = db.query(Empresa).order_by(
-        Empresa.avaliacao_media.desc().nullslast()
-    ).limit(20).all()
-
-    return [empresa_to_dict(e) for e in empresas]
-
-
-@router.get("/buscar")
-def buscar(q: str, cidade: Optional[str] = None, ativo: Optional[bool] = None, db: Session = Depends(get_db)):
-    query = db.query(Empresa)
-
-    if q:
-        query = query.filter(Empresa.nome.ilike(f"%{q}%"))
-
-    if cidade:
-        query = query.filter(Empresa.cidade.ilike(f"%{cidade}%"))
-
-    if ativo is not None:
-        query = query.filter(Empresa.ativo == ativo)
-
-    return [empresa_to_dict(e) for e in query.limit(50).all()]
-
-
-@router.get("/proximas")
-def proximas(lat: float, lng: float, raio: float = 10, db: Session = Depends(get_db)):
-    empresas = db.query(Empresa).filter(
-        Empresa.latitude.isnot(None),
-        Empresa.longitude.isnot(None)
-    ).all()
-
-    resultado = []
-
-    for e in empresas:
-        dist = ((e.latitude - lat)**2 + (e.longitude - lng)**2) ** 0.5
-
-        if dist <= raio:
-            resultado.append({
-                "id": e.id,
-                "nome": e.nome,
-                "distancia": round(dist, 4),
-                "cidade": e.cidade
-            })
-
-    return resultado
-
-
-@router.get("/_health")
-def health():
-    return {"status": "ok"}
 
 
 # =========================
@@ -244,7 +157,7 @@ def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
 
 
 # =========================
-# 📸 UPLOAD FOTO (CORRIGIDO)
+# 📸 UPLOAD FOTO (CLOUDINARY)
 # =========================
 @router.post("/id/{empresa_id}/upload-foto")
 async def upload_foto(
@@ -257,24 +170,29 @@ async def upload_foto(
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-    extensao = file.filename.split(".")[-1]
-    nome_arquivo = f"{uuid4()}.{extensao}"
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Arquivo inválido")
 
-    caminho_relativo = f"uploads/empresas/{nome_arquivo}"
-    caminho_fisico = os.path.join(EMPRESA_DIR, nome_arquivo)
+    try:
+        resultado = cloudinary.uploader.upload(
+            await file.read(),
+            folder="empresas"
+        )
 
-    with open(caminho_fisico, "wb") as buffer:
-        buffer.write(await file.read())
+        url_imagem = resultado.get("secure_url")
 
-    foto = EmpresaFoto(
-        empresa_id=empresa_id,
-        url=caminho_relativo  # 🔥 salva caminho relativo
-    )
+        foto = EmpresaFoto(
+            empresa_id=empresa_id,
+            url=url_imagem
+        )
 
-    db.add(foto)
-    db.commit()
+        db.add(foto)
+        db.commit()
 
-    return {
-        "msg": "Foto enviada",
-        "url": gerar_url_imagem(caminho_relativo)  # 🔥 retorna pronta pro Flutter
-    }
+        return {
+            "msg": "Foto enviada com sucesso",
+            "url": url_imagem
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
