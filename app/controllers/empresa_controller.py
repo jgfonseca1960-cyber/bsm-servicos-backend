@@ -10,7 +10,7 @@ from app.models.empresa_model import Empresa
 from app.models.empresa_foto_model import EmpresaFoto
 
 # 🔥 IMPORTANTE (usa função do main)
-from main import gerar_url_imagem
+from app.utils.files import gerar_url_imagem
 
 router = APIRouter(tags=["Empresas"])
 
