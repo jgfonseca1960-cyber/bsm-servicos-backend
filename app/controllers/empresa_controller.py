@@ -9,13 +9,19 @@ from app.database import get_db
 from app.models.empresa_model import Empresa
 from app.models.empresa_foto_model import EmpresaFoto
 
-# 🔥 SEM PREFIXO AQUI (CONTROLADO PELO MAIN)
-router = APIRouter(
-    tags=["Empresas"]
-)
+# 🔥 IMPORTANTE (usa função do main)
+from main import gerar_url_imagem
 
+router = APIRouter(tags=["Empresas"])
+
+# =========================
+# 📁 PASTAS (CORRIGIDO)
+# =========================
 UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+EMPRESA_DIR = os.path.join(UPLOAD_DIR, "empresas")
+
+os.makedirs(EMPRESA_DIR, exist_ok=True)
+
 
 # =========================
 # 📦 SCHEMAS
@@ -67,7 +73,7 @@ class EmpresaUpdate(BaseModel):
 
 
 # =========================
-# 🔧 SERIALIZER
+# 🔧 SERIALIZER (CORRIGIDO)
 # =========================
 def empresa_to_dict(e: Empresa):
     return {
@@ -87,8 +93,13 @@ def empresa_to_dict(e: Empresa):
         "cpf": e.cpf,
         "cnpj": e.cnpj,
         "servico_id": e.servico_id,
+
+        # 🔥 AGORA FUNCIONA NO FLUTTER
         "fotos": [
-            {"id": f.id, "url": f.url}
+            {
+                "id": f.id,
+                "url": gerar_url_imagem(f.url)  # converte para URL completa
+            }
             for f in (e.fotos or [])
         ]
     }
@@ -98,19 +109,14 @@ def empresa_to_dict(e: Empresa):
 # 📌 LISTAGEM
 # =========================
 @router.get("/")
-def listar_empresas(
-    db: Session = Depends(get_db),
-    skip: int = 0,
-    limit: int = 50
-):
+def listar_empresas(db: Session = Depends(get_db), skip: int = 0, limit: int = 50):
     empresas = db.query(Empresa).offset(skip).limit(limit).all()
     return [empresa_to_dict(e) for e in empresas]
 
 
 # =========================
-# 🔥 ROTAS FIXAS (ANTES DO DETALHE)
+# 🔥 ROTAS FIXAS
 # =========================
-
 @router.get("/_stats/overview")
 def estatisticas(db: Session = Depends(get_db)):
     total = db.query(Empresa).count()
@@ -133,12 +139,7 @@ def ranking(db: Session = Depends(get_db)):
 
 
 @router.get("/buscar")
-def buscar(
-    q: str,
-    cidade: Optional[str] = None,
-    ativo: Optional[bool] = None,
-    db: Session = Depends(get_db)
-):
+def buscar(q: str, cidade: Optional[str] = None, ativo: Optional[bool] = None, db: Session = Depends(get_db)):
     query = db.query(Empresa)
 
     if q:
@@ -154,12 +155,7 @@ def buscar(
 
 
 @router.get("/proximas")
-def proximas(
-    lat: float,
-    lng: float,
-    raio: float = 10,
-    db: Session = Depends(get_db)
-):
+def proximas(lat: float, lng: float, raio: float = 10, db: Session = Depends(get_db)):
     empresas = db.query(Empresa).filter(
         Empresa.latitude.isnot(None),
         Empresa.longitude.isnot(None)
@@ -187,13 +183,10 @@ def health():
 
 
 # =========================
-# 🔍 DETALHE (CORREÇÃO DEFINITIVA)
+# 🔍 DETALHE
 # =========================
 @router.get("/id/{empresa_id}")
-def detalhe_empresa(
-    empresa_id: int,
-    db: Session = Depends(get_db)
-):
+def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
     if not empresa:
@@ -219,11 +212,7 @@ def criar_empresa(data: EmpresaCreate, db: Session = Depends(get_db)):
 # ✏️ ATUALIZAR
 # =========================
 @router.put("/id/{empresa_id}")
-def atualizar_empresa(
-    empresa_id: int,
-    data: EmpresaUpdate,
-    db: Session = Depends(get_db)
-):
+def atualizar_empresa(empresa_id: int, data: EmpresaUpdate, db: Session = Depends(get_db)):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
     if not empresa:
@@ -255,7 +244,7 @@ def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
 
 
 # =========================
-# 📸 UPLOAD FOTO
+# 📸 UPLOAD FOTO (CORRIGIDO)
 # =========================
 @router.post("/id/{empresa_id}/upload-foto")
 async def upload_foto(
@@ -268,18 +257,24 @@ async def upload_foto(
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-    filename = f"{uuid4()}_{file.filename}"
-    filepath = os.path.join(UPLOAD_DIR, filename)
+    extensao = file.filename.split(".")[-1]
+    nome_arquivo = f"{uuid4()}.{extensao}"
 
-    with open(filepath, "wb") as buffer:
+    caminho_relativo = f"uploads/empresas/{nome_arquivo}"
+    caminho_fisico = os.path.join(EMPRESA_DIR, nome_arquivo)
+
+    with open(caminho_fisico, "wb") as buffer:
         buffer.write(await file.read())
 
     foto = EmpresaFoto(
         empresa_id=empresa_id,
-        url=f"/uploads/{filename}"
+        url=caminho_relativo  # 🔥 salva caminho relativo
     )
 
     db.add(foto)
     db.commit()
 
-    return {"msg": "Foto enviada", "url": foto.url}
+    return {
+        "msg": "Foto enviada",
+        "url": gerar_url_imagem(caminho_relativo)  # 🔥 retorna pronta pro Flutter
+    }

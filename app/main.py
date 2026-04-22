@@ -21,6 +21,12 @@ from app.controllers.usuario_controller import router as usuario_router
 
 
 # =========================
+# 🌐 CONFIG BASE URL (IMPORTANTE)
+# =========================
+BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
+
+
+# =========================
 # 🔐 AUTH
 # =========================
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -51,6 +57,18 @@ def ajustar_banco():
 
 
 # =========================
+# 📁 UPLOAD CONFIG (MELHORADO)
+# =========================
+UPLOAD_DIR = "uploads"
+EMPRESA_DIR = os.path.join(UPLOAD_DIR, "empresas")
+
+os.makedirs(EMPRESA_DIR, exist_ok=True)
+
+print(f"📁 Pasta uploads: {os.path.abspath(UPLOAD_DIR)}")
+print(f"📁 Pasta empresas: {os.path.abspath(EMPRESA_DIR)}")
+
+
+# =========================
 # 🚀 LIFESPAN
 # =========================
 @asynccontextmanager
@@ -61,12 +79,14 @@ async def lifespan(app: FastAPI):
         init_db()
         ajustar_banco()
 
-        # 🔥 DEBUG: listar arquivos da pasta uploads
-        if os.path.exists("uploads"):
-            arquivos = os.listdir("uploads")
-            print(f"📂 Arquivos em /uploads: {arquivos}")
+        # 🔥 DEBUG COMPLETO
+        if os.path.exists(UPLOAD_DIR):
+            for root, dirs, files in os.walk(UPLOAD_DIR):
+                print(f"📂 {root} -> {files}")
         else:
             print("⚠️ Pasta uploads não existe")
+
+        print("🌐 BASE_URL:", BASE_URL)
 
         print("✅ Inicialização concluída!")
 
@@ -99,7 +119,7 @@ app = FastAPI(
 # =========================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # depois pode restringir
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -107,13 +127,8 @@ app.add_middleware(
 
 
 # =========================
-# 📁 STATIC FILES (IMAGENS)
+# 📁 STATIC FILES (CORRIGIDO)
 # =========================
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-print(f"📁 Pasta uploads: {os.path.abspath(UPLOAD_DIR)}")
-
 app.mount(
     "/uploads",
     StaticFiles(directory=UPLOAD_DIR),
@@ -121,6 +136,22 @@ app.mount(
 )
 
 print("🖼 StaticFiles ativo em /uploads")
+
+
+# =========================
+# 🔗 GERAR URL DE IMAGEM (NOVO)
+# =========================
+def gerar_url_imagem(caminho: str) -> str:
+    """
+    Converte caminho interno em URL acessível pelo Flutter
+    """
+    if not caminho:
+        return None
+
+    # garante padrão correto
+    caminho = caminho.replace("\\", "/")
+
+    return f"{BASE_URL}/{caminho}"
 
 
 # =========================
@@ -149,6 +180,20 @@ app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
 
 
 # =========================
+# 🧪 TESTE DE IMAGEM (NOVO)
+# =========================
+@app.get("/teste-imagem")
+def teste_imagem():
+    """
+    Use isso pra testar direto no navegador
+    """
+    exemplo = "uploads/empresas/exemplo.jpg"
+    return {
+        "url_exemplo": gerar_url_imagem(exemplo)
+    }
+
+
+# =========================
 # 🧪 ROOT
 # =========================
 @app.get("/")
@@ -157,7 +202,7 @@ def root():
 
 
 # =========================
-# 💥 ERRO GLOBAL (DEBUG FORTE)
+# 💥 ERRO GLOBAL
 # =========================
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
