@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from pydantic import BaseModel
 import os
-from uuid import uuid4
 
 from app.database import get_db
 from app.models.empresa_model import Empresa
@@ -13,14 +12,6 @@ from app.models.empresa_foto_model import EmpresaFoto
 from app.utils.files import gerar_url_imagem
 
 router = APIRouter(tags=["Empresas"])
-
-# =========================
-# 📁 PASTAS
-# =========================
-UPLOAD_DIR = "uploads"
-EMPRESA_DIR = os.path.join(UPLOAD_DIR, "empresas")
-
-os.makedirs(EMPRESA_DIR, exist_ok=True)
 
 
 # =========================
@@ -63,25 +54,27 @@ class EmpresaUpdate(BaseModel):
 
 
 # =========================
-# 🔧 SERIALIZER (CORRIGIDO)
+# 🔧 SERIALIZER
 # =========================
 def empresa_to_dict(e: Empresa):
     foto_principal = None
     galeria = []
 
     for f in (e.fotos or []):
-        if not f.url or not f.url.startswith("http"):
+        if not f.url:
             continue
 
+        url = gerar_url_imagem(f.url)
+
         if f.principal:
-            foto_principal = f.url
+            foto_principal = url
         else:
             galeria.append({
                 "id": f.id,
-                "url": f.url
+                "url": url
             })
 
-    # fallback (se nenhuma marcada)
+    # fallback
     if not foto_principal and galeria:
         foto_principal = galeria[0]["url"]
 
@@ -102,11 +95,10 @@ def empresa_to_dict(e: Empresa):
         "cpf": e.cpf,
         "cnpj": e.cnpj,
         "servico_id": e.servico_id,
-
-        # 🔥 NOVO
         "foto_principal": foto_principal,
         "fotos": galeria
     }
+
 
 # =========================
 # 📌 LISTAGEM
@@ -163,7 +155,7 @@ def atualizar_empresa(empresa_id: int, data: EmpresaUpdate, db: Session = Depend
 
 
 # =========================
-# ❌ DELETAR
+# ❌ DELETAR EMPRESA
 # =========================
 @router.delete("/id/{empresa_id}")
 def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
@@ -179,7 +171,7 @@ def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
 
 
 # =========================
-# 📸 UPLOAD FOTO (CLOUDINARY OK)
+# 📸 UPLOAD FOTO (CLOUDINARY)
 # =========================
 @router.post("/id/{empresa_id}/upload-foto")
 async def upload_foto(
@@ -202,9 +194,16 @@ async def upload_foto(
 
         url = resultado.get("secure_url")
 
+        # 🔥 verifica se já existe foto principal
+        existe_principal = db.query(EmpresaFoto).filter(
+            EmpresaFoto.empresa_id == empresa_id,
+            EmpresaFoto.principal == True
+        ).first()
+
         foto = EmpresaFoto(
             empresa_id=empresa_id,
-            url=url
+            url=url,
+            principal=False if existe_principal else True
         )
 
         db.add(foto)
@@ -218,9 +217,10 @@ async def upload_foto(
     except Exception as e:
         print("Erro Cloudinary:", e)
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
 # =========================
-# 📸 FOTO PRINCIPAL
+# ⭐ DEFINIR FOTO PRINCIPAL
 # =========================
 @router.put("/foto/{foto_id}/principal")
 def definir_foto_principal(foto_id: int, db: Session = Depends(get_db)):
@@ -229,24 +229,21 @@ def definir_foto_principal(foto_id: int, db: Session = Depends(get_db)):
     if not foto:
         raise HTTPException(status_code=404, detail="Foto não encontrada")
 
-    # 🔥 remove principal das outras
     db.query(EmpresaFoto).filter(
         EmpresaFoto.empresa_id == foto.empresa_id
     ).update({"principal": False})
 
-    # 🔥 define nova principal
     foto.principal = True
-
     db.commit()
 
     return {"msg": "Foto principal definida"}
 
-# =========================
-# 📸 DELETAR FOTO
-# =========================
 
+# =========================
+# 🗑️ DELETAR FOTO
+# =========================
 @router.delete("/foto/{foto_id}")
-    def deletar_foto(foto_id: int, db: Session = Depends(get_db)):
+def deletar_foto(foto_id: int, db: Session = Depends(get_db)):
     foto = db.query(EmpresaFoto).filter(EmpresaFoto.id == foto_id).first()
 
     if not foto:
