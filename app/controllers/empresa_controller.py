@@ -223,23 +223,23 @@ async def upload_foto(
 # 📸 FOTO PRINCIPAL
 # =========================
 @router.put("/foto/{foto_id}/principal")
-    def definir_foto_principal(foto_id: int, db: Session = Depends(get_db)):
+def definir_foto_principal(foto_id: int, db: Session = Depends(get_db)):
     foto = db.query(EmpresaFoto).filter(EmpresaFoto.id == foto_id).first()
 
     if not foto:
         raise HTTPException(status_code=404, detail="Foto não encontrada")
 
-    # 🔥 remove principal anterior
+    # 🔥 remove principal das outras
     db.query(EmpresaFoto).filter(
         EmpresaFoto.empresa_id == foto.empresa_id
     ).update({"principal": False})
 
-    # 🔥 define nova
+    # 🔥 define nova principal
     foto.principal = True
 
     db.commit()
 
-    return {"msg": "Foto principal definida com sucesso"}
+    return {"msg": "Foto principal definida"}
 
 # =========================
 # 📸 DELETAR FOTO
