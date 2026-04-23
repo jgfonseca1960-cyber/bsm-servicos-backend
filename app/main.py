@@ -1,5 +1,5 @@
 print("🔥🔥🔥 MAIN CARREGADO 🔥🔥🔥")
-
+import app.config.cloudinary_config
 from fastapi import FastAPI, Response, Depends, Request
 from contextlib import asynccontextmanager
 from sqlalchemy import text
