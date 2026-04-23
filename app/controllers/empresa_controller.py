@@ -66,25 +66,24 @@ class EmpresaUpdate(BaseModel):
 # 🔧 SERIALIZER (CORRIGIDO)
 # =========================
 def empresa_to_dict(e: Empresa):
-    fotos = []
+    foto_principal = None
+    galeria = []
 
     for f in (e.fotos or []):
-        try:
-            url = f.url
+        if not f.url or not f.url.startswith("http"):
+            continue
 
-            # 🔥 CASO 1: já é Cloudinary (correto)
-            if url.startswith("http"):
-                fotos.append({
-                    "id": f.id,
-                    "url": url
-                })
+        if f.principal:
+            foto_principal = f.url
+        else:
+            galeria.append({
+                "id": f.id,
+                "url": f.url
+            })
 
-            # 🔥 CASO 2: imagem antiga (ignora)
-            else:
-                continue
-
-        except Exception as ex:
-            print(f"Erro ao processar imagem: {ex}")
+    # fallback (se nenhuma marcada)
+    if not foto_principal and galeria:
+        foto_principal = galeria[0]["url"]
 
     return {
         "id": e.id,
@@ -103,9 +102,11 @@ def empresa_to_dict(e: Empresa):
         "cpf": e.cpf,
         "cnpj": e.cnpj,
         "servico_id": e.servico_id,
-        "fotos": fotos
-    }
 
+        # 🔥 NOVO
+        "foto_principal": foto_principal,
+        "fotos": galeria
+    }
 
 # =========================
 # 📌 LISTAGEM
@@ -217,3 +218,41 @@ async def upload_foto(
     except Exception as e:
         print("Erro Cloudinary:", e)
         raise HTTPException(status_code=500, detail=str(e))
+    
+# =========================
+# 📸 FOTO PRINCIPAL
+# =========================
+@router.put("/foto/{foto_id}/principal")
+    def definir_foto_principal(foto_id: int, db: Session = Depends(get_db)):
+    foto = db.query(EmpresaFoto).filter(EmpresaFoto.id == foto_id).first()
+
+    if not foto:
+        raise HTTPException(status_code=404, detail="Foto não encontrada")
+
+    # 🔥 remove principal anterior
+    db.query(EmpresaFoto).filter(
+        EmpresaFoto.empresa_id == foto.empresa_id
+    ).update({"principal": False})
+
+    # 🔥 define nova
+    foto.principal = True
+
+    db.commit()
+
+    return {"msg": "Foto principal definida com sucesso"}
+
+# =========================
+# 📸 DELETAR FOTO
+# =========================
+
+@router.delete("/foto/{foto_id}")
+    def deletar_foto(foto_id: int, db: Session = Depends(get_db)):
+    foto = db.query(EmpresaFoto).filter(EmpresaFoto.id == foto_id).first()
+
+    if not foto:
+        raise HTTPException(status_code=404, detail="Foto não encontrada")
+
+    db.delete(foto)
+    db.commit()
+
+    return {"msg": "Foto deletada com sucesso"}

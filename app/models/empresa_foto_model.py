@@ -7,6 +7,7 @@ class EmpresaFoto(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     url = Column(String, nullable=False)
+    principal = Column(Boolean, default=False)
 
     empresa_id = Column(Integer, ForeignKey("empresas.id"))
 
