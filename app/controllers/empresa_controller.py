@@ -1,9 +1,7 @@
-
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import Optional
 from pydantic import BaseModel
-import os
 
 from app.database import get_db
 from app.models.empresa_model import Empresa
@@ -55,6 +53,21 @@ class EmpresaUpdate(BaseModel):
 
 
 # =========================
+# 🔧 TRATAMENTO DE URL (🔥 CORREÇÃO PRINCIPAL)
+# =========================
+def tratar_url(url: str):
+    if not url:
+        return None
+
+    # 🔥 Cloudinary → usa direto
+    if url.startswith("http"):
+        return url
+
+    # 🔥 Local → monta URL
+    return gerar_url_imagem(url)
+
+
+# =========================
 # 🔧 SERIALIZER
 # =========================
 def empresa_to_dict(e: Empresa):
@@ -62,10 +75,10 @@ def empresa_to_dict(e: Empresa):
     galeria = []
 
     for f in (e.fotos or []):
-        if not f.url:
-            continue
+        url = tratar_url(f.url)
 
-        url = gerar_url_imagem(f.url)
+        if not url:
+            continue
 
         if f.principal:
             foto_principal = url
@@ -75,7 +88,7 @@ def empresa_to_dict(e: Empresa):
                 "url": url
             })
 
-    # fallback
+    # fallback automático
     if not foto_principal and galeria:
         foto_principal = galeria[0]["url"]
 
@@ -104,7 +117,6 @@ def empresa_to_dict(e: Empresa):
 # =========================
 # 📌 LISTAGEM
 # =========================
-
 @router.get("/")
 def listar_empresas(db: Session = Depends(get_db), skip: int = 0, limit: int = 50):
     try:
@@ -113,7 +125,8 @@ def listar_empresas(db: Session = Depends(get_db), skip: int = 0, limit: int = 5
 
     except Exception as e:
         print("ERRO LISTAGEM:", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Erro interno no servidor")
+
 
 # =========================
 # 🔍 DETALHE
@@ -201,16 +214,18 @@ async def upload_foto(
         url = resultado.get("secure_url")
         public_id = resultado.get("public_id")
 
-        # 🔥 verifica se já existe foto principal
+        # 🔥 verifica se já existe principal
         existe_principal = db.query(EmpresaFoto).filter(
             EmpresaFoto.empresa_id == empresa_id,
             EmpresaFoto.principal == True
         ).first()
 
         foto = EmpresaFoto(
-        empresa_id=empresa_id,
-        url=url,
-        public_id=public_id)
+            empresa_id=empresa_id,
+            url=url,
+            public_id=public_id,
+            principal=False if existe_principal else True  # 🔥 PRIMEIRA FOTO vira principal
+        )
 
         db.add(foto)
         db.commit()
@@ -222,7 +237,7 @@ async def upload_foto(
 
     except Exception as e:
         print("Erro Cloudinary:", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Erro ao enviar imagem")
 
 
 # =========================
@@ -240,24 +255,21 @@ def definir_foto_principal(
     ).first()
 
     if not foto:
-        raise HTTPException(status_code=404, detail="Foto não encontrada para essa empresa")
+        raise HTTPException(status_code=404, detail="Foto não encontrada")
 
-    # remove principal das outras
     db.query(EmpresaFoto).filter(
         EmpresaFoto.empresa_id == empresa_id
     ).update({"principal": False})
 
-    # define nova principal
     foto.principal = True
-
     db.commit()
 
     return {"msg": "Foto principal definida com sucesso"}
 
+
 # =========================
 # 🗑️ DELETAR FOTO
 # =========================
-
 @router.delete("/id/{empresa_id}/foto/{foto_id}")
 def deletar_foto(
     empresa_id: int,
@@ -275,7 +287,7 @@ def deletar_foto(
         raise HTTPException(status_code=404, detail="Foto não encontrada")
 
     try:
-        # 🔥 SE FOR PRINCIPAL → DEFINE OUTRA
+        # 🔥 se for principal → define outra automaticamente
         if foto.principal:
             outra = db.query(EmpresaFoto).filter(
                 EmpresaFoto.empresa_id == empresa_id,
@@ -285,11 +297,10 @@ def deletar_foto(
             if outra:
                 outra.principal = True
 
-        # 🔥 DELETA NO CLOUDINARY
+        # 🔥 remove do cloudinary
         if foto.public_id:
             cloudinary.uploader.destroy(foto.public_id)
 
-        # 🔥 DELETA NO BANCO
         db.delete(foto)
         db.commit()
 
