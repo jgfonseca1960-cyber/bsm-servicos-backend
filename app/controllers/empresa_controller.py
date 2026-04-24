@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -103,11 +104,16 @@ def empresa_to_dict(e: Empresa):
 # =========================
 # 📌 LISTAGEM
 # =========================
+
 @router.get("/")
 def listar_empresas(db: Session = Depends(get_db), skip: int = 0, limit: int = 50):
-    empresas = db.query(Empresa).offset(skip).limit(limit).all()
-    return [empresa_to_dict(e) for e in empresas]
+    try:
+        empresas = db.query(Empresa).offset(skip).limit(limit).all()
+        return [empresa_to_dict(e) for e in empresas]
 
+    except Exception as e:
+        print("ERRO LISTAGEM:", e)
+        raise HTTPException(status_code=500, detail=str(e))
 
 # =========================
 # 🔍 DETALHE
