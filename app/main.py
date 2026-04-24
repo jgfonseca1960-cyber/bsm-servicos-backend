@@ -116,7 +116,7 @@ app = FastAPI(
     }
 )
 
-app.include_router(utils.router) # provisorio deletar fotos antigas
+app.include_router(utils_router)  # provisorio deletar fotos antigas
 
 # =========================
 # 🌐 CORS
