@@ -47,25 +47,23 @@ def limpar_fotos_antigas():
 # =========================
 # 🔥 LIMPEZA DO BANCO (CORRIGIDA)
 # =========================
+
 @router.delete("/limpar-fotos-quebradas-db")
 def limpar_fotos_quebradas(db: Session = Depends(get_db)):
+    from app.models.empresa_foto_model import EmpresaFoto
+
     fotos = db.query(EmpresaFoto).all()
 
     deletadas = 0
 
     for foto in fotos:
-        url = (foto.url or "").lower()
-
-        if (
-            "onrender.com/uploads" in url or
-            "/uploads/" in url
-        ):
+        if "onrender.com/uploads" in foto.url:
             db.delete(foto)
             deletadas += 1
 
     db.commit()
 
     return {
-        "msg": "Fotos quebradas removidas do banco",
-        "total_deletadas": deletadas
+        "msg": "Fotos locais removidas do banco",
+        "total_removidas": deletadas
     }
