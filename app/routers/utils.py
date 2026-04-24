@@ -54,16 +54,25 @@ def limpar_fotos_quebradas(db: Session = Depends(get_db)):
 
     fotos = db.query(EmpresaFoto).all()
 
-    deletadas = 0
+    removidas = 0
+    corrigidas = 0
 
     for foto in fotos:
+        # 🔥 REMOVE QUALQUER FOTO LOCAL (Render)
         if "onrender.com/uploads" in foto.url:
             db.delete(foto)
-            deletadas += 1
+            removidas += 1
+            continue
+
+        # 🔥 GARANTE URL LIMPA (evita //uploads bugado)
+        if "//uploads" in foto.url:
+            foto.url = foto.url.replace("//uploads", "/uploads")
+            corrigidas += 1
 
     db.commit()
 
     return {
-        "msg": "Fotos locais removidas do banco",
-        "total_removidas": deletadas
+        "msg": "Limpeza completa executada",
+        "removidas": removidas,
+        "corrigidas": corrigidas
     }
