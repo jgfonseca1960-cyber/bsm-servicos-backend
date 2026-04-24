@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.empresa_model import Empresa
+from app.models.empresa_foto_model import EmpresaFoto
 import os
 
 router = APIRouter(
@@ -44,22 +45,22 @@ def limpar_fotos_antigas():
 
 
 # =========================
-# 🔥 LIMPEZA DO BANCO (ESSENCIAL)
+# 🔥 LIMPEZA DO BANCO (CORRIGIDA)
 # =========================
 @router.delete("/limpar-fotos-quebradas-db")
 def limpar_fotos_quebradas(db: Session = Depends(get_db)):
-    empresas = db.query(Empresa).all()
+    fotos = db.query(EmpresaFoto).all()
 
-    atualizadas = 0
+    deletadas = 0
 
-    for emp in empresas:
-        if emp.foto_principal and "onrender.com/uploads" in emp.foto_principal:
-            emp.foto_principal = None
-            atualizadas += 1
+    for foto in fotos:
+        if foto.url and "onrender.com/uploads" in foto.url:
+            db.delete(foto)
+            deletadas += 1
 
     db.commit()
 
     return {
         "msg": "Fotos quebradas removidas do banco",
-        "total": atualizadas
+        "total_deletadas": deletadas
     }
