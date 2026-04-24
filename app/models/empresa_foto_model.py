@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -14,3 +14,5 @@ class EmpresaFoto(Base):
     principal = Column(Boolean, default=False)
 
     empresa = relationship("Empresa", back_populates="fotos")
+
+    public_id = Column(String, nullable=True)

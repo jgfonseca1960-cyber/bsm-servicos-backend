@@ -193,6 +193,7 @@ async def upload_foto(
         )
 
         url = resultado.get("secure_url")
+        public_id = resultado.get("public_id")
 
         # 🔥 verifica se já existe foto principal
         existe_principal = db.query(EmpresaFoto).filter(
@@ -201,10 +202,9 @@ async def upload_foto(
         ).first()
 
         foto = EmpresaFoto(
-            empresa_id=empresa_id,
-            url=url,
-            principal=False if existe_principal else True
-        )
+        empresa_id=empresa_id,
+        url=url,
+        public_id=public_id)
 
         db.add(foto)
         db.commit()
@@ -222,34 +222,73 @@ async def upload_foto(
 # =========================
 # ⭐ DEFINIR FOTO PRINCIPAL
 # =========================
-@router.put("/foto/{foto_id}/principal")
-def definir_foto_principal(foto_id: int, db: Session = Depends(get_db)):
-    foto = db.query(EmpresaFoto).filter(EmpresaFoto.id == foto_id).first()
+@router.put("/id/{empresa_id}/foto/{foto_id}/principal")
+def definir_foto_principal(
+    empresa_id: int,
+    foto_id: int,
+    db: Session = Depends(get_db)
+):
+    foto = db.query(EmpresaFoto).filter(
+        EmpresaFoto.id == foto_id,
+        EmpresaFoto.empresa_id == empresa_id
+    ).first()
 
     if not foto:
-        raise HTTPException(status_code=404, detail="Foto não encontrada")
+        raise HTTPException(status_code=404, detail="Foto não encontrada para essa empresa")
 
+    # remove principal das outras
     db.query(EmpresaFoto).filter(
-        EmpresaFoto.empresa_id == foto.empresa_id
+        EmpresaFoto.empresa_id == empresa_id
     ).update({"principal": False})
 
+    # define nova principal
     foto.principal = True
+
     db.commit()
 
-    return {"msg": "Foto principal definida"}
-
+    return {"msg": "Foto principal definida com sucesso"}
 
 # =========================
 # 🗑️ DELETAR FOTO
 # =========================
-@router.delete("/foto/{foto_id}")
-def deletar_foto(foto_id: int, db: Session = Depends(get_db)):
-    foto = db.query(EmpresaFoto).filter(EmpresaFoto.id == foto_id).first()
+
+@router.delete("/id/{empresa_id}/foto/{foto_id}")
+def deletar_foto(
+    empresa_id: int,
+    foto_id: int,
+    db: Session = Depends(get_db)
+):
+    import cloudinary.uploader
+
+    foto = db.query(EmpresaFoto).filter(
+        EmpresaFoto.id == foto_id,
+        EmpresaFoto.empresa_id == empresa_id
+    ).first()
 
     if not foto:
         raise HTTPException(status_code=404, detail="Foto não encontrada")
 
-    db.delete(foto)
-    db.commit()
+    try:
+        # 🔥 SE FOR PRINCIPAL → DEFINE OUTRA
+        if foto.principal:
+            outra = db.query(EmpresaFoto).filter(
+                EmpresaFoto.empresa_id == empresa_id,
+                EmpresaFoto.id != foto.id
+            ).first()
 
-    return {"msg": "Foto deletada com sucesso"}
+            if outra:
+                outra.principal = True
+
+        # 🔥 DELETA NO CLOUDINARY
+        if foto.public_id:
+            cloudinary.uploader.destroy(foto.public_id)
+
+        # 🔥 DELETA NO BANCO
+        db.delete(foto)
+        db.commit()
+
+        return {"msg": "Foto deletada com sucesso"}
+
+    except Exception as e:
+        print("Erro ao deletar foto:", e)
+        raise HTTPException(status_code=500, detail="Erro ao deletar foto")
