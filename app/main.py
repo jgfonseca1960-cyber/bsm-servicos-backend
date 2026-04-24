@@ -19,6 +19,7 @@ from app.controllers.empresa_controller import router as empresa_router
 from app.controllers.servico_controller import router as servico_router
 from app.controllers.usuario_controller import router as usuario_router
 
+from app.routes import utils  # provisorio limpeza de fotos antigas
 
 # =========================
 # 🌐 CONFIG BASE URL (IMPORTANTE)
@@ -113,6 +114,7 @@ app = FastAPI(
     }
 )
 
+app.include_router(utils.router) # provisorio deletar fotos antigas
 
 # =========================
 # 🌐 CORS
