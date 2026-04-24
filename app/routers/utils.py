@@ -54,7 +54,12 @@ def limpar_fotos_quebradas(db: Session = Depends(get_db)):
     deletadas = 0
 
     for foto in fotos:
-        if foto.url and "onrender.com/uploads" in foto.url:
+        url = (foto.url or "").lower()
+
+        if (
+            "onrender.com/uploads" in url or
+            "/uploads/" in url
+        ):
             db.delete(foto)
             deletadas += 1
 
