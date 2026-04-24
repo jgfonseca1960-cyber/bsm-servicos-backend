@@ -70,7 +70,8 @@ def empresa_to_dict(e: Empresa):
     fotos_validas = []
 
     for f in (e.fotos or []):
-        url = url_valida(f.url)
+        url = tratar_url(f.url)
+
         if not url:
             continue
 
@@ -80,14 +81,17 @@ def empresa_to_dict(e: Empresa):
             "principal": f.principal
         })
 
-    # 🔥 ordena: principal primeiro
-    fotos_validas.sort(key=lambda x: not x["principal"])
+    # 🔥 define principal automaticamente
+    foto_principal = None
 
-    # 🔥 define principal corretamente
-    foto_principal = next(
-        (f["url"] for f in fotos_validas if f["principal"]),
-        None
-    )
+    for f in fotos_validas:
+        if f["principal"]:
+            foto_principal = f["url"]
+            break
+
+    # 🔥 fallback forte (corrige seu problema)
+    if not foto_principal and fotos_validas:
+        foto_principal = fotos_validas[0]["url"]
 
     return {
         "id": e.id,
@@ -109,7 +113,6 @@ def empresa_to_dict(e: Empresa):
         "foto_principal": foto_principal,
         "fotos": fotos_validas
     }
-
 
 # =========================
 # 📌 LISTAGEM

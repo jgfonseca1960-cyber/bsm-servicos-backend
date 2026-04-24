@@ -76,3 +76,21 @@ def limpar_fotos_quebradas(db: Session = Depends(get_db)):
         "removidas": removidas,
         "corrigidas": corrigidas
     }
+
+@router.delete("/limpar-fotos-locais-do-banco")
+def limpar_fotos_locais(db: Session = Depends(get_db)):
+    fotos = db.query(EmpresaFoto).all()
+
+    deletadas = 0
+
+    for foto in fotos:
+        if foto.url and "uploads/empresas" in foto.url:
+            db.delete(foto)
+            deletadas += 1
+
+    db.commit()
+
+    return {
+        "msg": "Fotos locais removidas do banco",
+        "total_deletadas": deletadas
+    }
