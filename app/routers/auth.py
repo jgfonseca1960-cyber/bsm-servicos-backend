@@ -1,49 +1,44 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from fastapi.security import OAuth2PasswordRequestForm
 
 from app.database import get_db
 from app.models.usuario_model import Usuario
-from app.core.security import verificar_senha, criar_token
+from app.core.security import create_access_token
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["Auth"]
-)
-
-# 🔥 MODELO PARA RECEBER JSON (ESSENCIAL)
-class LoginRequest(BaseModel):
-    email: str
-    senha: str
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/login")
 def login(
-    dados: LoginRequest,
-    db: Session = Depends(get_db)
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
 ):
-    user = db.query(Usuario).filter(
-        Usuario.email == dados.email
-    ).first()
+    usuario = (
+        db.query(Usuario)
+        .filter(Usuario.email == form_data.username)
+        .first()
+    )
 
-    if not user:
+    if not usuario:
         raise HTTPException(status_code=401, detail="Usuário não encontrado")
 
-    # 🔥 IMPORTANTE: usar senha_hash (não senha)
-    if not verificar_senha(
-        dados.senha,
-        user.senha_hash
-    ):
+    # ⚠️ ajuste conforme seu hash depois
+    if usuario.senha_hash != form_data.password:
         raise HTTPException(status_code=401, detail="Senha inválida")
 
-    token = criar_token(
-        {
-            "sub": str(user.id),
-            "is_admin": getattr(user, "is_admin", False)
+    # 🔥 CONVERSÃO AQUI
+    tipo_usuario = "admin" if usuario.is_admin else "usuario"
+
+    access_token = create_access_token(
+        data={
+            "sub": str(usuario.id),
+            "is_admin": usuario.is_admin,
         }
     )
 
     return {
-        "access_token": token,
-        "token_type": "bearer"
+        "access_token": access_token,
+        "token_type": "bearer",
+        "tipo_usuario": tipo_usuario,  # 🔥 ESSA LINHA RESOLVE TUDO
     }

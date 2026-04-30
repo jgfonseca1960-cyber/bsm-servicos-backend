@@ -26,7 +26,7 @@ from app.routers.utils import router as utils_router
 # =========================
 # 🌐 CONFIG BASE URL (IMPORTANTE)
 # =========================
-BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
+BASE_URL = os.getenv("BASE_URL", "http://192.168.0.17:8000")
 
 
 # =========================

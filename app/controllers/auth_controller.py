@@ -35,8 +35,12 @@ def login(
         )
 
     # 🔥 cria token JWT
+
     token = create_access_token(
-        data={"sub": str(user.id)}
+        data={
+           "sub": str(usuario.id),
+            "tipo_usuario": tipo_usuario,  # 🔥 melhor que is_admin
+}
     )
 
     return {
