@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from sqlalchemy.orm import Session
-from typing import Optional
+from sqlalchemy import and_
+from typing import Optional, List
 from pydantic import BaseModel
+import math
 
 from app.database import get_db
 from app.models.empresa_model import Empresa
@@ -51,7 +53,25 @@ class EmpresaUpdate(BaseModel):
 
 
 # =========================
-# 🔧 TRATAR URL (FIX GLOBAL)
+# 📍 FUNÇÃO DISTÂNCIA (HAVERSINE)
+# =========================
+def calcular_distancia(lat1, lon1, lat2, lon2):
+    if not lat1 or not lon1 or not lat2 or not lon2:
+        return None
+
+    R = 6371  # km
+
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+
+    a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    return round(R * c, 2)
+
+
+# =========================
+# 🔧 URL IMAGEM
 # =========================
 def tratar_url(url: str):
     if not url:
@@ -64,9 +84,9 @@ def tratar_url(url: str):
 
 
 # =========================
-# 🔧 SERIALIZER (CORRIGIDO)
+# 🔧 SERIALIZER
 # =========================
-def empresa_to_dict(e: Empresa):
+def empresa_to_dict(e: Empresa, user_lat=None, user_lon=None):
     fotos_validas = []
 
     for f in (e.fotos or []):
@@ -81,7 +101,6 @@ def empresa_to_dict(e: Empresa):
             "principal": f.principal
         })
 
-    # 🔥 definir principal
     foto_principal = None
 
     for f in fotos_validas:
@@ -89,39 +108,72 @@ def empresa_to_dict(e: Empresa):
             foto_principal = f["url"]
             break
 
-    # 🔥 fallback automático
     if not foto_principal and fotos_validas:
         foto_principal = fotos_validas[0]["url"]
+
+    distancia = None
+    if user_lat and user_lon and e.latitude and e.longitude:
+        distancia = calcular_distancia(
+            user_lat, user_lon,
+            e.latitude, e.longitude
+        )
 
     return {
         "id": e.id,
         "nome": e.nome,
         "descricao": e.descricao,
         "telefone": e.telefone,
-        "endereco": e.endereco,
-        "bairro": e.bairro,
         "cidade": e.cidade,
-        "estado": e.estado,
-        "cep": e.cep,
+        "bairro": e.bairro,
         "latitude": e.latitude,
         "longitude": e.longitude,
-        "ativo": e.ativo,
-        "avaliacao_media": e.avaliacao_media,
-        "cpf": e.cpf,
-        "cnpj": e.cnpj,
         "servico_id": e.servico_id,
         "foto_principal": foto_principal,
-        "fotos": fotos_validas
+        "fotos": fotos_validas,
+        "distancia_km": distancia  # 🔥 NOVO
     }
 
 
 # =========================
-# 📌 LISTAGEM
+# 🔍 BUSCA PROFISSIONAL
 # =========================
 @router.get("/")
-def listar_empresas(db: Session = Depends(get_db), skip: int = 0, limit: int = 50):
-    empresas = db.query(Empresa).offset(skip).limit(limit).all()
-    return [empresa_to_dict(e) for e in empresas]
+def listar_empresas(
+    db: Session = Depends(get_db),
+
+    servico_id: Optional[int] = None,
+    cidade: Optional[str] = None,
+    bairro: Optional[str] = None,
+
+    latitude: Optional[float] = None,
+    longitude: Optional[float] = None,
+):
+    query = db.query(Empresa)
+
+    # 🔍 FILTROS
+    if servico_id:
+        query = query.filter(Empresa.servico_id == servico_id)
+
+    if cidade:
+        query = query.filter(Empresa.cidade.ilike(f"%{cidade}%"))
+
+    if bairro:
+        query = query.filter(Empresa.bairro.ilike(f"%{bairro}%"))
+
+    empresas = query.all()
+
+    resultado = [
+        empresa_to_dict(e, latitude, longitude)
+        for e in empresas
+    ]
+
+    # 📏 ORDENA POR DISTÂNCIA
+    if latitude and longitude:
+        resultado.sort(
+            key=lambda x: x["distancia_km"] if x["distancia_km"] else 9999
+        )
+
+    return resultado
 
 
 # =========================
@@ -181,67 +233,3 @@ def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"msg": "Empresa deletada"}
-
-
-# =========================
-# 📸 UPLOAD FOTO (CLOUDINARY)
-# =========================
-@router.post("/id/{empresa_id}/upload-foto")
-async def upload_foto(
-    empresa_id: int,
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db)
-):
-    import cloudinary.uploader
-
-    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
-
-    if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
-    resultado = cloudinary.uploader.upload(
-        await file.read(),
-        folder="empresas"
-    )
-
-    url = resultado.get("secure_url")
-    public_id = resultado.get("public_id")
-
-    existe_principal = db.query(EmpresaFoto).filter(
-        EmpresaFoto.empresa_id == empresa_id,
-        EmpresaFoto.principal == True
-    ).first()
-
-    foto = EmpresaFoto(
-        empresa_id=empresa_id,
-        url=url,
-        public_id=public_id,
-        principal=False if existe_principal else True
-    )
-
-    db.add(foto)
-    db.commit()
-
-    return {"msg": "Foto enviada", "url": url}
-
-
-# =========================
-# ⭐ DEFINIR PRINCIPAL
-# =========================
-@router.put("/id/{empresa_id}/foto/{foto_id}/principal")
-def definir_foto_principal(empresa_id: int, foto_id: int, db: Session = Depends(get_db)):
-    db.query(EmpresaFoto).filter(
-        EmpresaFoto.empresa_id == empresa_id
-    ).update({"principal": False})
-
-    foto = db.query(EmpresaFoto).filter(
-        EmpresaFoto.id == foto_id
-    ).first()
-
-    if not foto:
-        raise HTTPException(status_code=404, detail="Foto não encontrada")
-
-    foto.principal = True
-    db.commit()
-
-    return {"msg": "Foto principal definida"}
