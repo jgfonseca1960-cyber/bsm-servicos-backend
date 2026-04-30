@@ -1,49 +1,52 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordRequestForm
 
 from app.database import get_db
 from app.models.usuario_model import Usuario
-from app.core.security import verify_password, create_access_token
+from app.core.security import create_access_token
 
-router = APIRouter(tags=["Auth"])
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
-# =========================
-# 🔐 LOGIN
-# =========================
+
 @router.post("/login")
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    # 🔎 busca usuário pelo email
-    user = db.query(Usuario).filter(
-        Usuario.email == form_data.username
-    ).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuário não encontrado"
+    try:
+        # 🔥 BUSCA USUÁRIO
+        usuario = (
+            db.query(Usuario)
+            .filter(Usuario.email == form_data.username)
+            .first()
         )
 
-    # 🔐 valida senha
-    if not verify_password(form_data.password, user.senha_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Senha inválida"
+        # ❌ NÃO EXISTE
+        if not usuario:
+            raise HTTPException(status_code=401, detail="Usuário não encontrado")
+
+        # 🔐 VALIDA SENHA (SIMPLES POR ENQUANTO)
+        if usuario.senha_hash != form_data.password:
+            raise HTTPException(status_code=401, detail="Senha inválida")
+
+        # 🔥 DEFINE TIPO
+        tipo_usuario = "admin" if usuario.is_admin else "usuario"
+
+        # 🔥 GERA TOKEN
+        access_token = create_access_token(
+            data={
+                "sub": str(usuario.id),
+                "tipo_usuario": tipo_usuario,
+            }
         )
 
-    # 🔥 cria token JWT
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "tipo_usuario": tipo_usuario,
+        }
 
-    token = create_access_token(
-        data={
-           "sub": str(usuario.id),
-            "tipo_usuario": tipo_usuario,  # 🔥 melhor que is_admin
-}
-    )
-
-    return {
-        "access_token": token,
-        "token_type": "bearer"
-    }
+    except Exception as e:
+        print("🔥 ERRO LOGIN:", e)
+        raise HTTPException(status_code=500, detail=str(e))

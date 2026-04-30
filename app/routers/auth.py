@@ -51,5 +51,5 @@ def login(
         }
 
     except Exception as e:
-        print("🔥 ERRO LOGIN:", e)
-        raise HTTPException(status_code=500, detail="Erro interno no servidor")
+    print("🔥 ERRO REAL LOGIN:", str(e))
+    raise HTTPException(status_code=500, detail=str(e))
