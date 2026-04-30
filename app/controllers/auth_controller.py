@@ -7,7 +7,7 @@ from app.database import get_db
 from app.models.usuario_model import Usuario
 from app.core.security import create_access_token
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter(tags=["Auth"])
 
 # 🔐 CONTEXTO DE CRIPTOGRAFIA
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

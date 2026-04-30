@@ -177,10 +177,14 @@ def auth_check(token: str = Depends(oauth2_scheme)):
 # =========================
 # 📌 ROUTERS
 # =========================
-app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+
+app.include_router(auth_router, prefix="/auth")
 app.include_router(empresa_router, prefix="/empresa", tags=["Empresas"])
 app.include_router(servico_router, prefix="/servicos", tags=["Serviços"])
 app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
+
+
+
 
 
 # =========================
