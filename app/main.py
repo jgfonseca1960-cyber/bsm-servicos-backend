@@ -15,7 +15,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from app.database import engine, init_db
 
-# ✅ IMPORTS CORRETOS (SEM DUPLICAÇÃO)
+# ✅ CONTROLLERS (SEM DUPLICAÇÃO)
 from app.controllers.auth_controller import router as auth_router
 from app.controllers.empresa_controller import router as empresa_router
 from app.controllers.servico_controller import router as servico_router
@@ -25,7 +25,7 @@ from app.routers.utils import router as utils_router
 
 
 # =========================
-# 🌐 CONFIG BASE URL
+# 🌐 CONFIG
 # =========================
 BASE_URL = os.getenv("BASE_URL", "https://bsm-servicos-backend.onrender.com")
 
@@ -33,7 +33,7 @@ BASE_URL = os.getenv("BASE_URL", "https://bsm-servicos-backend.onrender.com")
 # =========================
 # 🔐 AUTH
 # =========================
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -99,7 +99,7 @@ async def lifespan(app: FastAPI):
 
 
 # =========================
-# 🚀 APP (ÚNICO!)
+# 🚀 APP
 # =========================
 app = FastAPI(
     title="BSM Serviços API",
@@ -136,12 +136,15 @@ app.mount(
 
 
 # =========================
-# 🔗 ROUTERS (SEM DUPLICAÇÃO)
+# 🔗 ROUTERS (CORRETOS)
 # =========================
-app.include_router(auth_router, prefix="/auth")
+app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(empresa_router, prefix="/empresa", tags=["Empresas"])
 app.include_router(servico_router, prefix="/servicos", tags=["Serviços"])
+
+# 🔥 IMPORTANTE: PREFIX DEFINIDO AQUI (NÃO NO CONTROLLER)
 app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
+
 app.include_router(utils_router)
 
 
