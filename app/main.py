@@ -23,6 +23,10 @@ from app.controllers.usuario_controller import router as usuario_router
 # from app.routes import utils
 from app.routers.utils import router as utils_router
 
+from app.routers import usuario_router
+
+app.include_router(usuario_router.router)
+
 # =========================
 # 🌐 CONFIG BASE URL (IMPORTANTE)
 # =========================
