@@ -1,5 +1,7 @@
 print("🔥🔥🔥 MAIN CARREGADO 🔥🔥🔥")
+
 import app.config.cloudinary_config
+
 from fastapi import FastAPI, Response, Depends, Request
 from contextlib import asynccontextmanager
 from sqlalchemy import text
@@ -13,24 +15,19 @@ from fastapi.security import OAuth2PasswordBearer
 
 from app.database import engine, init_db
 
-# Controllers
+# ✅ IMPORTS CORRETOS (SEM DUPLICAÇÃO)
 from app.controllers.auth_controller import router as auth_router
 from app.controllers.empresa_controller import router as empresa_router
 from app.controllers.servico_controller import router as servico_router
 from app.controllers.usuario_controller import router as usuario_router
 
-# from app.routes import utils  # provisorio limpeza de fotos antigas
-# from app.routes import utils
 from app.routers.utils import router as utils_router
 
-from app.routers import usuario_router
-
-app.include_router(usuario_router.router)
 
 # =========================
-# 🌐 CONFIG BASE URL (IMPORTANTE)
+# 🌐 CONFIG BASE URL
 # =========================
-BASE_URL = os.getenv("BASE_URL", "http://192.168.0.17:8000")
+BASE_URL = os.getenv("BASE_URL", "https://bsm-servicos-backend.onrender.com")
 
 
 # =========================
@@ -64,15 +61,14 @@ def ajustar_banco():
 
 
 # =========================
-# 📁 UPLOAD CONFIG (MELHORADO)
+# 📁 UPLOAD
 # =========================
 UPLOAD_DIR = "uploads"
 EMPRESA_DIR = os.path.join(UPLOAD_DIR, "empresas")
 
 os.makedirs(EMPRESA_DIR, exist_ok=True)
 
-print(f"📁 Pasta uploads: {os.path.abspath(UPLOAD_DIR)}")
-print(f"📁 Pasta empresas: {os.path.abspath(EMPRESA_DIR)}")
+print(f"📁 Uploads: {os.path.abspath(UPLOAD_DIR)}")
 
 
 # =========================
@@ -86,15 +82,11 @@ async def lifespan(app: FastAPI):
         init_db()
         ajustar_banco()
 
-        # 🔥 DEBUG COMPLETO
         if os.path.exists(UPLOAD_DIR):
             for root, dirs, files in os.walk(UPLOAD_DIR):
                 print(f"📂 {root} -> {files}")
-        else:
-            print("⚠️ Pasta uploads não existe")
 
         print("🌐 BASE_URL:", BASE_URL)
-
         print("✅ Inicialização concluída!")
 
     except Exception:
@@ -107,7 +99,7 @@ async def lifespan(app: FastAPI):
 
 
 # =========================
-# 🚀 FASTAPI APP
+# 🚀 APP (ÚNICO!)
 # =========================
 app = FastAPI(
     title="BSM Serviços API",
@@ -120,14 +112,13 @@ app = FastAPI(
     }
 )
 
-app.include_router(utils_router)  # provisorio deletar fotos antigas
 
 # =========================
 # 🌐 CORS
 # =========================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # depois pode restringir
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -135,7 +126,7 @@ app.add_middleware(
 
 
 # =========================
-# 📁 STATIC FILES (CORRIGIDO)
+# 📁 STATIC FILES
 # =========================
 app.mount(
     "/uploads",
@@ -143,74 +134,50 @@ app.mount(
     name="uploads"
 )
 
-print("🖼 StaticFiles ativo em /uploads")
+
+# =========================
+# 🔗 ROUTERS (SEM DUPLICAÇÃO)
+# =========================
+app.include_router(auth_router, prefix="/auth")
+app.include_router(empresa_router, prefix="/empresa", tags=["Empresas"])
+app.include_router(servico_router, prefix="/servicos", tags=["Serviços"])
+app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
+app.include_router(utils_router)
 
 
 # =========================
-# 🔗 GERAR URL DE IMAGEM (NOVO)
+# 🔗 URL IMAGEM
 # =========================
-def gerar_url_imagem(caminho: str) -> str:
-    """
-    Converte caminho interno em URL acessível pelo Flutter
-    """
+def gerar_url_imagem(caminho: str):
     if not caminho:
         return None
 
-    # garante padrão correto
     caminho = caminho.replace("\\", "/")
-
     return f"{BASE_URL}/{caminho}"
 
 
 # =========================
-# 🔧 FAVICON
+# 🔧 ROTAS AUX
 # =========================
-@app.get("/favicon.ico")
-def favicon():
-    return Response(status_code=204)
+@app.get("/")
+def root():
+    return {"msg": "API BSM Serviços rodando 🚀"}
 
 
-# =========================
-# 🔐 AUTH CHECK
-# =========================
 @app.get("/auth-check")
 def auth_check(token: str = Depends(oauth2_scheme)):
     return {"token": token}
 
 
-# =========================
-# 📌 ROUTERS
-# =========================
-
-app.include_router(auth_router, prefix="/auth")
-app.include_router(empresa_router, prefix="/empresa", tags=["Empresas"])
-app.include_router(servico_router, prefix="/servicos", tags=["Serviços"])
-app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
+@app.get("/favicon.ico")
+def favicon():
+    return Response(status_code=204)
 
 
-
-
-
-# =========================
-# 🧪 TESTE DE IMAGEM (NOVO)
-# =========================
 @app.get("/teste-imagem")
 def teste_imagem():
-    """
-    Use isso pra testar direto no navegador
-    """
     exemplo = "uploads/empresas/exemplo.jpg"
-    return {
-        "url_exemplo": gerar_url_imagem(exemplo)
-    }
-
-
-# =========================
-# 🧪 ROOT
-# =========================
-@app.get("/")
-def root():
-    return {"msg": "API BSM Serviços rodando 🚀"}
+    return {"url_exemplo": gerar_url_imagem(exemplo)}
 
 
 # =========================
