@@ -3,7 +3,7 @@ from typing import Optional, List
 
 
 # =========================
-# 🔹 FOTO RESPONSE
+# 🔹 FOTO
 # =========================
 class FotoResponse(BaseModel):
     id: int
@@ -15,7 +15,7 @@ class FotoResponse(BaseModel):
 
 
 # =========================
-# 🔹 BASE
+# 🔹 BASE COMPLETA
 # =========================
 class EmpresaBase(BaseModel):
     nome: str
@@ -25,7 +25,7 @@ class EmpresaBase(BaseModel):
     email: Optional[str] = None
 
     endereco: Optional[str] = None
-    bairro: Optional[str] = None  # 🔥 ADICIONADO
+    bairro: Optional[str] = None
     cidade: Optional[str] = None
     estado: Optional[str] = None
     cep: Optional[str] = None
@@ -34,6 +34,10 @@ class EmpresaBase(BaseModel):
     longitude: Optional[float] = None
 
     ativo: Optional[bool] = True
+    avaliacao_media: Optional[float] = None
+
+    cpf: Optional[str] = None
+    cnpj: Optional[str] = None
 
 
 # =========================
@@ -54,7 +58,7 @@ class EmpresaUpdate(BaseModel):
     email: Optional[str] = None
 
     endereco: Optional[str] = None
-    bairro: Optional[str] = None  # 🔥 ADICIONADO
+    bairro: Optional[str] = None
     cidade: Optional[str] = None
     estado: Optional[str] = None
     cep: Optional[str] = None
@@ -63,21 +67,24 @@ class EmpresaUpdate(BaseModel):
     longitude: Optional[float] = None
 
     ativo: Optional[bool] = None
+    avaliacao_media: Optional[float] = None
+
+    cpf: Optional[str] = None
+    cnpj: Optional[str] = None
+
     servico_id: Optional[int] = None
 
 
 # =========================
-# 🔹 RESPONSE COMPLETO
+# 🔹 RESPONSE COMPLETA
 # =========================
 class EmpresaResponse(EmpresaBase):
     id: int
     servico_id: Optional[int] = None
 
-    # 🔥 CAMPOS QUE ESTAVAM SUMINDO
     foto_principal: Optional[str] = None
     fotos: List[FotoResponse] = []
 
-    avaliacao_media: Optional[float] = 0
     distancia_km: Optional[float] = None
 
     class Config:

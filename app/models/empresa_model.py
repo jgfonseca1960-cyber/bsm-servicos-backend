@@ -12,6 +12,8 @@ class Empresa(Base):
     nome = Column(String, nullable=False)
     descricao = Column(String, nullable=True)
     telefone = Column(String, nullable=True)
+    whatsapp = Column(String, nullable=True)  # 🔥 ADICIONADO
+    email = Column(String, nullable=True)     # 🔥 ADICIONADO
 
     # 🔹 endereço
     endereco = Column(String, nullable=True)
@@ -35,7 +37,7 @@ class Empresa(Base):
     # 🔹 serviço
     servico_id = Column(
         Integer,
-        ForeignKey("servicos.id", ondelete="SET NULL"),  # 🔥 importante
+        ForeignKey("servicos.id", ondelete="SET NULL"),
         nullable=True
     )
 
@@ -49,7 +51,7 @@ class Empresa(Base):
         "EmpresaFoto",
         back_populates="empresa",
         cascade="all, delete-orphan",
-        passive_deletes=True  # 🔥 melhora performance e integridade
+        passive_deletes=True
     )
 
     # =========================
@@ -57,16 +59,11 @@ class Empresa(Base):
     # =========================
     @property
     def foto_principal(self):
-        """
-        Retorna a foto principal da empresa (ou fallback)
-        """
         if not self.fotos:
             return None
 
-        # tenta pegar principal
         for f in self.fotos:
             if f.principal:
                 return f.url
 
-        # fallback: primeira foto
         return self.fotos[0].url
