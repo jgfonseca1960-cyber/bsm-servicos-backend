@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 
-# 🔹 IMPORT DIRETO DOS SERVICES (OK)
 from app.services.usuario_service import (
     criar_usuario,
     listar_usuarios,
@@ -12,15 +11,14 @@ from app.services.usuario_service import (
     deletar_usuario
 )
 
-# 🔹 SCHEMAS
 from app.schemas.usuario_schema import (
     UsuarioCreate,
     UsuarioResponse,
     UsuarioUpdate
 )
 
+# 🔥 SEM PREFIX AQUI
 router = APIRouter(
-    prefix="/usuarios",
     tags=["Usuários"]
 )
 
@@ -33,7 +31,6 @@ def criar_novo_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        # 🔥 evita erro 500 sem explicação
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 

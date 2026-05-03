@@ -144,7 +144,6 @@ app.include_router(servico_router, prefix="/servicos", tags=["Serviços"])
 
 # 🔥 IMPORTANTE: PREFIX DEFINIDO AQUI (NÃO NO CONTROLLER)
 app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
-
 app.include_router(utils_router)
 
 
@@ -200,3 +199,6 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 print("🔥🔥🔥 BACKEND NOVO RODANDO 🔥🔥🔥")
+
+for route in app.routes:
+    print(route.path)
