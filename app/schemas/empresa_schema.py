@@ -21,7 +21,6 @@ class EmpresaBase(BaseModel):
     nome: str
     descricao: Optional[str] = None
     telefone: Optional[str] = None
-    whatsapp: Optional[str] = None
     email: Optional[str] = None
 
     endereco: Optional[str] = None
@@ -54,7 +53,6 @@ class EmpresaUpdate(BaseModel):
     nome: Optional[str] = None
     descricao: Optional[str] = None
     telefone: Optional[str] = None
-    whatsapp: Optional[str] = None
     email: Optional[str] = None
 
     endereco: Optional[str] = None
@@ -83,7 +81,7 @@ class EmpresaResponse(EmpresaBase):
     servico_id: Optional[int] = None
 
     foto_principal: Optional[str] = None
-    fotos: List[FotoResponse] = []
+    fotos: List[FotoResponse] = []  # ⚠️ controlado pelo FastAPI
 
     distancia_km: Optional[float] = None
 
