@@ -8,10 +8,53 @@ from app.schemas.empresa_schema import EmpresaCreate, EmpresaUpdate
 
 
 # =========================
+# 🔹 SERIALIZADOR (🔥 NOVO)
+# =========================
+def serialize_empresa(e: Empresa):
+    return {
+        "id": e.id,
+        "nome": e.nome,
+        "descricao": e.descricao,
+        "telefone": e.telefone,
+
+        "endereco": e.endereco,
+        "bairro": e.bairro,
+        "cidade": e.cidade,
+        "estado": e.estado,
+        "cep": e.cep,
+
+        "latitude": e.latitude,
+        "longitude": e.longitude,
+
+        "ativo": e.ativo,
+        "avaliacao_media": e.avaliacao_media,
+
+        "cpf": e.cpf,
+        "cnpj": e.cnpj,
+
+        "servico_id": e.servico_id,
+
+        # 🔥 FOTO PRINCIPAL (property do model)
+        "foto_principal": e.foto_principal,
+
+        # 🔥 FOTOS RELACIONADAS
+        "fotos": [
+            {
+                "id": f.id,
+                "url": f.url,
+                "principal": f.principal
+            }
+            for f in e.fotos
+        ],
+
+        "distancia_km": None
+    }
+
+
+# =========================
 # 🔹 CRIAR EMPRESA
 # =========================
 def criar_empresa(db: Session, data: EmpresaCreate):
-    # 🔥 valida se o serviço existe
     servico = db.query(Servico).filter(Servico.id == data.servico_id).first()
     if not servico:
         raise HTTPException(status_code=404, detail="Serviço não encontrado")
@@ -21,6 +64,7 @@ def criar_empresa(db: Session, data: EmpresaCreate):
         descricao=data.descricao,
         telefone=data.telefone,
         endereco=data.endereco,
+        bairro=data.bairro,
         cidade=data.cidade,
         estado=data.estado,
         cep=data.cep,
@@ -34,19 +78,19 @@ def criar_empresa(db: Session, data: EmpresaCreate):
     db.commit()
     db.refresh(empresa)
 
-    return empresa
+    return serialize_empresa(empresa)
 
 
 # =========================
-# 🔹 LISTAR TODAS
+# 🔹 LISTAR TODAS (🔥 CORRIGIDO)
 # =========================
 def listar_empresas(db: Session):
     empresas = db.query(Empresa).all()
-    return empresas
+    return [serialize_empresa(e) for e in empresas]
 
 
 # =========================
-# 🔹 BUSCAR POR ID
+# 🔹 BUSCAR POR ID (🔥 CORRIGIDO)
 # =========================
 def buscar_empresa(db: Session, empresa_id: int):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
@@ -54,10 +98,11 @@ def buscar_empresa(db: Session, empresa_id: int):
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-    return empresa
+    return serialize_empresa(empresa)
+
 
 # =========================
-# 🔹 ATUALIZAR
+# 🔹 ATUALIZAR (🔥 CORRIGIDO)
 # =========================
 def atualizar_empresa(db: Session, empresa_id: int, data: EmpresaUpdate):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
@@ -65,20 +110,18 @@ def atualizar_empresa(db: Session, empresa_id: int, data: EmpresaUpdate):
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-    # 🔥 se vier servico_id, valida
     if data.servico_id is not None:
         servico = db.query(Servico).filter(Servico.id == data.servico_id).first()
         if not servico:
             raise HTTPException(status_code=404, detail="Serviço não encontrado")
 
-    # 🔥 atualiza só os campos enviados
     for key, value in data.dict(exclude_unset=True).items():
         setattr(empresa, key, value)
 
     db.commit()
     db.refresh(empresa)
 
-    return empresa
+    return serialize_empresa(empresa)
 
 
 # =========================

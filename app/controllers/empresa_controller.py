@@ -1,65 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
-from typing import Optional, List
-from pydantic import BaseModel
+from typing import Optional
 import math
 
 from app.database import get_db
 from app.models.empresa_model import Empresa
-from app.models.empresa_foto_model import EmpresaFoto
 from app.utils.files import gerar_url_imagem
 
 router = APIRouter(tags=["Empresas"])
 
 
 # =========================
-# 📦 SCHEMAS
-# =========================
-class EmpresaCreate(BaseModel):
-    nome: str
-    descricao: Optional[str] = None
-    telefone: Optional[str] = None
-    endereco: Optional[str] = None
-    bairro: Optional[str] = None
-    cidade: Optional[str] = None
-    estado: Optional[str] = None
-    cep: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    ativo: Optional[bool] = True
-    avaliacao_media: Optional[float] = None
-    cpf: Optional[str] = None
-    cnpj: Optional[str] = None
-    servico_id: Optional[int] = None
-
-
-class EmpresaUpdate(BaseModel):
-    nome: Optional[str] = None
-    descricao: Optional[str] = None
-    telefone: Optional[str] = None
-    endereco: Optional[str] = None
-    bairro: Optional[str] = None
-    cidade: Optional[str] = None
-    estado: Optional[str] = None
-    cep: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    ativo: Optional[bool] = None
-    avaliacao_media: Optional[float] = None
-    cpf: Optional[str] = None
-    cnpj: Optional[str] = None
-    servico_id: Optional[int] = None
-
-
-# =========================
-# 📍 FUNÇÃO DISTÂNCIA (HAVERSINE)
+# 📍 DISTÂNCIA
 # =========================
 def calcular_distancia(lat1, lon1, lat2, lon2):
     if not lat1 or not lon1 or not lat2 or not lon2:
         return None
 
-    R = 6371  # km
+    R = 6371
 
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
@@ -71,7 +29,7 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
 
 
 # =========================
-# 🔧 URL IMAGEM
+# 🔧 URL
 # =========================
 def tratar_url(url: str):
     if not url:
@@ -84,11 +42,11 @@ def tratar_url(url: str):
 
 
 # =========================
-# 🔧 SERIALIZER
+# 🔥 SERIALIZER COMPLETO
 # =========================
 def empresa_to_dict(e: Empresa, user_lat=None, user_lon=None):
-    fotos_validas = []
 
+    fotos_validas = []
     for f in (e.fotos or []):
         url = tratar_url(f.url)
 
@@ -101,8 +59,8 @@ def empresa_to_dict(e: Empresa, user_lat=None, user_lon=None):
             "principal": f.principal
         })
 
+    # 🔥 FOTO PRINCIPAL
     foto_principal = None
-
     for f in fotos_validas:
         if f["principal"]:
             foto_principal = f["url"]
@@ -111,46 +69,57 @@ def empresa_to_dict(e: Empresa, user_lat=None, user_lon=None):
     if not foto_principal and fotos_validas:
         foto_principal = fotos_validas[0]["url"]
 
+    # 🔥 DISTÂNCIA
     distancia = None
     if user_lat and user_lon and e.latitude and e.longitude:
-        distancia = calcular_distancia(
-            user_lat, user_lon,
-            e.latitude, e.longitude
-        )
+        distancia = calcular_distancia(user_lat, user_lon, e.latitude, e.longitude)
 
+    # 🔥 RETORNO COMPLETO (AGORA SIM)
     return {
         "id": e.id,
         "nome": e.nome,
         "descricao": e.descricao,
         "telefone": e.telefone,
-        "cidade": e.cidade,
+        "email": e.email,
+
+        "endereco": e.endereco,
         "bairro": e.bairro,
+        "cidade": e.cidade,
+        "estado": e.estado,
+        "cep": e.cep,
+
         "latitude": e.latitude,
         "longitude": e.longitude,
+
+        "ativo": e.ativo,
+        "avaliacao_media": e.avaliacao_media,
+
+        "cpf": e.cpf,
+        "cnpj": e.cnpj,
+
         "servico_id": e.servico_id,
+
         "foto_principal": foto_principal,
         "fotos": fotos_validas,
-        "distancia_km": distancia  # 🔥 NOVO
+
+        "distancia_km": distancia
     }
 
 
 # =========================
-# 🔍 BUSCA PROFISSIONAL
+# 🔍 LISTAR
 # =========================
 @router.get("/")
 def listar_empresas(
     db: Session = Depends(get_db),
-
     servico_id: Optional[int] = None,
     cidade: Optional[str] = None,
     bairro: Optional[str] = None,
-
     latitude: Optional[float] = None,
     longitude: Optional[float] = None,
 ):
     query = db.query(Empresa)
 
-    # 🔍 FILTROS
     if servico_id:
         query = query.filter(Empresa.servico_id == servico_id)
 
@@ -167,7 +136,6 @@ def listar_empresas(
         for e in empresas
     ]
 
-    # 📏 ORDENA POR DISTÂNCIA
     if latitude and longitude:
         resultado.sort(
             key=lambda x: x["distancia_km"] if x["distancia_km"] else 9999
@@ -193,30 +161,32 @@ def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
 # ➕ CRIAR
 # =========================
 @router.post("/")
-def criar_empresa(data: EmpresaCreate, db: Session = Depends(get_db)):
-    empresa = Empresa(**data.model_dump())
+def criar_empresa(data: dict, db: Session = Depends(get_db)):
+    empresa = Empresa(**data)
     db.add(empresa)
     db.commit()
     db.refresh(empresa)
 
-    return {"msg": "Empresa criada", "id": empresa.id}
+    return empresa_to_dict(empresa)
 
 
 # =========================
 # ✏️ ATUALIZAR
 # =========================
 @router.put("/id/{empresa_id}")
-def atualizar_empresa(empresa_id: int, data: EmpresaUpdate, db: Session = Depends(get_db)):
+def atualizar_empresa(empresa_id: int, data: dict, db: Session = Depends(get_db)):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-    for key, value in data.model_dump(exclude_unset=True).items():
+    for key, value in data.items():
         setattr(empresa, key, value)
 
     db.commit()
-    return {"msg": "Empresa atualizada"}
+    db.refresh(empresa)
+
+    return empresa_to_dict(empresa)
 
 
 # =========================
