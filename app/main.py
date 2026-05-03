@@ -15,12 +15,11 @@ from fastapi.security import OAuth2PasswordBearer
 
 from app.database import engine, init_db
 
-# ✅ CONTROLLERS (SEM DUPLICAÇÃO)
+# ✅ CONTROLLERS
 from app.controllers.auth_controller import router as auth_router
 from app.controllers.empresa_controller import router as empresa_router
 from app.controllers.servico_controller import router as servico_router
 from app.controllers.usuario_controller import router as usuario_router
-
 from app.routers.utils import router as utils_router
 
 
@@ -41,19 +40,57 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 
 
 # =========================
-# 🔧 BANCO
+# 🔧 BANCO (🔥 CORREÇÃO REAL)
 # =========================
 def ajustar_banco():
     try:
         print("🔥 Ajustando banco...")
 
         with engine.begin() as conn:
+
+            # 🔹 USUÁRIOS
             conn.execute(text("""
                 ALTER TABLE usuarios 
                 ADD COLUMN IF NOT EXISTS senha_hash VARCHAR;
             """))
 
-        print("✅ Banco pronto!")
+            # 🔹 EMPRESAS - CAMPOS FALTANTES
+            conn.execute(text("""
+                ALTER TABLE empresas 
+                ADD COLUMN IF NOT EXISTS whatsapp VARCHAR;
+            """))
+
+            conn.execute(text("""
+                ALTER TABLE empresas 
+                ADD COLUMN IF NOT EXISTS email VARCHAR;
+            """))
+
+            conn.execute(text("""
+                ALTER TABLE empresas 
+                ADD COLUMN IF NOT EXISTS bairro VARCHAR;
+            """))
+
+            conn.execute(text("""
+                ALTER TABLE empresas 
+                ADD COLUMN IF NOT EXISTS estado VARCHAR;
+            """))
+
+            conn.execute(text("""
+                ALTER TABLE empresas 
+                ADD COLUMN IF NOT EXISTS cep VARCHAR;
+            """))
+
+            conn.execute(text("""
+                ALTER TABLE empresas 
+                ADD COLUMN IF NOT EXISTS cpf VARCHAR;
+            """))
+
+            conn.execute(text("""
+                ALTER TABLE empresas 
+                ADD COLUMN IF NOT EXISTS cnpj VARCHAR;
+            """))
+
+        print("✅ Banco atualizado com sucesso!")
 
     except Exception:
         print("❌ ERRO AO AJUSTAR BANCO:")
@@ -82,10 +119,6 @@ async def lifespan(app: FastAPI):
         init_db()
         ajustar_banco()
 
-        if os.path.exists(UPLOAD_DIR):
-            for root, dirs, files in os.walk(UPLOAD_DIR):
-                print(f"📂 {root} -> {files}")
-
         print("🌐 BASE_URL:", BASE_URL)
         print("✅ Inicialização concluída!")
 
@@ -103,7 +136,7 @@ async def lifespan(app: FastAPI):
 # =========================
 app = FastAPI(
     title="BSM Serviços API",
-    version="1.0.0",
+    version="1.0.1",
     description="API com autenticação JWT",
     lifespan=lifespan,
     swagger_ui_parameters={
@@ -136,13 +169,11 @@ app.mount(
 
 
 # =========================
-# 🔗 ROUTERS (CORRETOS)
+# 🔗 ROUTERS
 # =========================
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(empresa_router, prefix="/empresa", tags=["Empresas"])
 app.include_router(servico_router, prefix="/servicos", tags=["Serviços"])
-
-# 🔥 IMPORTANTE: PREFIX DEFINIDO AQUI (NÃO NO CONTROLLER)
 app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
 app.include_router(utils_router)
 
