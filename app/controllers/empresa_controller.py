@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, List
 import math
 
 from app.database import get_db
 from app.models.empresa_model import Empresa
 from app.utils.files import gerar_url_imagem
+
+# ✅ IMPORTANTE (AQUI ESTÁ A CHAVE)
+from app.schemas.empresa_schema import EmpresaCreate, EmpresaUpdate, EmpresaResponse
 
 router = APIRouter(tags=["Empresas"])
 
@@ -42,7 +45,7 @@ def tratar_url(url: str):
 
 
 # =========================
-# 🔥 SERIALIZER COMPLETO
+# 🔥 SERIALIZER
 # =========================
 def empresa_to_dict(e: Empresa, user_lat=None, user_lon=None):
 
@@ -59,7 +62,6 @@ def empresa_to_dict(e: Empresa, user_lat=None, user_lon=None):
             "principal": f.principal
         })
 
-    # 🔥 FOTO PRINCIPAL
     foto_principal = None
     for f in fotos_validas:
         if f["principal"]:
@@ -69,17 +71,16 @@ def empresa_to_dict(e: Empresa, user_lat=None, user_lon=None):
     if not foto_principal and fotos_validas:
         foto_principal = fotos_validas[0]["url"]
 
-    # 🔥 DISTÂNCIA
     distancia = None
     if user_lat and user_lon and e.latitude and e.longitude:
         distancia = calcular_distancia(user_lat, user_lon, e.latitude, e.longitude)
 
-    # 🔥 RETORNO COMPLETO (AGORA SIM)
     return {
         "id": e.id,
         "nome": e.nome,
         "descricao": e.descricao,
         "telefone": e.telefone,
+        "whatsapp": e.whatsapp,
         "email": e.email,
 
         "endereco": e.endereco,
@@ -109,7 +110,7 @@ def empresa_to_dict(e: Empresa, user_lat=None, user_lon=None):
 # =========================
 # 🔍 LISTAR
 # =========================
-@router.get("/")
+@router.get("/", response_model=List[EmpresaResponse])
 def listar_empresas(
     db: Session = Depends(get_db),
     servico_id: Optional[int] = None,
@@ -147,7 +148,7 @@ def listar_empresas(
 # =========================
 # 🔍 DETALHE
 # =========================
-@router.get("/id/{empresa_id}")
+@router.get("/id/{empresa_id}", response_model=EmpresaResponse)
 def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
@@ -158,11 +159,12 @@ def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
 
 
 # =========================
-# ➕ CRIAR
+# ➕ CRIAR (🔥 CORRIGIDO)
 # =========================
-@router.post("/")
-def criar_empresa(data: dict, db: Session = Depends(get_db)):
-    empresa = Empresa(**data)
+@router.post("/", response_model=EmpresaResponse)
+def criar_empresa(data: EmpresaCreate, db: Session = Depends(get_db)):
+    empresa = Empresa(**data.model_dump())
+
     db.add(empresa)
     db.commit()
     db.refresh(empresa)
@@ -171,16 +173,16 @@ def criar_empresa(data: dict, db: Session = Depends(get_db)):
 
 
 # =========================
-# ✏️ ATUALIZAR
+# ✏️ ATUALIZAR (🔥 CORRIGIDO)
 # =========================
-@router.put("/id/{empresa_id}")
-def atualizar_empresa(empresa_id: int, data: dict, db: Session = Depends(get_db)):
+@router.put("/id/{empresa_id}", response_model=EmpresaResponse)
+def atualizar_empresa(empresa_id: int, data: EmpresaUpdate, db: Session = Depends(get_db)):
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-    for key, value in data.items():
+    for key, value in data.model_dump(exclude_unset=True).items():
         setattr(empresa, key, value)
 
     db.commit()
