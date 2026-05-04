@@ -15,7 +15,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from app.database import engine, init_db
 
-# ✅ CONTROLLERS
+# CONTROLLERS
 from app.controllers.auth_controller import router as auth_router
 from app.controllers.empresa_controller import router as empresa_router
 from app.controllers.servico_controller import router as servico_router
@@ -26,7 +26,10 @@ from app.routers.utils import router as utils_router
 # =========================
 # 🌐 CONFIG
 # =========================
-BASE_URL = os.getenv("BASE_URL", "https://bsm-servicos-backend.onrender.com")
+BASE_URL = os.getenv(
+    "BASE_URL",
+    "https://bsm-servicos-backend.onrender.com"
+)
 
 
 # =========================
@@ -40,7 +43,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 
 
 # =========================
-# 🔧 BANCO (🔥 CORREÇÃO REAL)
+# 🔧 BANCO (SEGURO)
 # =========================
 def ajustar_banco():
     try:
@@ -48,13 +51,11 @@ def ajustar_banco():
 
         with engine.begin() as conn:
 
-            # 🔹 USUÁRIOS
             conn.execute(text("""
                 ALTER TABLE usuarios 
                 ADD COLUMN IF NOT EXISTS senha_hash VARCHAR;
             """))
 
-            # 🔹 EMPRESAS - CAMPOS FALTANTES
             conn.execute(text("""
                 ALTER TABLE empresas 
                 ADD COLUMN IF NOT EXISTS whatsapp VARCHAR;
@@ -90,10 +91,10 @@ def ajustar_banco():
                 ADD COLUMN IF NOT EXISTS cnpj VARCHAR;
             """))
 
-        print("✅ Banco atualizado com sucesso!")
+        print("✅ Banco atualizado!")
 
-    except Exception:
-        print("❌ ERRO AO AJUSTAR BANCO:")
+    except Exception as e:
+        print("❌ ERRO BANCO:")
         traceback.print_exc()
 
 
@@ -105,11 +106,9 @@ EMPRESA_DIR = os.path.join(UPLOAD_DIR, "empresas")
 
 os.makedirs(EMPRESA_DIR, exist_ok=True)
 
-print(f"📁 Uploads: {os.path.abspath(UPLOAD_DIR)}")
-
 
 # =========================
-# 🚀 LIFESPAN
+# 🚀 LIFESPAN (CORRIGIDO)
 # =========================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -120,13 +119,13 @@ async def lifespan(app: FastAPI):
         ajustar_banco()
 
         print("🌐 BASE_URL:", BASE_URL)
-        print("✅ Inicialização concluída!")
+        print("✅ App pronta!")
 
     except Exception:
         print("❌ ERRO NA INICIALIZAÇÃO:")
         traceback.print_exc()
 
-    yield
+    yield  # 🔥 ESSENCIAL (NÃO REMOVER)
 
     print("🛑 Encerrando aplicação...")
 
@@ -136,12 +135,10 @@ async def lifespan(app: FastAPI):
 # =========================
 app = FastAPI(
     title="BSM Serviços API",
-    version="1.0.1",
-    description="API com autenticação JWT",
+    version="1.0.2",
     lifespan=lifespan,
     swagger_ui_parameters={
-        "persistAuthorization": True,
-        "displayRequestDuration": True
+        "persistAuthorization": True
     }
 )
 
@@ -159,7 +156,7 @@ app.add_middleware(
 
 
 # =========================
-# 📁 STATIC FILES
+# 📁 STATIC
 # =========================
 app.mount(
     "/uploads",
@@ -169,48 +166,38 @@ app.mount(
 
 
 # =========================
-# 🔗 ROUTERS
+# 🔗 ROUTES
 # =========================
-app.include_router(auth_router, prefix="/auth", tags=["Auth"])
-app.include_router(empresa_router, prefix="/empresa", tags=["Empresas"])
-app.include_router(servico_router, prefix="/servicos", tags=["Serviços"])
-app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
+app.include_router(auth_router, prefix="/auth")
+app.include_router(empresa_router, prefix="/empresa")
+app.include_router(servico_router, prefix="/servicos")
+app.include_router(usuario_router, prefix="/usuarios")
 app.include_router(utils_router)
 
 
 # =========================
-# 🔗 URL IMAGEM
+# 🔧 AUX
 # =========================
 def gerar_url_imagem(caminho: str):
     if not caminho:
         return None
-
-    caminho = caminho.replace("\\", "/")
-    return f"{BASE_URL}/{caminho}"
+    return f"{BASE_URL}/{caminho.replace('\\', '/')}"
 
 
 # =========================
-# 🔧 ROTAS AUX
+# 🔧 HEALTHCHECK (IMPORTANTE)
+# =========================
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+# =========================
+# 🔧 ROOT
 # =========================
 @app.get("/")
 def root():
     return {"msg": "API BSM Serviços rodando 🚀"}
-
-
-@app.get("/auth-check")
-def auth_check(token: str = Depends(oauth2_scheme)):
-    return {"token": token}
-
-
-@app.get("/favicon.ico")
-def favicon():
-    return Response(status_code=204)
-
-
-@app.get("/teste-imagem")
-def teste_imagem():
-    exemplo = "uploads/empresas/exemplo.jpg"
-    return {"url_exemplo": gerar_url_imagem(exemplo)}
 
 
 # =========================
@@ -220,16 +207,9 @@ def teste_imagem():
 async def global_exception_handler(request: Request, exc: Exception):
     print("\n💥 ERRO GLOBAL:")
     print(f"URL: {request.url}")
-    print(str(exc))
     traceback.print_exc()
 
     return JSONResponse(
         status_code=500,
-        content={"detail": "Erro interno no servidor"}
+        content={"detail": "Erro interno"}
     )
-
-
-print("🔥🔥🔥 BACKEND NOVO RODANDO 🔥🔥🔥")
-
-for route in app.routes:
-    print(route.path)
