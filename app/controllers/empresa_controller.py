@@ -7,9 +7,10 @@ from uuid import uuid4
 from app.database import get_db
 from app.models.empresa_model import Empresa
 from app.models.empresa_foto_model import EmpresaFoto
+from app.models.servico_model import Servico  # 🔥 NOVO
+
 from app.utils.files import gerar_url_imagem
 
-# 🔥 CLOUDINARY
 import cloudinary.uploader
 
 from app.schemas.empresa_schema import EmpresaCreate, EmpresaUpdate, EmpresaResponse
@@ -163,36 +164,70 @@ def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
 
 
 # =========================
-# ➕ CRIAR
+# ➕ CRIAR (VALIDADO)
 # =========================
 @router.post("/", response_model=EmpresaResponse)
 def criar_empresa(data: EmpresaCreate, db: Session = Depends(get_db)):
-    empresa = Empresa(**data.model_dump())
 
-    db.add(empresa)
-    db.commit()
-    db.refresh(empresa)
+    # 🔥 VALIDAÇÃO FK
+    if data.servico_id == 0:
+        raise HTTPException(status_code=400, detail="servico_id inválido")
 
-    return empresa_to_dict(empresa)
+    servico = db.query(Servico).filter(Servico.id == data.servico_id).first()
+    if not servico:
+        raise HTTPException(status_code=404, detail="Serviço não encontrado")
+
+    try:
+        empresa = Empresa(**data.model_dump())
+
+        db.add(empresa)
+        db.commit()
+        db.refresh(empresa)
+
+        return empresa_to_dict(empresa)
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # =========================
-# ✏️ ATUALIZAR
+# ✏️ ATUALIZAR (VALIDADO)
 # =========================
 @router.put("/id/{empresa_id}", response_model=EmpresaResponse)
 def atualizar_empresa(empresa_id: int, data: EmpresaUpdate, db: Session = Depends(get_db)):
+
     empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
 
     if not empresa:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
 
-    for key, value in data.model_dump(exclude_unset=True).items():
-        setattr(empresa, key, value)
+    update_data = data.model_dump(exclude_unset=True)
 
-    db.commit()
-    db.refresh(empresa)
+    # 🔥 VALIDAÇÃO FK
+    if "servico_id" in update_data:
+        if update_data["servico_id"] == 0:
+            raise HTTPException(status_code=400, detail="servico_id inválido")
 
-    return empresa_to_dict(empresa)
+        servico = db.query(Servico).filter(
+            Servico.id == update_data["servico_id"]
+        ).first()
+
+        if not servico:
+            raise HTTPException(status_code=404, detail="Serviço não encontrado")
+
+    try:
+        for key, value in update_data.items():
+            setattr(empresa, key, value)
+
+        db.commit()
+        db.refresh(empresa)
+
+        return empresa_to_dict(empresa)
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # =========================
@@ -212,7 +247,7 @@ def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
 
 
 # =========================================================
-# 📸 UPLOAD LOCAL (MANTIDO - NÃO QUEBRA NADA)
+# 📸 UPLOAD LOCAL
 # =========================================================
 @router.post("/id/{empresa_id}/upload-local")
 def upload_foto_local(
@@ -247,7 +282,7 @@ def upload_foto_local(
 
 
 # =========================================================
-# ☁️ UPLOAD CLOUDINARY (NOVO - PROFISSIONAL)
+# ☁️ UPLOAD CLOUDINARY
 # =========================================================
 @router.post("/id/{empresa_id}/upload-cloudinary")
 def upload_foto_cloudinary(
@@ -283,6 +318,7 @@ def upload_foto_cloudinary(
         }
 
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=f"Erro upload: {str(e)}")
 
 
