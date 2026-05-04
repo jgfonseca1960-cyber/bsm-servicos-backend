@@ -1,13 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import Optional, List
 import math
+from uuid import uuid4
 
 from app.database import get_db
 from app.models.empresa_model import Empresa
+from app.models.empresa_foto_model import EmpresaFoto
 from app.utils.files import gerar_url_imagem
 
-# ✅ IMPORTANTE (AQUI ESTÁ A CHAVE)
+# 🔥 CLOUDINARY
+import cloudinary.uploader
+
 from app.schemas.empresa_schema import EmpresaCreate, EmpresaUpdate, EmpresaResponse
 
 router = APIRouter(tags=["Empresas"])
@@ -159,7 +163,7 @@ def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
 
 
 # =========================
-# ➕ CRIAR (🔥 CORRIGIDO)
+# ➕ CRIAR
 # =========================
 @router.post("/", response_model=EmpresaResponse)
 def criar_empresa(data: EmpresaCreate, db: Session = Depends(get_db)):
@@ -173,7 +177,7 @@ def criar_empresa(data: EmpresaCreate, db: Session = Depends(get_db)):
 
 
 # =========================
-# ✏️ ATUALIZAR (🔥 CORRIGIDO)
+# ✏️ ATUALIZAR
 # =========================
 @router.put("/id/{empresa_id}", response_model=EmpresaResponse)
 def atualizar_empresa(empresa_id: int, data: EmpresaUpdate, db: Session = Depends(get_db)):
@@ -205,3 +209,98 @@ def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"msg": "Empresa deletada"}
+
+
+# =========================================================
+# 📸 UPLOAD LOCAL (MANTIDO - NÃO QUEBRA NADA)
+# =========================================================
+@router.post("/id/{empresa_id}/upload-local")
+def upload_foto_local(
+    empresa_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
+
+    if not empresa:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+
+    filename = f"{uuid4()}_{file.filename}"
+    filepath = f"uploads/empresas/{filename}"
+
+    with open(filepath, "wb") as buffer:
+        buffer.write(file.file.read())
+
+    foto = EmpresaFoto(
+        empresa_id=empresa_id,
+        url=filepath,
+        principal=False
+    )
+
+    db.add(foto)
+    db.commit()
+
+    return {
+        "msg": "Foto enviada (local)",
+        "url": gerar_url_imagem(filepath)
+    }
+
+
+# =========================================================
+# ☁️ UPLOAD CLOUDINARY (NOVO - PROFISSIONAL)
+# =========================================================
+@router.post("/id/{empresa_id}/upload-cloudinary")
+def upload_foto_cloudinary(
+    empresa_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
+
+    if not empresa:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+
+    try:
+        resultado = cloudinary.uploader.upload(
+            file.file,
+            folder="bsm/empresas"
+        )
+
+        url = resultado.get("secure_url")
+
+        foto = EmpresaFoto(
+            empresa_id=empresa_id,
+            url=url,
+            principal=False
+        )
+
+        db.add(foto)
+        db.commit()
+
+        return {
+            "msg": "Upload Cloudinary OK",
+            "url": url
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro upload: {str(e)}")
+
+
+# =========================
+# ⭐ DEFINIR PRINCIPAL
+# =========================
+@router.put("/foto/{foto_id}/principal")
+def definir_principal(foto_id: int, db: Session = Depends(get_db)):
+    foto = db.query(EmpresaFoto).filter(EmpresaFoto.id == foto_id).first()
+
+    if not foto:
+        raise HTTPException(status_code=404, detail="Foto não encontrada")
+
+    db.query(EmpresaFoto).filter(
+        EmpresaFoto.empresa_id == foto.empresa_id
+    ).update({"principal": False})
+
+    foto.principal = True
+    db.commit()
+
+    return {"msg": "Foto principal definida"}
