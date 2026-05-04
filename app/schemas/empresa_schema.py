@@ -1,26 +1,27 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 
 
 # =========================
-# 🔹 FOTO
+# 🔹 FOTO RESPONSE
 # =========================
 class FotoResponse(BaseModel):
     id: int
     url: str
     principal: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =========================
-# 🔹 BASE COMPLETA
+# 🔹 BASE (COMPARTILHADO)
 # =========================
 class EmpresaBase(BaseModel):
     nome: str
     descricao: Optional[str] = None
+
     telefone: Optional[str] = None
+    whatsapp: Optional[str] = None
     email: Optional[str] = None
 
     endereco: Optional[str] = None
@@ -52,7 +53,9 @@ class EmpresaCreate(EmpresaBase):
 class EmpresaUpdate(BaseModel):
     nome: Optional[str] = None
     descricao: Optional[str] = None
+
     telefone: Optional[str] = None
+    whatsapp: Optional[str] = None
     email: Optional[str] = None
 
     endereco: Optional[str] = None
@@ -74,16 +77,15 @@ class EmpresaUpdate(BaseModel):
 
 
 # =========================
-# 🔹 RESPONSE COMPLETA
+# 🔹 RESPONSE
 # =========================
 class EmpresaResponse(EmpresaBase):
     id: int
     servico_id: Optional[int] = None
 
     foto_principal: Optional[str] = None
-    fotos: List[FotoResponse] = []  # ⚠️ controlado pelo FastAPI
+    fotos: List[FotoResponse] = []  # OK pois FastAPI controla
 
     distancia_km: Optional[float] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
