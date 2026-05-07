@@ -6,7 +6,7 @@ import uuid
 
 from app.database import get_db
 from app.models.empresa_model import Empresa
-from app.models.foto_model import Foto
+from app.models.empresa_foto_model import EmpresaFoto
 from app.models.avaliacao_model import Avaliacao
 
 from app.schemas.empresa_schema import EmpresaCreate, EmpresaUpdate

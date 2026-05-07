@@ -1,5 +1,16 @@
-from pydantic import BaseModel, ConfigDict
+```python id="s8gb4r"
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
+
+
+# =========================
+# 🔹 FOTO CREATE
+# =========================
+class EmpresaFotoCreate(BaseModel):
+    empresa_id: int
+    url: str
+    principal: Optional[bool] = False
+    public_id: Optional[str] = None
 
 
 # =========================
@@ -9,12 +20,15 @@ class FotoResponse(BaseModel):
     id: int
     url: str
     principal: bool
+    public_id: Optional[str] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 
 # =========================
-# 🔹 BASE (COMPARTILHADO)
+# 🔹 BASE
 # =========================
 class EmpresaBase(BaseModel):
     nome: str
@@ -81,11 +95,17 @@ class EmpresaUpdate(BaseModel):
 # =========================
 class EmpresaResponse(EmpresaBase):
     id: int
+
     servico_id: Optional[int] = None
 
     foto_principal: Optional[str] = None
-    fotos: List[FotoResponse] = []  # OK pois FastAPI controla
+
+    fotos: List[FotoResponse] = Field(
+        default_factory=list
+    )
 
     distancia_km: Optional[float] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True
+    )
