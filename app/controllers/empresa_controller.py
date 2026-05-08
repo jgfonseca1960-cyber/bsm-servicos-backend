@@ -565,4 +565,3 @@ def deletar_foto(
     return {
         "msg": "Foto removida"
     }
-}
