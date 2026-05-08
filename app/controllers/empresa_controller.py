@@ -3,24 +3,36 @@ from sqlalchemy.orm import Session
 from typing import Optional, List
 import math
 from uuid import uuid4
+import os
 
 from app.database import get_db
 from app.models.empresa_model import Empresa
 from app.models.empresa_foto_model import EmpresaFoto
-from app.models.servico_model import Servico  # 🔥 NOVO
+from app.models.servico_model import Servico
 
 from app.utils.files import gerar_url_imagem
 
 import cloudinary.uploader
 
-from app.schemas.empresa_schema import EmpresaCreate, EmpresaUpdate, EmpresaResponse
+from app.schemas.empresa_schema import (
+    EmpresaCreate,
+    EmpresaUpdate,
+    EmpresaResponse,
+)
 
-router = APIRouter(tags=["Empresas"])
+router = APIRouter(
+    prefix="/empresa",
+    tags=["Empresas"]
+)
 
+# =========================================================
+# 📁 GARANTE PASTA UPLOAD
+# =========================================================
+os.makedirs("uploads/empresas", exist_ok=True)
 
-# =========================
+# =========================================================
 # 📍 DISTÂNCIA
-# =========================
+# =========================================================
 def calcular_distancia(lat1, lon1, lat2, lon2):
     if not lat1 or not lon1 or not lat2 or not lon2:
         return None
@@ -30,15 +42,20 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
 
-    a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(math.radians(lat1))
+        * math.cos(math.radians(lat2))
+        * math.sin(dlon / 2) ** 2
+    )
+
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     return round(R * c, 2)
 
-
-# =========================
-# 🔧 URL
-# =========================
+# =========================================================
+# 🔧 TRATAR URL
+# =========================================================
 def tratar_url(url: str):
     if not url:
         return None
@@ -48,14 +65,27 @@ def tratar_url(url: str):
 
     return gerar_url_imagem(url)
 
-
-# =========================
+# =========================================================
 # 🔥 SERIALIZER
-# =========================
-def empresa_to_dict(e: Empresa, user_lat=None, user_lon=None):
+# =========================================================
+def empresa_to_dict(
+    e: Empresa,
+    user_lat=None,
+    user_lon=None
+):
 
     fotos_validas = []
-    for f in (e.fotos or []):
+
+    fotos_ordenadas = sorted(
+        e.fotos or [],
+        key=lambda x: (
+            not x.principal,
+            x.id
+        )
+    )
+
+    for f in fotos_ordenadas:
+
         url = tratar_url(f.url)
 
         if not url:
@@ -64,21 +94,33 @@ def empresa_to_dict(e: Empresa, user_lat=None, user_lon=None):
         fotos_validas.append({
             "id": f.id,
             "url": url,
-            "principal": f.principal
+            "principal": bool(f.principal)
         })
 
     foto_principal = None
-    for f in fotos_validas:
-        if f["principal"]:
-            foto_principal = f["url"]
+
+    for foto in fotos_validas:
+        if foto["principal"]:
+            foto_principal = foto["url"]
             break
 
     if not foto_principal and fotos_validas:
         foto_principal = fotos_validas[0]["url"]
 
     distancia = None
-    if user_lat and user_lon and e.latitude and e.longitude:
-        distancia = calcular_distancia(user_lat, user_lon, e.latitude, e.longitude)
+
+    if (
+        user_lat
+        and user_lon
+        and e.latitude
+        and e.longitude
+    ):
+        distancia = calcular_distancia(
+            user_lat,
+            user_lon,
+            e.latitude,
+            e.longitude
+        )
 
     return {
         "id": e.id,
@@ -111,11 +153,13 @@ def empresa_to_dict(e: Empresa, user_lat=None, user_lon=None):
         "distancia_km": distancia
     }
 
-
-# =========================
-# 🔍 LISTAR
-# =========================
-@router.get("/", response_model=List[EmpresaResponse])
+# =========================================================
+# 🔍 LISTAR EMPRESAS
+# =========================================================
+@router.get(
+    "/",
+    response_model=List[EmpresaResponse]
+)
 def listar_empresas(
     db: Session = Depends(get_db),
     servico_id: Optional[int] = None,
@@ -124,61 +168,102 @@ def listar_empresas(
     latitude: Optional[float] = None,
     longitude: Optional[float] = None,
 ):
+
     query = db.query(Empresa)
 
     if servico_id:
-        query = query.filter(Empresa.servico_id == servico_id)
+        query = query.filter(
+            Empresa.servico_id == servico_id
+        )
 
     if cidade:
-        query = query.filter(Empresa.cidade.ilike(f"%{cidade}%"))
+        query = query.filter(
+            Empresa.cidade.ilike(f"%{cidade}%")
+        )
 
     if bairro:
-        query = query.filter(Empresa.bairro.ilike(f"%{bairro}%"))
+        query = query.filter(
+            Empresa.bairro.ilike(f"%{bairro}%")
+        )
 
     empresas = query.all()
 
     resultado = [
-        empresa_to_dict(e, latitude, longitude)
+        empresa_to_dict(
+            e,
+            latitude,
+            longitude
+        )
         for e in empresas
     ]
 
     if latitude and longitude:
         resultado.sort(
-            key=lambda x: x["distancia_km"] if x["distancia_km"] else 9999
+            key=lambda x:
+            x["distancia_km"]
+            if x["distancia_km"]
+            else 9999
         )
 
     return resultado
 
+# =========================================================
+# 🔍 DETALHE EMPRESA
+# =========================================================
+@router.get(
+    "/{empresa_id}",
+    response_model=EmpresaResponse
+)
+def detalhe_empresa(
+    empresa_id: int,
+    db: Session = Depends(get_db)
+):
 
-# =========================
-# 🔍 DETALHE
-# =========================
-@router.get("/id/{empresa_id}", response_model=EmpresaResponse)
-def detalhe_empresa(empresa_id: int, db: Session = Depends(get_db)):
-    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
+    empresa = db.query(Empresa).filter(
+        Empresa.id == empresa_id
+    ).first()
 
     if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada"
+        )
 
     return empresa_to_dict(empresa)
 
+# =========================================================
+# ➕ CRIAR EMPRESA
+# =========================================================
+@router.post(
+    "/",
+    response_model=EmpresaResponse
+)
+def criar_empresa(
+    data: EmpresaCreate,
+    db: Session = Depends(get_db)
+):
 
-# =========================
-# ➕ CRIAR (VALIDADO)
-# =========================
-@router.post("/", response_model=EmpresaResponse)
-def criar_empresa(data: EmpresaCreate, db: Session = Depends(get_db)):
-
-    # 🔥 VALIDAÇÃO FK
     if data.servico_id == 0:
-        raise HTTPException(status_code=400, detail="servico_id inválido")
+        raise HTTPException(
+            status_code=400,
+            detail="servico_id inválido"
+        )
 
-    servico = db.query(Servico).filter(Servico.id == data.servico_id).first()
+    servico = db.query(Servico).filter(
+        Servico.id == data.servico_id
+    ).first()
+
     if not servico:
-        raise HTTPException(status_code=404, detail="Serviço não encontrado")
+        raise HTTPException(
+            status_code=404,
+            detail="Serviço não encontrado"
+        )
 
     try:
-        empresa = Empresa(**data.model_dump())
+
+        empresa = Empresa(
+            **data.model_dump()
+        )
 
         db.add(empresa)
         db.commit()
@@ -188,35 +273,59 @@ def criar_empresa(data: EmpresaCreate, db: Session = Depends(get_db)):
 
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
 
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 
-# =========================
-# ✏️ ATUALIZAR (VALIDADO)
-# =========================
-@router.put("/id/{empresa_id}", response_model=EmpresaResponse)
-def atualizar_empresa(empresa_id: int, data: EmpresaUpdate, db: Session = Depends(get_db)):
+# =========================================================
+# ✏️ ATUALIZAR EMPRESA
+# =========================================================
+@router.put(
+    "/{empresa_id}",
+    response_model=EmpresaResponse
+)
+def atualizar_empresa(
+    empresa_id: int,
+    data: EmpresaUpdate,
+    db: Session = Depends(get_db)
+):
 
-    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
+    empresa = db.query(Empresa).filter(
+        Empresa.id == empresa_id
+    ).first()
 
     if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada"
+        )
 
-    update_data = data.model_dump(exclude_unset=True)
+    update_data = data.model_dump(
+        exclude_unset=True
+    )
 
-    # 🔥 VALIDAÇÃO FK
     if "servico_id" in update_data:
+
         if update_data["servico_id"] == 0:
-            raise HTTPException(status_code=400, detail="servico_id inválido")
+            raise HTTPException(
+                status_code=400,
+                detail="servico_id inválido"
+            )
 
         servico = db.query(Servico).filter(
             Servico.id == update_data["servico_id"]
         ).first()
 
         if not servico:
-            raise HTTPException(status_code=404, detail="Serviço não encontrado")
+            raise HTTPException(
+                status_code=404,
+                detail="Serviço não encontrado"
+            )
 
     try:
+
         for key, value in update_data.items():
             setattr(empresa, key, value)
 
@@ -227,75 +336,122 @@ def atualizar_empresa(empresa_id: int, data: EmpresaUpdate, db: Session = Depend
 
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
 
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 
-# =========================
-# ❌ DELETAR
-# =========================
-@router.delete("/id/{empresa_id}")
-def deletar_empresa(empresa_id: int, db: Session = Depends(get_db)):
-    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
+# =========================================================
+# ❌ DELETAR EMPRESA
+# =========================================================
+@router.delete("/{empresa_id}")
+def deletar_empresa(
+    empresa_id: int,
+    db: Session = Depends(get_db)
+):
+
+    empresa = db.query(Empresa).filter(
+        Empresa.id == empresa_id
+    ).first()
 
     if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada"
+        )
 
     db.delete(empresa)
     db.commit()
 
-    return {"msg": "Empresa deletada"}
-
+    return {
+        "msg": "Empresa deletada"
+    }
 
 # =========================================================
 # 📸 UPLOAD LOCAL
 # =========================================================
-@router.post("/id/{empresa_id}/upload-local")
+@router.post("/{empresa_id}/fotos")
 def upload_foto_local(
     empresa_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
+
+    empresa = db.query(Empresa).filter(
+        Empresa.id == empresa_id
+    ).first()
 
     if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada"
+        )
 
-    filename = f"{uuid4()}_{file.filename}"
-    filepath = f"uploads/empresas/{filename}"
+    try:
 
-    with open(filepath, "wb") as buffer:
-        buffer.write(file.file.read())
+        filename = f"{uuid4()}_{file.filename}"
 
-    foto = EmpresaFoto(
-        empresa_id=empresa_id,
-        url=filepath,
-        principal=False
-    )
+        filepath = (
+            f"uploads/empresas/{filename}"
+        )
 
-    db.add(foto)
-    db.commit()
+        with open(filepath, "wb") as buffer:
+            buffer.write(file.file.read())
 
-    return {
-        "msg": "Foto enviada (local)",
-        "url": gerar_url_imagem(filepath)
-    }
+        total_fotos = db.query(EmpresaFoto).filter(
+            EmpresaFoto.empresa_id == empresa_id
+        ).count()
 
+        foto = EmpresaFoto(
+            empresa_id=empresa_id,
+            url=filepath,
+            principal=(total_fotos == 0)
+        )
+
+        db.add(foto)
+        db.commit()
+        db.refresh(foto)
+
+        return {
+            "msg": "Foto enviada",
+            "foto": {
+                "id": foto.id,
+                "url": gerar_url_imagem(filepath),
+                "principal": foto.principal
+            }
+        }
+
+    except Exception as e:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 
 # =========================================================
 # ☁️ UPLOAD CLOUDINARY
 # =========================================================
-@router.post("/id/{empresa_id}/upload-cloudinary")
+@router.post("/{empresa_id}/upload-cloudinary")
 def upload_foto_cloudinary(
     empresa_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    empresa = db.query(Empresa).filter(Empresa.id == empresa_id).first()
+
+    empresa = db.query(Empresa).filter(
+        Empresa.id == empresa_id
+    ).first()
 
     if not empresa:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada"
+        )
 
     try:
+
         resultado = cloudinary.uploader.upload(
             file.file,
             folder="bsm/empresas"
@@ -303,40 +459,110 @@ def upload_foto_cloudinary(
 
         url = resultado.get("secure_url")
 
+        total_fotos = db.query(EmpresaFoto).filter(
+            EmpresaFoto.empresa_id == empresa_id
+        ).count()
+
         foto = EmpresaFoto(
             empresa_id=empresa_id,
             url=url,
-            principal=False
+            principal=(total_fotos == 0)
         )
 
         db.add(foto)
         db.commit()
+        db.refresh(foto)
 
         return {
             "msg": "Upload Cloudinary OK",
-            "url": url
+            "foto": {
+                "id": foto.id,
+                "url": url,
+                "principal": foto.principal
+            }
         }
 
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Erro upload: {str(e)}")
 
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro upload: {str(e)}"
+        )
 
-# =========================
-# ⭐ DEFINIR PRINCIPAL
-# =========================
-@router.put("/foto/{foto_id}/principal")
-def definir_principal(foto_id: int, db: Session = Depends(get_db)):
-    foto = db.query(EmpresaFoto).filter(EmpresaFoto.id == foto_id).first()
+# =========================================================
+# ⭐ DEFINIR FOTO PRINCIPAL
+# =========================================================
+@router.put(
+    "/{empresa_id}/foto-principal/{foto_id}"
+)
+def definir_principal(
+    empresa_id: int,
+    foto_id: int,
+    db: Session = Depends(get_db)
+):
+
+    foto = db.query(EmpresaFoto).filter(
+        EmpresaFoto.id == foto_id,
+        EmpresaFoto.empresa_id == empresa_id
+    ).first()
 
     if not foto:
-        raise HTTPException(status_code=404, detail="Foto não encontrada")
+        raise HTTPException(
+            status_code=404,
+            detail="Foto não encontrada"
+        )
 
     db.query(EmpresaFoto).filter(
-        EmpresaFoto.empresa_id == foto.empresa_id
-    ).update({"principal": False})
+        EmpresaFoto.empresa_id == empresa_id
+    ).update({
+        "principal": False
+    })
 
     foto.principal = True
+
     db.commit()
 
-    return {"msg": "Foto principal definida"}
+    return {
+        "msg": "Foto principal definida"
+    }
+
+# =========================================================
+# ❌ EXCLUIR FOTO
+# =========================================================
+@router.delete("/foto/{foto_id}")
+def deletar_foto(
+    foto_id: int,
+    db: Session = Depends(get_db)
+):
+
+    foto = db.query(EmpresaFoto).filter(
+        EmpresaFoto.id == foto_id
+    ).first()
+
+    if not foto:
+        raise HTTPException(
+            status_code=404,
+            detail="Foto não encontrada"
+        )
+
+    empresa_id = foto.empresa_id
+    era_principal = foto.principal
+
+    db.delete(foto)
+    db.commit()
+
+    if era_principal:
+
+        nova_principal = db.query(EmpresaFoto).filter(
+            EmpresaFoto.empresa_id == empresa_id
+        ).first()
+
+        if nova_principal:
+            nova_principal.principal = True
+            db.commit()
+
+    return {
+        "msg": "Foto removida"
+    }
+}
