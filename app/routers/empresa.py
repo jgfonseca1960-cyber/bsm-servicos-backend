@@ -1,6 +1,6 @@
-```python
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
+
 import os
 import shutil
 import uuid
@@ -20,6 +20,11 @@ router = APIRouter(
     prefix="/empresa",
     tags=["Empresa"]
 )
+
+# =========================
+# 🌐 BASE URL
+# =========================
+BASE_URL = "https://bsm-servicos-backend.onrender.com"
 
 # =========================
 # 📁 CONFIG UPLOAD
@@ -63,13 +68,28 @@ def upload_foto(
             buffer
         )
 
+    # 🔥 URL ABSOLUTA
+    url_foto = (
+        f"{BASE_URL}/uploads/{filename}"
+    )
+
     foto = EmpresaFoto(
         empresa_id=empresa_id,
-        url=f"/uploads/{filename}",
+        url=url_foto,
         principal=False
     )
 
     db.add(foto)
+
+    # 🔥 DEFINE PRIMEIRA FOTO COMO PRINCIPAL
+    total_fotos = db.query(EmpresaFoto).filter(
+        EmpresaFoto.empresa_id == empresa_id
+    ).count()
+
+    if total_fotos == 0:
+        foto.principal = True
+
+        empresa.foto_principal = url_foto
 
     db.commit()
 
@@ -83,7 +103,6 @@ def upload_foto(
             "principal": foto.principal
         }
     }
-
 
 # =========================
 # ⭐ DEFINIR FOTO PRINCIPAL
@@ -125,12 +144,14 @@ def definir_foto_principal(
             detail="Foto não encontrada"
         )
 
+    # 🔥 SALVA URL PRINCIPAL
+    empresa.foto_principal = foto_principal.url
+
     db.commit()
 
     return {
         "message": "Foto principal atualizada"
     }
-
 
 # =========================
 # ❌ DELETAR FOTO
@@ -150,22 +171,45 @@ def deletar_foto(
             detail="Foto não encontrada"
         )
 
+    empresa = db.query(Empresa).filter(
+        Empresa.id == foto.empresa_id
+    ).first()
+
+    # 🔥 REMOVE URL BASE
     caminho_arquivo = foto.url.replace(
-        "/uploads/",
+        f"{BASE_URL}/uploads/",
         "uploads/"
     )
 
     if os.path.exists(caminho_arquivo):
         os.remove(caminho_arquivo)
 
+    era_principal = foto.principal
+
     db.delete(foto)
 
     db.commit()
 
+    # 🔥 DEFINE NOVA PRINCIPAL
+    if era_principal and empresa:
+        nova_principal = db.query(EmpresaFoto).filter(
+            EmpresaFoto.empresa_id == empresa.id
+        ).first()
+
+        if nova_principal:
+            nova_principal.principal = True
+
+            empresa.foto_principal = (
+                nova_principal.url
+            )
+        else:
+            empresa.foto_principal = None
+
+        db.commit()
+
     return {
         "message": "Foto removida"
     }
-
 
 # =========================
 # ➕ CRIAR EMPRESA
@@ -184,7 +228,6 @@ def criar_empresa(
     db.refresh(nova)
 
     return nova
-
 
 # =========================
 # 📡 LISTAR EMPRESAS
@@ -253,7 +296,6 @@ def listar_empresas(
         })
 
     return resultado
-
 
 # =========================
 # 🔍 DETALHE EMPRESA
@@ -336,7 +378,6 @@ def detalhe_empresa(
         ]
     }
 
-
 # =========================
 # ✏️ ATUALIZAR EMPRESA
 # =========================
@@ -373,7 +414,6 @@ def atualizar_empresa(
 
     return empresa
 
-
 # =========================
 # ❌ DELETAR EMPRESA
 # =========================
@@ -399,4 +439,3 @@ def deletar_empresa(
     return {
         "message": "Empresa removida com sucesso"
     }
-```
