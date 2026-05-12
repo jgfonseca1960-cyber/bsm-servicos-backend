@@ -4,6 +4,7 @@ from sqlalchemy import func
 
 from app.database import get_db
 from app.models.avaliacao_model import Avaliacao
+from app.models.empresa_model import Empresa
 from app.schemas.avaliacao_schema import AvaliacaoCreate
 
 
@@ -13,7 +14,27 @@ router = APIRouter(
 )
 
 
-# criar avaliação
+# =========================
+# 🔥 FUNÇÃO AUXILIAR: atualizar média
+# =========================
+def atualizar_media_empresa(db: Session, empresa_id: int):
+
+    media = db.query(func.avg(Avaliacao.nota)).filter(
+        Avaliacao.empresa_id == empresa_id
+    ).scalar()
+
+    empresa = db.query(Empresa).filter(
+        Empresa.id == empresa_id
+    ).first()
+
+    if empresa:
+        empresa.avaliacao_media = round(media or 0, 1)
+        db.commit()
+
+
+# =========================
+# ⭐ CRIAR AVALIAÇÃO
+# =========================
 @router.post("/")
 def criar(av: AvaliacaoCreate, db: Session = Depends(get_db)):
 
@@ -25,7 +46,7 @@ def criar(av: AvaliacaoCreate, db: Session = Depends(get_db)):
     if existe:
         raise HTTPException(
             status_code=400,
-            detail="Usuário já avaliou"
+            detail="Usuário já avaliou esta empresa"
         )
 
     nova = Avaliacao(**av.dict())
@@ -34,18 +55,23 @@ def criar(av: AvaliacaoCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(nova)
 
+    # 🔥 atualiza média automaticamente
+    atualizar_media_empresa(db, av.empresa_id)
+
     return nova
 
 
-# listar todas
+# =========================
+# 📋 LISTAR TODAS
+# =========================
 @router.get("/")
 def listar(db: Session = Depends(get_db)):
-
     return db.query(Avaliacao).all()
 
 
-# listar por empresa
-
+# =========================
+# 🏢 LISTAR POR EMPRESA
+# =========================
 @router.get("/empresa/{empresa_id}")
 def por_empresa(empresa_id: int, db: Session = Depends(get_db)):
 
@@ -54,20 +80,25 @@ def por_empresa(empresa_id: int, db: Session = Depends(get_db)):
     ).all()
 
 
-# média da empresa
+# =========================
+# ⭐ MÉDIA DA EMPRESA
+# =========================
 @router.get("/media/{empresa_id}")
 def media(empresa_id: int, db: Session = Depends(get_db)):
 
-    m = db.query(
-        func.avg(Avaliacao.nota)
-    ).filter(
+    m = db.query(func.avg(Avaliacao.nota)).filter(
         Avaliacao.empresa_id == empresa_id
     ).scalar()
 
-    return {"media": m}
+    return {
+        "empresa_id": empresa_id,
+        "media": round(m or 0, 1)
+    }
 
 
-# ranking empresas
+# =========================
+# 🏆 RANKING DE EMPRESAS
+# =========================
 @router.get("/ranking")
 def ranking(db: Session = Depends(get_db)):
 
@@ -81,4 +112,11 @@ def ranking(db: Session = Depends(get_db)):
         func.avg(Avaliacao.nota).desc()
     ).all()
 
-    return r
+    return [
+        {
+            "empresa_id": item.empresa_id,
+            "media": round(item.media or 0, 1),
+            "total_avaliacoes": item.total
+        }
+        for item in r
+    ]
