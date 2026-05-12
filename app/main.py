@@ -35,15 +35,22 @@ BASE_URL = os.getenv(
 # =========================
 # 🔐 AUTH
 # =========================
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/auth/login"
+)
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    return {"token": token, "is_admin": True}
+def get_current_user(
+    token: str = Depends(oauth2_scheme)
+):
+    return {
+        "token": token,
+        "is_admin": True
+    }
 
 
 # =========================
-# 🔧 BANCO (CORRIGIDO E COMPLETO)
+# 🔧 BANCO
 # =========================
 def ajustar_banco():
     try:
@@ -53,18 +60,50 @@ def ajustar_banco():
 
             # USUÁRIOS
             conn.execute(text("""
-                ALTER TABLE usuarios 
+                ALTER TABLE usuarios
                 ADD COLUMN IF NOT EXISTS senha_hash VARCHAR;
             """))
 
-            # EMPRESAS (🔥 GARANTE TODAS)
-            conn.execute(text("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS whatsapp VARCHAR;"))
-            conn.execute(text("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS email VARCHAR;"))
-            conn.execute(text("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS bairro VARCHAR;"))
-            conn.execute(text("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS estado VARCHAR;"))
-            conn.execute(text("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS cep VARCHAR;"))
-            conn.execute(text("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS cpf VARCHAR;"))
-            conn.execute(text("ALTER TABLE empresas ADD COLUMN IF NOT EXISTS cnpj VARCHAR;"))
+            # EMPRESAS
+            conn.execute(text("""
+                ALTER TABLE empresas
+                ADD COLUMN IF NOT EXISTS whatsapp VARCHAR;
+            """))
+
+            conn.execute(text("""
+                ALTER TABLE empresas
+                ADD COLUMN IF NOT EXISTS email VARCHAR;
+            """))
+
+            conn.execute(text("""
+                ALTER TABLE empresas
+                ADD COLUMN IF NOT EXISTS bairro VARCHAR;
+            """))
+
+            conn.execute(text("""
+                ALTER TABLE empresas
+                ADD COLUMN IF NOT EXISTS estado VARCHAR;
+            """))
+
+            conn.execute(text("""
+                ALTER TABLE empresas
+                ADD COLUMN IF NOT EXISTS cep VARCHAR;
+            """))
+
+            conn.execute(text("""
+                ALTER TABLE empresas
+                ADD COLUMN IF NOT EXISTS cpf VARCHAR;
+            """))
+
+            conn.execute(text("""
+                ALTER TABLE empresas
+                ADD COLUMN IF NOT EXISTS cnpj VARCHAR;
+            """))
+
+            conn.execute(text("""
+                ALTER TABLE empresas
+                ADD COLUMN IF NOT EXISTS foto_principal VARCHAR;
+            """))
 
         print("✅ Banco atualizado!")
 
@@ -78,13 +117,20 @@ def ajustar_banco():
 # 📁 UPLOAD
 # =========================
 UPLOAD_DIR = "uploads"
-EMPRESA_DIR = os.path.join(UPLOAD_DIR, "empresas")
 
-os.makedirs(EMPRESA_DIR, exist_ok=True)
+EMPRESA_DIR = os.path.join(
+    UPLOAD_DIR,
+    "empresas"
+)
+
+os.makedirs(
+    EMPRESA_DIR,
+    exist_ok=True
+)
 
 
 # =========================
-# 🚀 LIFESPAN (ESTÁVEL)
+# 🚀 LIFESPAN
 # =========================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -92,9 +138,11 @@ async def lifespan(app: FastAPI):
 
     try:
         init_db()
+
         ajustar_banco()
 
         print("🌐 BASE_URL:", BASE_URL)
+
         print("✅ App pronta!")
 
     except Exception as e:
@@ -102,7 +150,7 @@ async def lifespan(app: FastAPI):
         print(repr(e))
         traceback.print_exc()
 
-    yield  # 🔥 NÃO REMOVER
+    yield
 
     print("🛑 Encerrando aplicação...")
 
@@ -112,7 +160,7 @@ async def lifespan(app: FastAPI):
 # =========================
 app = FastAPI(
     title="BSM Serviços API",
-    version="1.0.3",
+    version="1.0.4",
     description="API com autenticação JWT",
     lifespan=lifespan,
     swagger_ui_parameters={
@@ -123,14 +171,24 @@ app = FastAPI(
 
 
 # =========================
-# 🌐 CORS
+# 🌐 CORS (🔥 IMPORTANTE)
 # =========================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+
+    allow_origins=[
+        "*"
+    ],
+
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+
+    allow_methods=[
+        "*"
+    ],
+
+    allow_headers=[
+        "*"
+    ],
 )
 
 
@@ -147,59 +205,97 @@ app.mount(
 # =========================
 # 🔗 ROUTES
 # =========================
-app.include_router(auth_router, prefix="/auth", tags=["Auth"])
-app.include_router(empresa_router, prefix="/empresa", tags=["Empresas"])
-app.include_router(servico_router, prefix="/servicos", tags=["Serviços"])
-app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
-app.include_router(utils_router)
+app.include_router(
+    auth_router,
+    prefix="/auth",
+    tags=["Auth"]
+)
+
+app.include_router(
+    empresa_router,
+    prefix="/empresa",
+    tags=["Empresas"]
+)
+
+app.include_router(
+    servico_router,
+    prefix="/servicos",
+    tags=["Serviços"]
+)
+
+app.include_router(
+    usuario_router,
+    prefix="/usuarios",
+    tags=["Usuários"]
+)
+
+app.include_router(
+    utils_router
+)
 
 
 # =========================
 # 🔧 AUX
 # =========================
-def gerar_url_imagem(caminho: str):
+def gerar_url_imagem(
+    caminho: str
+):
     if not caminho:
         return None
 
-    caminho = caminho.replace("\\", "/")
+    caminho = caminho.replace(
+        "\\",
+        "/"
+    )
+
     return f"{BASE_URL}/{caminho}"
 
 
 # =========================
-# 🔧 HEALTHCHECK (🔥 ESSENCIAL PRO RENDER)
+# ❤️ HEALTHCHECK
 # =========================
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {
+        "status": "ok"
+    }
 
 
 # =========================
-# 🔧 ROOT
+# 🏠 ROOT
 # =========================
 @app.get("/")
 def root():
-    return {"msg": "API BSM Serviços rodando 🚀"}
+    return {
+        "msg": "API BSM Serviços rodando 🚀"
+    }
 
 
 @app.get("/favicon.ico")
 def favicon():
-    return Response(status_code=204)
+    return Response(
+        status_code=204
+    )
 
 
 # =========================
-# 💥 ERRO GLOBAL (🔥 MOSTRA ERRO REAL)
+# 💥 ERRO GLOBAL
 # =========================
 @app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
+async def global_exception_handler(
+    request: Request,
+    exc: Exception
+):
     print("\n💥 ERRO GLOBAL REAL:")
     print(f"URL: {request.url}")
     print(f"ERRO: {repr(exc)}")
+
     traceback.print_exc()
 
     return JSONResponse(
         status_code=500,
         content={
-            "detail": str(exc)  # 🔥 agora você vê o erro real no Swagger
+            "detail": str(exc)
         }
     )
 
