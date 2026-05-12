@@ -21,6 +21,7 @@ from app.controllers.empresa_controller import router as empresa_router
 from app.controllers.servico_controller import router as servico_router
 from app.controllers.usuario_controller import router as usuario_router
 from app.routers.utils import router as utils_router
+from app.routers.avaliacao import router as avaliacoes_router
 
 
 # =========================
@@ -233,6 +234,11 @@ app.include_router(
     utils_router
 )
 
+app.include_router(
+    avaliacoes_router,
+    prefix="/avaliacoes",
+    tags=["Avaliações"]
+)
 
 # =========================
 # 🔧 AUX
