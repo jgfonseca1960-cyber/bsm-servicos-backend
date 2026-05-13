@@ -1,13 +1,32 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
+
 from app.database import Base
 from datetime import datetime
+
 
 class Avaliacao(Base):
     __tablename__ = "avaliacoes"
 
     id = Column(Integer, primary_key=True, index=True)
-    empresa_id = Column(Integer, ForeignKey("empresas.id"))
-    usuario_id = Column(Integer, ForeignKey("usuarios.id"))
+
+    empresa_id = Column(
+        Integer,
+        ForeignKey("empresas.id")
+    )
+
+    usuario_id = Column(
+        Integer,
+        ForeignKey("usuarios.id")
+    )
+
     nota = Column(Integer)
+
     comentario = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    usuario = relationship("Usuario")

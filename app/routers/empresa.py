@@ -298,7 +298,11 @@ def listar_empresas(
     "avaliacoes": [
         {
             "id": a.id,
-            "usuario": f"Usuário {a.usuario_id}",
+            "usuario": (
+                a.usuario.nome
+                if a.usuario else
+                f"Usuário {a.usuario_id}"
+            ),
             "nota": a.nota,
             "comentario": a.comentario
         }
@@ -381,7 +385,11 @@ def detalhe_empresa(
         "avaliacoes": [
             {
                 "id": a.id,
-                "usuario": f"Usuário {a.usuario_id}",
+                "usuario": (
+                    a.usuario.nome
+                    if a.usuario else
+                    f"Usuário {a.usuario_id}"
+                ),
                 "nota": a.nota,
                 "comentario": a.comentario
             }
