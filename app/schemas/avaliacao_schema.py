@@ -1,9 +1,20 @@
 from pydantic import BaseModel
-from typing import Optional
 
 
-class AvaliacaoCreate(BaseModel):
-    empresa_id: int
-    usuario_id: int
+class AvaliacaoBase(BaseModel):
     nota: int
-    comentario: Optional[str] = None
+    comentario: str | None = None
+
+
+class AvaliacaoCreate(AvaliacaoBase):
+    empresa_id: int
+    usuario_nome: str
+
+
+class AvaliacaoResponse(AvaliacaoBase):
+    id: int
+    usuario_nome: str
+    empresa_id: int
+
+    class Config:
+        from_attributes = True
