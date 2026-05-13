@@ -264,36 +264,47 @@ def listar_empresas(
         ]
 
         resultado.append({
-            "id": e.id,
-            "nome": e.nome,
-            "descricao": e.descricao,
+    "id": e.id,
+    "nome": e.nome,
+    "descricao": e.descricao,
 
-            "telefone": e.telefone,
-            "whatsapp": e.whatsapp,
-            "email": e.email,
+    "telefone": e.telefone,
+    "whatsapp": e.whatsapp,
+    "email": e.email,
 
-            "endereco": e.endereco,
-            "bairro": e.bairro,
-            "cidade": e.cidade,
-            "estado": e.estado,
-            "cep": e.cep,
+    "endereco": e.endereco,
+    "bairro": e.bairro,
+    "cidade": e.cidade,
+    "estado": e.estado,
+    "cep": e.cep,
 
-            "latitude": e.latitude,
-            "longitude": e.longitude,
+    "latitude": e.latitude,
+    "longitude": e.longitude,
 
-            "ativo": e.ativo,
+    "ativo": e.ativo,
 
-            "avaliacao_media": media,
+    "avaliacao_media": media,
 
-            "cpf": e.cpf,
-            "cnpj": e.cnpj,
+    "cpf": e.cpf,
+    "cnpj": e.cnpj,
 
-            "servico_id": e.servico_id,
+    "servico_id": e.servico_id,
 
-            "foto_principal": e.foto_principal,
+    "foto_principal": e.foto_principal,
 
-            "fotos": lista_fotos
-        })
+    "fotos": lista_fotos,
+
+    # ⭐ AQUI FALTAVA
+    "avaliacoes": [
+        {
+            "id": a.id,
+            "usuario": a.usuario_nome,
+            "nota": a.nota,
+            "comentario": a.comentario
+        }
+        for a in avaliacoes
+    ]
+})
 
     return resultado
 

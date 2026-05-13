@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
-
+from app.schemas.avaliacao_schema import AvaliacaoResponse
 
 # =========================
 # 🔹 FOTO CREATE
@@ -104,6 +104,10 @@ class EmpresaResponse(EmpresaBase):
     )
 
     distancia_km: Optional[float] = None
+
+    avaliacao_media: float | None = None
+
+    avaliacoes: list[AvaliacaoResponse] = []
 
     model_config = ConfigDict(
         from_attributes=True
