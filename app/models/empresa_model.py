@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
+
 from app.database import Base
 
 
@@ -12,8 +13,8 @@ class Empresa(Base):
     nome = Column(String, nullable=False)
     descricao = Column(String, nullable=True)
     telefone = Column(String, nullable=True)
-    whatsapp = Column(String, nullable=True)  # 🔥 ADICIONADO
-    email = Column(String, nullable=True)     # 🔥 ADICIONADO
+    whatsapp = Column(String, nullable=True)
+    email = Column(String, nullable=True)
 
     # 🔹 endereço
     endereco = Column(String, nullable=True)
@@ -52,6 +53,13 @@ class Empresa(Base):
         back_populates="empresa",
         cascade="all, delete-orphan",
         passive_deletes=True
+    )
+
+    # ⭐ AVALIAÇÕES
+    avaliacoes = relationship(
+        "Avaliacao",
+        back_populates="empresa",
+        cascade="all, delete-orphan"
     )
 
     # =========================

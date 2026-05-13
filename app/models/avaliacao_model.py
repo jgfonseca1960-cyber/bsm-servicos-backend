@@ -29,4 +29,8 @@ class Avaliacao(Base):
         default=datetime.utcnow
     )
 
-    usuario = relationship("Usuario")
+    # ⭐ RELACIONAMENTO
+    empresa = relationship(
+        "Empresa",
+        back_populates="avaliacoes"
+    )
