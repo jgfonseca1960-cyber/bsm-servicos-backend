@@ -369,10 +369,10 @@ def deletar_empresa(
     }
 
 # =========================================================
-# 📸 UPLOAD LOCAL
+# ☁️ UPLOAD CLOUDINARY
 # =========================================================
 @router.post("/{empresa_id}/fotos")
-def upload_foto_local(
+def upload_foto(
     empresa_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
@@ -390,14 +390,12 @@ def upload_foto_local(
 
     try:
 
-        filename = f"{uuid4()}_{file.filename}"
-
-        filepath = (
-            f"uploads/empresas/{filename}"
+        resultado = cloudinary.uploader.upload(
+            file.file,
+            folder="bsm/empresas"
         )
 
-        with open(filepath, "wb") as buffer:
-            buffer.write(file.file.read())
+        url = resultado.get("secure_url")
 
         total_fotos = db.query(EmpresaFoto).filter(
             EmpresaFoto.empresa_id == empresa_id
@@ -405,19 +403,23 @@ def upload_foto_local(
 
         foto = EmpresaFoto(
             empresa_id=empresa_id,
-            url=filepath,
+            url=url,
             principal=(total_fotos == 0)
         )
 
         db.add(foto)
+
+        if total_fotos == 0:
+            empresa.foto_principal = url
+
         db.commit()
         db.refresh(foto)
 
         return {
-            "msg": "Foto enviada",
+            "msg": "Upload Cloudinary OK",
             "foto": {
                 "id": foto.id,
-                "url": gerar_url_imagem(filepath),
+                "url": url,
                 "principal": foto.principal
             }
         }
@@ -427,10 +429,9 @@ def upload_foto_local(
 
         raise HTTPException(
             status_code=500,
-            detail=str(e)
+            detail=f"Erro upload: {str(e)}"
         )
 
-s
 # =========================================================
 # ⭐ DEFINIR FOTO PRINCIPAL
 # =========================================================
