@@ -212,10 +212,14 @@ app.include_router(
     tags=["Auth"]
 )
 
+# app.include_router(
+#    empresa_router,
+#    prefix="/empresa",
+#    tags=["Empresas"]
+#)
+
 app.include_router(
-    empresa_router,
-    prefix="/empresa",
-    tags=["Empresas"]
+    empresa_router
 )
 
 app.include_router(
