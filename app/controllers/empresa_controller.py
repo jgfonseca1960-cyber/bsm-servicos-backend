@@ -430,66 +430,7 @@ def upload_foto_local(
             detail=str(e)
         )
 
-# =========================================================
-# ☁️ UPLOAD CLOUDINARY
-# =========================================================
-@router.post("/{empresa_id}/upload-cloudinary")
-def upload_foto_cloudinary(
-    empresa_id: int,
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db)
-):
-
-    empresa = db.query(Empresa).filter(
-        Empresa.id == empresa_id
-    ).first()
-
-    if not empresa:
-        raise HTTPException(
-            status_code=404,
-            detail="Empresa não encontrada"
-        )
-
-    try:
-
-        resultado = cloudinary.uploader.upload(
-            file.file,
-            folder="bsm/empresas"
-        )
-
-        url = resultado.get("secure_url")
-
-        total_fotos = db.query(EmpresaFoto).filter(
-            EmpresaFoto.empresa_id == empresa_id
-        ).count()
-
-        foto = EmpresaFoto(
-            empresa_id=empresa_id,
-            url=url,
-            principal=(total_fotos == 0)
-        )
-
-        db.add(foto)
-        db.commit()
-        db.refresh(foto)
-
-        return {
-            "msg": "Upload Cloudinary OK",
-            "foto": {
-                "id": foto.id,
-                "url": url,
-                "principal": foto.principal
-            }
-        }
-
-    except Exception as e:
-        db.rollback()
-
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro upload: {str(e)}"
-        )
-
+s
 # =========================================================
 # ⭐ DEFINIR FOTO PRINCIPAL
 # =========================================================

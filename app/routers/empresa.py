@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 import os
 import shutil
 import uuid
+import cloudinary
+import cloudinary.uploader
 
 from app.database import get_db
 
@@ -27,7 +29,7 @@ router = APIRouter(
 BASE_URL = "https://bsm-servicos-backend.onrender.com"
 
 # =========================
-# 📁 CONFIG UPLOAD
+# 📁 CONFIG UPLOAD LOCAL
 # =========================
 UPLOAD_DIR = "uploads"
 
@@ -36,15 +38,26 @@ os.makedirs(
     exist_ok=True
 )
 
-# =========================
-# 📸 UPLOAD FOTO
-# =========================
+# =========================================================
+# ☁️ CLOUDINARY CONFIG
+# =========================================================
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
+
+# =========================================================
+# ☁️ UPLOAD CLOUDINARY
+# =========================================================
 @router.post("/{empresa_id}/fotos")
 def upload_foto(
     empresa_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
+
     empresa = db.query(Empresa).filter(
         Empresa.id == empresa_id
     ).first()
@@ -55,54 +68,58 @@ def upload_foto(
             detail="Empresa não encontrada"
         )
 
-    filename = f"{uuid.uuid4()}_{file.filename}"
+    try:
 
-    filepath = os.path.join(
-        UPLOAD_DIR,
-        filename
-    )
-
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(
+        # =====================================
+        # ☁️ UPLOAD CLOUDINARY
+        # =====================================
+        resultado = cloudinary.uploader.upload(
             file.file,
-            buffer
+            folder="bsm/empresas"
         )
 
-    # 🔥 URL ABSOLUTA
-    url_foto = (
-        f"{BASE_URL}/uploads/{filename}"
-    )
+        url = resultado.get("secure_url")
 
-    foto = EmpresaFoto(
-        empresa_id=empresa_id,
-        url=url_foto,
-        principal=False
-    )
+        # =====================================
+        # ⭐ PRIMEIRA FOTO = PRINCIPAL
+        # =====================================
+        total_fotos = db.query(EmpresaFoto).filter(
+            EmpresaFoto.empresa_id == empresa_id
+        ).count()
 
-    db.add(foto)
+        principal = (total_fotos == 0)
 
-    # 🔥 DEFINE PRIMEIRA FOTO COMO PRINCIPAL
-    total_fotos = db.query(EmpresaFoto).filter(
-        EmpresaFoto.empresa_id == empresa_id
-    ).count()
+        foto = EmpresaFoto(
+            empresa_id=empresa_id,
+            url=url,
+            principal=principal
+        )
 
-    if total_fotos == 0:
-        foto.principal = True
+        db.add(foto)
 
-        empresa.foto_principal = url_foto
+        if principal:
+            empresa.foto_principal = url
 
-    db.commit()
+        db.commit()
+        db.refresh(foto)
 
-    db.refresh(foto)
-
-    return {
-        "message": "Foto enviada com sucesso",
-        "foto": {
-            "id": foto.id,
-            "url": foto.url,
-            "principal": foto.principal
+        return {
+            "message": "Foto enviada com sucesso",
+            "foto": {
+                "id": foto.id,
+                "url": foto.url,
+                "principal": foto.principal
+            }
         }
-    }
+
+    except Exception as e:
+
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro upload: {str(e)}"
+        )
 
 # =========================
 # ⭐ DEFINIR FOTO PRINCIPAL
@@ -132,6 +149,7 @@ def definir_foto_principal(
     foto_principal = None
 
     for foto in fotos:
+
         foto.principal = False
 
         if foto.id == foto_id:
@@ -144,7 +162,6 @@ def definir_foto_principal(
             detail="Foto não encontrada"
         )
 
-    # 🔥 SALVA URL PRINCIPAL
     empresa.foto_principal = foto_principal.url
 
     db.commit()
@@ -175,34 +192,53 @@ def deletar_foto(
         Empresa.id == foto.empresa_id
     ).first()
 
-    # 🔥 REMOVE URL BASE
-    caminho_arquivo = foto.url.replace(
-        f"{BASE_URL}/uploads/",
-        "uploads/"
-    )
-
-    if os.path.exists(caminho_arquivo):
-        os.remove(caminho_arquivo)
-
     era_principal = foto.principal
+
+    # =====================================
+    # ☁️ REMOVE DO CLOUDINARY
+    # =====================================
+    try:
+
+        if "cloudinary.com" in foto.url:
+
+            partes = foto.url.split("/")
+
+            upload_index = partes.index("upload")
+
+            public_parts = partes[upload_index + 2:]
+
+            public_id = "/".join(public_parts)
+
+            public_id = os.path.splitext(public_id)[0]
+
+            cloudinary.uploader.destroy(public_id)
+
+    except Exception as e:
+        print(f"Erro removendo cloudinary: {e}")
 
     db.delete(foto)
 
     db.commit()
 
-    # 🔥 DEFINE NOVA PRINCIPAL
+    # =====================================
+    # ⭐ NOVA FOTO PRINCIPAL
+    # =====================================
     if era_principal and empresa:
+
         nova_principal = db.query(EmpresaFoto).filter(
             EmpresaFoto.empresa_id == empresa.id
         ).first()
 
         if nova_principal:
+
             nova_principal.principal = True
 
             empresa.foto_principal = (
                 nova_principal.url
             )
+
         else:
+
             empresa.foto_principal = None
 
         db.commit()
@@ -264,51 +300,50 @@ def listar_empresas(
         ]
 
         resultado.append({
-    "id": e.id,
-    "nome": e.nome,
-    "descricao": e.descricao,
+            "id": e.id,
+            "nome": e.nome,
+            "descricao": e.descricao,
 
-    "telefone": e.telefone,
-    "whatsapp": e.whatsapp,
-    "email": e.email,
+            "telefone": e.telefone,
+            "whatsapp": e.whatsapp,
+            "email": e.email,
 
-    "endereco": e.endereco,
-    "bairro": e.bairro,
-    "cidade": e.cidade,
-    "estado": e.estado,
-    "cep": e.cep,
+            "endereco": e.endereco,
+            "bairro": e.bairro,
+            "cidade": e.cidade,
+            "estado": e.estado,
+            "cep": e.cep,
 
-    "latitude": e.latitude,
-    "longitude": e.longitude,
+            "latitude": e.latitude,
+            "longitude": e.longitude,
 
-    "ativo": e.ativo,
+            "ativo": e.ativo,
 
-    "avaliacao_media": media,
+            "avaliacao_media": media,
 
-    "cpf": e.cpf,
-    "cnpj": e.cnpj,
+            "cpf": e.cpf,
+            "cnpj": e.cnpj,
 
-    "servico_id": e.servico_id,
+            "servico_id": e.servico_id,
 
-    "foto_principal": e.foto_principal,
+            "foto_principal": e.foto_principal,
 
-    "fotos": lista_fotos,
+            "fotos": lista_fotos,
 
-    # ⭐ AQUI FALTAVA
-    "avaliacoes": [
-        {
-            "id": a.id,
-            "usuario": (
-                a.usuario.nome
-                if a.usuario else
-                f"Usuário {a.usuario_id}"
-            ),
-            "nota": a.nota,
-            "comentario": a.comentario
-        }
-        for a in avaliacoes
-    ]
-})
+            "avaliacoes": [
+                {
+                    "id": a.id,
+                    "usuario": (
+                        a.usuario.nome
+                        if a.usuario else
+                        f"Usuário {a.usuario_id}"
+                    ),
+                    "nota": a.nota,
+                    "comentario": a.comentario
+                }
+                for a in avaliacoes
+            ]
+        })
 
     return resultado
 
