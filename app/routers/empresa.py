@@ -97,8 +97,8 @@ def upload_foto(
 
         db.add(foto)
 
-        if principal:
-            empresa.foto_principal = url
+        # if principal:
+        #    empresa.foto_principal = url
 
         db.commit()
         db.refresh(foto)
@@ -162,7 +162,7 @@ def definir_foto_principal(
             detail="Foto não encontrada"
         )
 
-    empresa.foto_principal = foto_principal.url
+    # empresa.foto_principal = foto_principal.url
 
     db.commit()
 
@@ -233,13 +233,13 @@ def deletar_foto(
 
             nova_principal.principal = True
 
-            empresa.foto_principal = (
-                nova_principal.url
-            )
+            # empresa.foto_principal = (
+            #    nova_principal.url
+            # )
 
         else:
 
-            empresa.foto_principal = None
+            # empresa.foto_principal = None
 
         db.commit()
 

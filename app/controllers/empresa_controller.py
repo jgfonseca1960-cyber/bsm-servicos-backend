@@ -322,8 +322,7 @@ def deletar_empresa(
 )
 async def upload_foto(
     empresa_id: int,
-    file: UploadFile = File(...)
-,
+    file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
 
@@ -360,9 +359,6 @@ async def upload_foto(
 
         db.add(foto)
 
-        if total_fotos == 0:
-            empresa.foto_principal = url
-
         db.commit()
         db.refresh(foto)
 
@@ -378,6 +374,9 @@ async def upload_foto(
     except Exception as e:
 
         db.rollback()
+
+        print("🔥🔥🔥 ERRO CLOUDINARY 🔥🔥🔥")
+        print(str(e))
 
         raise HTTPException(
             status_code=500,
@@ -414,12 +413,6 @@ def definir_principal(
     })
 
     foto.principal = True
-
-    empresa = db.query(Empresa).filter(
-        Empresa.id == empresa_id
-    ).first()
-
-    empresa.foto_principal = foto.url
 
     db.commit()
 
@@ -458,20 +451,9 @@ def deletar_foto(
             EmpresaFoto.empresa_id == empresa_id
         ).first()
 
-        empresa = db.query(Empresa).filter(
-            Empresa.id == empresa_id
-        ).first()
-
         if nova_principal:
-
             nova_principal.principal = True
-            empresa.foto_principal = nova_principal.url
-
-        else:
-
-            empresa.foto_principal = None
-
-        db.commit()
+            db.commit()
 
     return {
         "msg": "Foto removida"
