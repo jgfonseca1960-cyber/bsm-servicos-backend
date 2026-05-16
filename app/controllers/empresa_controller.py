@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import Optional, List
 import math
-from uuid import uuid4
 import os
 
 from app.database import get_db
@@ -34,6 +33,7 @@ os.makedirs("uploads/empresas", exist_ok=True)
 # 📍 DISTÂNCIA
 # =========================================================
 def calcular_distancia(lat1, lon1, lat2, lon2):
+
     if not lat1 or not lon1 or not lat2 or not lon2:
         return None
 
@@ -57,6 +57,7 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
 # 🔧 TRATAR URL
 # =========================================================
 def tratar_url(url: str):
+
     if not url:
         return None
 
@@ -243,41 +244,13 @@ def criar_empresa(
     db: Session = Depends(get_db)
 ):
 
-    if data.servico_id == 0:
-        raise HTTPException(
-            status_code=400,
-            detail="servico_id inválido"
-        )
+    empresa = Empresa(**data.model_dump())
 
-    servico = db.query(Servico).filter(
-        Servico.id == data.servico_id
-    ).first()
+    db.add(empresa)
+    db.commit()
+    db.refresh(empresa)
 
-    if not servico:
-        raise HTTPException(
-            status_code=404,
-            detail="Serviço não encontrado"
-        )
-
-    try:
-
-        empresa = Empresa(
-            **data.model_dump()
-        )
-
-        db.add(empresa)
-        db.commit()
-        db.refresh(empresa)
-
-        return empresa_to_dict(empresa)
-
-    except Exception as e:
-        db.rollback()
-
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
+    return empresa_to_dict(empresa)
 
 # =========================================================
 # ✏️ ATUALIZAR EMPRESA
@@ -306,41 +279,13 @@ def atualizar_empresa(
         exclude_unset=True
     )
 
-    if "servico_id" in update_data:
+    for key, value in update_data.items():
+        setattr(empresa, key, value)
 
-        if update_data["servico_id"] == 0:
-            raise HTTPException(
-                status_code=400,
-                detail="servico_id inválido"
-            )
+    db.commit()
+    db.refresh(empresa)
 
-        servico = db.query(Servico).filter(
-            Servico.id == update_data["servico_id"]
-        ).first()
-
-        if not servico:
-            raise HTTPException(
-                status_code=404,
-                detail="Serviço não encontrado"
-            )
-
-    try:
-
-        for key, value in update_data.items():
-            setattr(empresa, key, value)
-
-        db.commit()
-        db.refresh(empresa)
-
-        return empresa_to_dict(empresa)
-
-    except Exception as e:
-        db.rollback()
-
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
+    return empresa_to_dict(empresa)
 
 # =========================================================
 # ❌ DELETAR EMPRESA
@@ -369,12 +314,16 @@ def deletar_empresa(
     }
 
 # =========================================================
-# ☁️ UPLOAD CLOUDINARY
+# ☁️ UPLOAD FOTO CLOUDINARY
 # =========================================================
-@router.post("/{empresa_id}/fotos")
-def upload_foto(
+@router.post(
+    "/{empresa_id}/fotos",
+    summary="Upload de foto da empresa"
+)
+async def upload_foto(
     empresa_id: int,
-    file: UploadFile = File(...),
+    file: UploadFile = File(...)
+,
     db: Session = Depends(get_db)
 ):
 
@@ -390,8 +339,10 @@ def upload_foto(
 
     try:
 
+        conteudo = await file.read()
+
         resultado = cloudinary.uploader.upload(
-            file.file,
+            conteudo,
             folder="bsm/empresas"
         )
 
@@ -416,15 +367,16 @@ def upload_foto(
         db.refresh(foto)
 
         return {
-            "msg": "Upload Cloudinary OK",
+            "msg": "Foto enviada com sucesso",
             "foto": {
                 "id": foto.id,
-                "url": url,
+                "url": foto.url,
                 "principal": foto.principal
             }
         }
 
     except Exception as e:
+
         db.rollback()
 
         raise HTTPException(
@@ -463,6 +415,12 @@ def definir_principal(
 
     foto.principal = True
 
+    empresa = db.query(Empresa).filter(
+        Empresa.id == empresa_id
+    ).first()
+
+    empresa.foto_principal = foto.url
+
     db.commit()
 
     return {
@@ -500,9 +458,20 @@ def deletar_foto(
             EmpresaFoto.empresa_id == empresa_id
         ).first()
 
+        empresa = db.query(Empresa).filter(
+            Empresa.id == empresa_id
+        ).first()
+
         if nova_principal:
+
             nova_principal.principal = True
-            db.commit()
+            empresa.foto_principal = nova_principal.url
+
+        else:
+
+            empresa.foto_principal = None
+
+        db.commit()
 
     return {
         "msg": "Foto removida"
