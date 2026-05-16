@@ -2,8 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 
 import os
-import shutil
-import uuid
 import cloudinary
 import cloudinary.uploader
 
@@ -49,6 +47,27 @@ cloudinary.config(
 )
 
 # =========================================================
+# 🔥 FOTO PRINCIPAL
+# =========================================================
+def obter_foto_principal(fotos):
+
+    principal = next(
+        (
+            f.url for f in fotos
+            if f.principal
+        ),
+        None
+    )
+
+    if principal:
+        return principal
+
+    if fotos:
+        return fotos[0].url
+
+    return None
+
+# =========================================================
 # ☁️ UPLOAD CLOUDINARY
 # =========================================================
 @router.post("/{empresa_id}/fotos")
@@ -70,9 +89,6 @@ def upload_foto(
 
     try:
 
-        # =====================================
-        # ☁️ UPLOAD CLOUDINARY
-        # =====================================
         resultado = cloudinary.uploader.upload(
             file.file,
             folder="bsm/empresas"
@@ -80,9 +96,6 @@ def upload_foto(
 
         url = resultado.get("secure_url")
 
-        # =====================================
-        # ⭐ PRIMEIRA FOTO = PRINCIPAL
-        # =====================================
         total_fotos = db.query(EmpresaFoto).filter(
             EmpresaFoto.empresa_id == empresa_id
         ).count()
@@ -96,9 +109,6 @@ def upload_foto(
         )
 
         db.add(foto)
-
-        # if principal:
-        #    empresa.foto_principal = url
 
         db.commit()
         db.refresh(foto)
@@ -132,6 +142,7 @@ def definir_foto_principal(
     foto_id: int,
     db: Session = Depends(get_db)
 ):
+
     empresa = db.query(Empresa).filter(
         Empresa.id == empresa_id
     ).first()
@@ -162,8 +173,6 @@ def definir_foto_principal(
             detail="Foto não encontrada"
         )
 
-    # empresa.foto_principal = foto_principal.url
-
     db.commit()
 
     return {
@@ -178,6 +187,7 @@ def deletar_foto(
     foto_id: int,
     db: Session = Depends(get_db)
 ):
+
     foto = db.query(EmpresaFoto).filter(
         EmpresaFoto.id == foto_id
     ).first()
@@ -194,12 +204,9 @@ def deletar_foto(
 
     era_principal = foto.principal
 
-    # =====================================
-    # ☁️ REMOVE DO CLOUDINARY
-    # =====================================
     try:
 
-        if "cloudinary.com" in foto.url:
+        if foto.url and "cloudinary.com" in foto.url:
 
             partes = foto.url.split("/")
 
@@ -220,9 +227,6 @@ def deletar_foto(
 
     db.commit()
 
-    # =====================================
-    # ⭐ NOVA FOTO PRINCIPAL
-    # =====================================
     if era_principal and empresa:
 
         nova_principal = db.query(EmpresaFoto).filter(
@@ -230,18 +234,8 @@ def deletar_foto(
         ).first()
 
         if nova_principal:
-
             nova_principal.principal = True
-
-            # empresa.foto_principal = (
-            #    nova_principal.url
-            # )
-
-        else:
-
-            # empresa.foto_principal = None
-
-        db.commit()
+            db.commit()
 
     return {
         "message": "Foto removida"
@@ -255,6 +249,7 @@ def criar_empresa(
     dados: EmpresaCreate,
     db: Session = Depends(get_db)
 ):
+
     nova = Empresa(**dados.dict())
 
     db.add(nova)
@@ -272,6 +267,7 @@ def criar_empresa(
 def listar_empresas(
     db: Session = Depends(get_db)
 ):
+
     empresas = db.query(Empresa).all()
 
     resultado = []
@@ -326,7 +322,7 @@ def listar_empresas(
 
             "servico_id": e.servico_id,
 
-            "foto_principal": e.foto_principal,
+            "foto_principal": obter_foto_principal(e.fotos),
 
             "fotos": lista_fotos,
 
@@ -355,6 +351,7 @@ def detalhe_empresa(
     empresa_id: int,
     db: Session = Depends(get_db)
 ):
+
     empresa = db.query(Empresa).filter(
         Empresa.id == empresa_id
     ).first()
@@ -413,7 +410,7 @@ def detalhe_empresa(
 
         "servico_id": empresa.servico_id,
 
-        "foto_principal": empresa.foto_principal,
+        "foto_principal": obter_foto_principal(empresa.fotos),
 
         "fotos": lista_fotos,
 
@@ -441,6 +438,7 @@ def atualizar_empresa(
     dados: EmpresaUpdate,
     db: Session = Depends(get_db)
 ):
+
     empresa = db.query(Empresa).filter(
         Empresa.id == empresa_id
     ).first()
@@ -456,6 +454,7 @@ def atualizar_empresa(
     )
 
     for key, value in update_data.items():
+
         setattr(
             empresa,
             key,
@@ -476,6 +475,7 @@ def deletar_empresa(
     empresa_id: int,
     db: Session = Depends(get_db)
 ):
+
     empresa = db.query(Empresa).filter(
         Empresa.id == empresa_id
     ).first()
