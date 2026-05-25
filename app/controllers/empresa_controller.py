@@ -16,7 +16,7 @@ import cloudinary.uploader
 from app.schemas.empresa_schema import (
     EmpresaCreate,
     EmpresaUpdate,
-    EmpresaResponse,
+    EmpresaResponse
 )
 
 router = APIRouter(
