@@ -67,6 +67,97 @@ def obter_foto_principal(fotos):
 
     return None
 
+
+# =========================================================
+# 📦 SERIALIZADOR EMPRESA
+# =========================================================
+def serializar_empresa(e, db: Session):
+
+    avaliacoes = db.query(Avaliacao).filter(
+        Avaliacao.empresa_id == e.id
+    ).all()
+
+    media = 0
+
+    if avaliacoes:
+        media = round(
+            sum([a.nota for a in avaliacoes])
+            / len(avaliacoes),
+            1
+        )
+
+    lista_fotos = [
+        {
+            "id": f.id,
+            "url": f.url,
+            "principal": f.principal,
+            "public_id": getattr(f, "public_id", None)
+        }
+        for f in e.fotos
+    ]
+
+    return {
+        "id": e.id,
+        "nome": e.nome,
+        "descricao": e.descricao,
+
+        "telefone": e.telefone,
+        "whatsapp": e.whatsapp,
+        "email": e.email,
+
+        "endereco": e.endereco,
+        "bairro": e.bairro,
+        "cidade": e.cidade,
+        "estado": e.estado,
+        "cep": e.cep,
+
+        "latitude": e.latitude,
+        "longitude": e.longitude,
+
+        "ativo": e.ativo,
+
+        # ⭐ PREMIUM
+        "premium": bool(getattr(e, "premium", False)),
+        "destaque": bool(getattr(e, "destaque", False)),
+        "plano": getattr(e, "plano", "gratuito"),
+        "prioridade": getattr(e, "prioridade", 0),
+        "whatsapp_destacado": bool(
+            getattr(e, "whatsapp_destacado", False)
+        ),
+        "exibir_no_topo": bool(
+            getattr(e, "exibir_no_topo", False)
+        ),
+        "selo_premium": bool(
+            getattr(e, "selo_premium", False)
+        ),
+
+        "avaliacao_media": media,
+
+        "cpf": e.cpf,
+        "cnpj": e.cnpj,
+
+        "servico_id": e.servico_id,
+
+        "foto_principal": obter_foto_principal(e.fotos),
+
+        "fotos": lista_fotos,
+
+        "avaliacoes": [
+            {
+                "id": a.id,
+                "usuario": (
+                    a.usuario.nome
+                    if a.usuario else
+                    f"Usuário {a.usuario_id}"
+                ),
+                "nota": a.nota,
+                "comentario": a.comentario
+            }
+            for a in avaliacoes
+        ]
+    }
+
+
 # =========================================================
 # ☁️ UPLOAD CLOUDINARY
 # =========================================================
@@ -105,7 +196,8 @@ def upload_foto(
         foto = EmpresaFoto(
             empresa_id=empresa_id,
             url=url,
-            principal=principal
+            principal=principal,
+            public_id=resultado.get("public_id")
         )
 
         db.add(foto)
@@ -118,7 +210,8 @@ def upload_foto(
             "foto": {
                 "id": foto.id,
                 "url": foto.url,
-                "principal": foto.principal
+                "principal": foto.principal,
+                "public_id": foto.public_id
             }
         }
 
@@ -130,6 +223,7 @@ def upload_foto(
             status_code=500,
             detail=f"Erro upload: {str(e)}"
         )
+
 
 # =========================
 # ⭐ DEFINIR FOTO PRINCIPAL
@@ -177,6 +271,7 @@ def definir_foto_principal(
         "message": "Foto principal atualizada"
     }
 
+
 # =========================
 # ❌ DELETAR FOTO
 # =========================
@@ -204,19 +299,11 @@ def deletar_foto(
 
     try:
 
-        if foto.url and "cloudinary.com" in foto.url:
+        if foto.public_id:
 
-            partes = foto.url.split("/")
-
-            upload_index = partes.index("upload")
-
-            public_parts = partes[upload_index + 2:]
-
-            public_id = "/".join(public_parts)
-
-            public_id = os.path.splitext(public_id)[0]
-
-            cloudinary.uploader.destroy(public_id)
+            cloudinary.uploader.destroy(
+                foto.public_id
+            )
 
     except Exception as e:
         print(f"Erro removendo cloudinary: {e}")
@@ -239,6 +326,7 @@ def deletar_foto(
         "message": "Foto removida"
     }
 
+
 # =========================
 # ➕ CRIAR EMPRESA
 # =========================
@@ -248,7 +336,13 @@ def criar_empresa(
     db: Session = Depends(get_db)
 ):
 
-    nova = Empresa(**dados.dict())
+    data = dados.dict()
+
+    # evita FK inválida
+    if data.get("servico_id") == 0:
+        data["servico_id"] = None
+
+    nova = Empresa(**data)
 
     db.add(nova)
 
@@ -256,7 +350,8 @@ def criar_empresa(
 
     db.refresh(nova)
 
-    return nova
+    return serializar_empresa(nova, db)
+
 
 # =========================
 # 📡 LISTAR EMPRESAS
@@ -268,90 +363,21 @@ def listar_empresas(
 
     empresas = db.query(Empresa).all()
 
-    # PREMIUM PRIMEIRO
+    # ⭐ PREMIUM PRIMEIRO
     empresas.sort(
         key=lambda x: (
-            not bool(x.premium),
-            not bool(x.destaque)
+            -int(getattr(x, "prioridade", 0)),
+            not bool(getattr(x, "premium", False)),
+            not bool(getattr(x, "destaque", False)),
+            x.nome.lower()
         )
     )
 
-    resultado = []
+    return [
+        serializar_empresa(e, db)
+        for e in empresas
+    ]
 
-    for e in empresas:
-
-        avaliacoes = db.query(Avaliacao).filter(
-            Avaliacao.empresa_id == e.id
-        ).all()
-
-        media = 0
-
-        if avaliacoes:
-            media = (
-                sum([a.nota for a in avaliacoes])
-                / len(avaliacoes)
-            )
-
-        lista_fotos = [
-            {
-                "id": f.id,
-                "url": f.url,
-                "principal": f.principal
-            }
-            for f in e.fotos
-        ]
-
-        resultado.append({
-            "id": e.id,
-            "nome": e.nome,
-            "descricao": e.descricao,
-
-            "telefone": e.telefone,
-            "whatsapp": e.whatsapp,
-            "email": e.email,
-
-            "endereco": e.endereco,
-            "bairro": e.bairro,
-            "cidade": e.cidade,
-            "estado": e.estado,
-            "cep": e.cep,
-
-            "latitude": e.latitude,
-            "longitude": e.longitude,
-
-            "ativo": e.ativo,
-
-            # PREMIUM
-            "premium": e.premium,
-            "destaque": e.destaque,
-
-            "avaliacao_media": media,
-
-            "cpf": e.cpf,
-            "cnpj": e.cnpj,
-
-            "servico_id": e.servico_id,
-
-            "foto_principal": obter_foto_principal(e.fotos),
-
-            "fotos": lista_fotos,
-
-            "avaliacoes": [
-                {
-                    "id": a.id,
-                    "usuario": (
-                        a.usuario.nome
-                        if a.usuario else
-                        f"Usuário {a.usuario_id}"
-                    ),
-                    "nota": a.nota,
-                    "comentario": a.comentario
-                }
-                for a in avaliacoes
-            ]
-        })
-
-    return resultado
 
 # =========================
 # 🔍 DETALHE EMPRESA
@@ -372,76 +398,8 @@ def detalhe_empresa(
             detail="Empresa não encontrada"
         )
 
-    avaliacoes = db.query(Avaliacao).filter(
-        Avaliacao.empresa_id == empresa.id
-    ).all()
+    return serializar_empresa(empresa, db)
 
-    media = 0
-
-    if avaliacoes:
-        media = (
-            sum([a.nota for a in avaliacoes])
-            / len(avaliacoes)
-        )
-
-    lista_fotos = [
-        {
-            "id": f.id,
-            "url": f.url,
-            "principal": f.principal
-        }
-        for f in empresa.fotos
-    ]
-
-    return {
-        "id": empresa.id,
-        "nome": empresa.nome,
-        "descricao": empresa.descricao,
-
-        "telefone": empresa.telefone,
-        "whatsapp": empresa.whatsapp,
-        "email": empresa.email,
-
-        "endereco": empresa.endereco,
-        "bairro": empresa.bairro,
-        "cidade": empresa.cidade,
-        "estado": empresa.estado,
-        "cep": empresa.cep,
-
-        "latitude": empresa.latitude,
-        "longitude": empresa.longitude,
-
-        "ativo": empresa.ativo,
-
-        # PREMIUM
-        "premium": empresa.premium,
-        "destaque": empresa.destaque,
-
-        "avaliacao_media": media,
-
-        "cpf": empresa.cpf,
-        "cnpj": empresa.cnpj,
-
-        "servico_id": empresa.servico_id,
-
-        "foto_principal": obter_foto_principal(empresa.fotos),
-
-        "fotos": lista_fotos,
-
-        "avaliacoes": [
-            {
-                "id": a.id,
-                "usuario": (
-                    a.usuario.nome
-                    if a.usuario else
-                    f"Usuário {a.usuario_id}"
-                ),
-                "nota": a.nota,
-                "comentario": a.comentario
-            }
-            for a in avaliacoes
-        ]
-    }
 
 # =========================
 # ✏️ ATUALIZAR EMPRESA
@@ -467,6 +425,10 @@ def atualizar_empresa(
         exclude_unset=True
     )
 
+    # evita FK inválida
+    if update_data.get("servico_id") == 0:
+        update_data["servico_id"] = None
+
     for key, value in update_data.items():
 
         setattr(
@@ -479,7 +441,8 @@ def atualizar_empresa(
 
     db.refresh(empresa)
 
-    return empresa
+    return serializar_empresa(empresa, db)
+
 
 # =========================
 # ❌ DELETAR EMPRESA
