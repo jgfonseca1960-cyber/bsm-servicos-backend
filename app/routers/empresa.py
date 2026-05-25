@@ -134,9 +134,7 @@ def upload_foto(
 # =========================
 # ⭐ DEFINIR FOTO PRINCIPAL
 # =========================
-@router.put(
-    "/{empresa_id}/foto-principal/{foto_id}"
-)
+@router.put("/{empresa_id}/foto-principal/{foto_id}")
 def definir_foto_principal(
     empresa_id: int,
     foto_id: int,
@@ -270,6 +268,14 @@ def listar_empresas(
 
     empresas = db.query(Empresa).all()
 
+    # PREMIUM PRIMEIRO
+    empresas.sort(
+        key=lambda x: (
+            not bool(x.premium),
+            not bool(x.destaque)
+        )
+    )
+
     resultado = []
 
     for e in empresas:
@@ -314,6 +320,10 @@ def listar_empresas(
             "longitude": e.longitude,
 
             "ativo": e.ativo,
+
+            # PREMIUM
+            "premium": e.premium,
+            "destaque": e.destaque,
 
             "avaliacao_media": media,
 
@@ -402,6 +412,10 @@ def detalhe_empresa(
         "longitude": empresa.longitude,
 
         "ativo": empresa.ativo,
+
+        # PREMIUM
+        "premium": empresa.premium,
+        "destaque": empresa.destaque,
 
         "avaliacao_media": media,
 
