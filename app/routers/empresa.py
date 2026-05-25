@@ -13,7 +13,8 @@ from app.models.avaliacao_model import Avaliacao
 
 from app.schemas.empresa_schema import (
     EmpresaCreate,
-    EmpresaUpdate
+    EmpresaUpdate,
+    EmpresaResponse
 )
 
 router = APIRouter(
@@ -330,7 +331,10 @@ def deletar_foto(
 # =========================
 # ➕ CRIAR EMPRESA
 # =========================
-@router.post("/")
+@router.post(
+    "/",
+    response_model=EmpresaResponse
+)
 def criar_empresa(
     dados: EmpresaCreate,
     db: Session = Depends(get_db)
@@ -356,7 +360,10 @@ def criar_empresa(
 # =========================
 # 📡 LISTAR EMPRESAS
 # =========================
-@router.get("/")
+@router.get(
+    "/",
+    response_model=list[EmpresaResponse]
+)
 def listar_empresas(
     db: Session = Depends(get_db)
 ):
@@ -382,7 +389,10 @@ def listar_empresas(
 # =========================
 # 🔍 DETALHE EMPRESA
 # =========================
-@router.get("/{empresa_id}")
+@router.get(
+    "/{empresa_id}",
+    response_model=EmpresaResponse
+)
 def detalhe_empresa(
     empresa_id: int,
     db: Session = Depends(get_db)
@@ -404,7 +414,10 @@ def detalhe_empresa(
 # =========================
 # ✏️ ATUALIZAR EMPRESA
 # =========================
-@router.put("/{empresa_id}")
+@router.put(
+    "/{empresa_id}",
+    response_model=EmpresaResponse
+)
 def atualizar_empresa(
     empresa_id: int,
     dados: EmpresaUpdate,
