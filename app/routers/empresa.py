@@ -131,6 +131,8 @@ def serializar_empresa(e, db: Session):
         "selo_premium": bool(
             getattr(e, "selo_premium", False)
         ),
+        
+        "is_premium": e.is_premium,
 
         "avaliacao_media": media,
 
