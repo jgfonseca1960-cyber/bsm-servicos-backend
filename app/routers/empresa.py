@@ -436,28 +436,141 @@ def atualizar_empresa(
             detail="Empresa não encontrada"
         )
 
-    update_data = dados.dict(
+    update_data = dados.model_dump(
         exclude_unset=True
     )
 
-    # evita FK inválida
-    if update_data.get("servico_id") == 0:
-        update_data["servico_id"] = None
+    print("📥 UPDATE DATA RECEBIDO:")
+    print(update_data)
 
-    for key, value in update_data.items():
+    # =====================================================
+    # 🔥 CAMPOS COMUNS
+    # =====================================================
 
-        setattr(
-            empresa,
-            key,
-            value
+    empresa.nome = update_data.get(
+        "nome",
+        empresa.nome
+    )
+
+    empresa.descricao = update_data.get(
+        "descricao",
+        empresa.descricao
+    )
+
+    empresa.telefone = update_data.get(
+        "telefone",
+        empresa.telefone
+    )
+
+    empresa.whatsapp = update_data.get(
+        "whatsapp",
+        empresa.whatsapp
+    )
+
+    empresa.email = update_data.get(
+        "email",
+        empresa.email
+    )
+
+    empresa.endereco = update_data.get(
+        "endereco",
+        empresa.endereco
+    )
+
+    empresa.bairro = update_data.get(
+        "bairro",
+        empresa.bairro
+    )
+
+    empresa.cidade = update_data.get(
+        "cidade",
+        empresa.cidade
+    )
+
+    empresa.estado = update_data.get(
+        "estado",
+        empresa.estado
+    )
+
+    empresa.cep = update_data.get(
+        "cep",
+        empresa.cep
+    )
+
+    empresa.latitude = update_data.get(
+        "latitude",
+        empresa.latitude
+    )
+
+    empresa.longitude = update_data.get(
+        "longitude",
+        empresa.longitude
+    )
+
+    empresa.ativo = update_data.get(
+        "ativo",
+        empresa.ativo
+    )
+
+    empresa.servico_id = update_data.get(
+        "servico_id",
+        empresa.servico_id
+    )
+
+    # =====================================================
+    # ⭐ PREMIUM
+    # =====================================================
+
+    if "premium" in update_data:
+        empresa.premium = bool(
+            update_data["premium"]
         )
+
+    if "destaque" in update_data:
+        empresa.destaque = bool(
+            update_data["destaque"]
+        )
+
+    if "whatsapp_destacado" in update_data:
+        empresa.whatsapp_destacado = bool(
+            update_data["whatsapp_destacado"]
+        )
+
+    if "exibir_no_topo" in update_data:
+        empresa.exibir_no_topo = bool(
+            update_data["exibir_no_topo"]
+        )
+
+    if "selo_premium" in update_data:
+        empresa.selo_premium = bool(
+            update_data["selo_premium"]
+        )
+
+    if "plano" in update_data:
+        empresa.plano = update_data["plano"]
+
+    if "prioridade" in update_data:
+        empresa.prioridade = int(
+            update_data["prioridade"]
+        )
+
+    # =====================================================
+    # DEBUG
+    # =====================================================
+
+    print("🔥 VALORES APÓS UPDATE:")
+    print("premium =", empresa.premium)
+    print("destaque =", empresa.destaque)
+    print("plano =", empresa.plano)
 
     db.commit()
 
     db.refresh(empresa)
 
-    return serializar_empresa(empresa, db)
-
+    return serializar_empresa(
+        empresa,
+        db
+    )
 
 # =========================
 # ❌ DELETAR EMPRESA
