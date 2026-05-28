@@ -2,8 +2,8 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
-    Float,
     Boolean,
+    Float,
     ForeignKey
 )
 
@@ -13,86 +13,44 @@ from app.database import Base
 
 
 class Empresa(Base):
+
     __tablename__ = "empresas"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # =====================================================
-    # 🔹 DADOS BÁSICOS
-    # =====================================================
-
     nome = Column(String, nullable=False)
 
-    descricao = Column(String, nullable=True)
+    descricao = Column(String)
 
-    telefone = Column(String, nullable=True)
+    telefone = Column(String)
+    whatsapp = Column(String)
+    email = Column(String)
 
-    whatsapp = Column(String, nullable=True)
+    endereco = Column(String)
+    bairro = Column(String)
+    cidade = Column(String)
+    estado = Column(String)
+    cep = Column(String)
 
-    email = Column(String, nullable=True)
+    latitude = Column(Float)
+    longitude = Column(Float)
 
-    # =====================================================
-    # 🔹 ENDEREÇO
-    # =====================================================
+    ativo = Column(Boolean, default=True)
 
-    endereco = Column(String, nullable=True)
-
-    bairro = Column(String, nullable=True)
-
-    cidade = Column(String, nullable=True)
-
-    estado = Column(String, nullable=True)
-
-    cep = Column(String, nullable=True)
+    cpf = Column(String)
+    cnpj = Column(String)
 
     # =====================================================
-    # 🔹 GEOLOCALIZAÇÃO
+    # ⭐ PREMIUM
     # =====================================================
 
-    latitude = Column(Float, nullable=True)
+    premium = Column(Boolean, default=False)
 
-    longitude = Column(Float, nullable=True)
+    destaque = Column(Boolean, default=False)
 
-    # =====================================================
-    # 🔹 STATUS
-    # =====================================================
+    plano = Column(String, default="gratuito")
 
-    ativo = Column(
-        Boolean,
-        default=True,
-        nullable=False
-    )
-
-    avaliacao_media = Column(
-        Float,
-        default=0.0
-    )
-
-    # =====================================================
-    # 💰 MONETIZAÇÃO PREMIUM
-    # =====================================================
-
-    premium = Column(
-        Boolean,
-        default=False,
-        nullable=False
-    )
-
-    destaque = Column(
-        Boolean,
-        default=False,
-        nullable=False
-    )
-
-    plano = Column(
-        String,
-        default="gratuito"
-    )
-
-    prioridade = Column(
-        Integer,
-        default=0
-    )
+    prioridade = Column(Integer, default=0)
 
     whatsapp_destacado = Column(
         Boolean,
@@ -110,104 +68,35 @@ class Empresa(Base):
     )
 
     # =====================================================
-    # 🔹 DOCUMENTOS
-    # =====================================================
-
-    cpf = Column(String, nullable=True)
-
-    cnpj = Column(String, nullable=True)
-
-    # =====================================================
-    # 🔹 SERVIÇO
+    # FK
     # =====================================================
 
     servico_id = Column(
         Integer,
-        ForeignKey(
-            "servicos.id",
-            ondelete="SET NULL"
-        ),
+        ForeignKey("servicos.id"),
         nullable=True
     )
 
-    servico = relationship(
-        "Servico",
-        back_populates="empresas"
-    )
-
     # =====================================================
-    # 🔹 FOTOS
+    # RELACIONAMENTOS
     # =====================================================
 
     fotos = relationship(
         "EmpresaFoto",
         back_populates="empresa",
-        cascade="all, delete-orphan",
-        passive_deletes=True
+        cascade="all, delete"
     )
-
-    # =====================================================
-    # ⭐ AVALIAÇÕES
-    # =====================================================
 
     avaliacoes = relationship(
         "Avaliacao",
         back_populates="empresa",
-        cascade="all, delete-orphan"
+        cascade="all, delete"
     )
 
     # =====================================================
-    # ⭐ FOTO PRINCIPAL (VIRTUAL)
-    # =====================================================
-
-    @property
-    def foto_principal(self):
-
-        if not self.fotos:
-            return None
-
-        for foto in self.fotos:
-
-            if foto.principal:
-                return foto.url
-
-        return self.fotos[0].url
-
-    # =====================================================
-    # ⭐ TOTAL AVALIAÇÕES
-    # =====================================================
-
-    @property
-    def total_avaliacoes(self):
-
-        return len(self.avaliacoes)
-
-    # =====================================================
-    # ⭐ MÉDIA AVALIAÇÕES
-    # =====================================================
-
-    @property
-    def media_avaliacoes(self):
-
-        if not self.avaliacoes:
-            return 0.0
-
-        total = sum(a.nota for a in self.avaliacoes)
-
-        return round(
-            total / len(self.avaliacoes),
-            1
-        )
-
-    # =====================================================
-    # ⭐ EMPRESA PREMIUM
+    # PROPERTY
     # =====================================================
 
     @property
     def is_premium(self):
-
-        return (
-            self.premium or
-            self.destaque or
-            self.plano != "gratuito"
-        )
+        return bool(self.premium)
