@@ -120,18 +120,18 @@ def serializar_empresa(e, db: Session):
         "latitude": e.latitude,
         "longitude": e.longitude,
 
-        "ativo": e.ativo,
+        "ativo": bool(e.ativo),
 
         # ⭐ PREMIUM
-        "premium": e.premium,
-        "destaque": e.destaque,
+        "premium": bool(e.premium),
+        "destaque": bool(e.destaque),
         "plano": e.plano,
-        "prioridade": e.prioridade,
-        "whatsapp_destacado": e.whatsapp_destacado,
-        "exibir_no_topo": e.exibir_no_topo,
-        "selo_premium": e.selo_premium,
+        "prioridade": int(e.prioridade or 0),
+        "whatsapp_destacado": bool(e.whatsapp_destacado),
+        "exibir_no_topo": bool(e.exibir_no_topo),
+        "selo_premium": bool(e.selo_premium),
 
-        "is_premium": e.is_premium,
+        "is_premium": bool(e.is_premium),
 
         "avaliacao_media": media,
 
@@ -192,7 +192,14 @@ def criar_empresa(
 
         db.refresh(nova)
 
-        return serializar_empresa(nova, db)
+        empresa_atualizada = db.query(Empresa).filter(
+            Empresa.id == nova.id
+        ).first()
+
+        return serializar_empresa(
+            empresa_atualizada,
+            db
+        )
 
     except Exception as e:
 
@@ -309,16 +316,22 @@ def atualizar_empresa(
                 value
             )
 
-        print("🔥 PREMIUM =", empresa.premium)
-        print("🔥 DESTAQUE =", empresa.destaque)
-        print("🔥 PLANO =", empresa.plano)
-
         db.commit()
 
-        db.refresh(empresa)
+        # 🔥 FORÇA RECARREGAR DO BANCO
+        db.expire_all()
+
+        empresa_atualizada = db.query(Empresa).filter(
+            Empresa.id == empresa_id
+        ).first()
+
+        print("🔥 RESULTADO FINAL:")
+        print("premium =", empresa_atualizada.premium)
+        print("destaque =", empresa_atualizada.destaque)
+        print("plano =", empresa_atualizada.plano)
 
         return serializar_empresa(
-            empresa,
+            empresa_atualizada,
             db
         )
 
