@@ -133,6 +133,20 @@ def serializar_empresa(
         for f in fotos
     ]
 
+    ```python
+avaliacoes = db.query(Avaliacao).filter(
+    Avaliacao.empresa_id == e.id
+).all()
+
+media = 0.0
+
+if avaliacoes:
+    media = round(
+        sum(a.nota for a in avaliacoes)
+        / len(avaliacoes),
+        1
+    )
+    
     empresa_serializada = {
 
         # =================================================
