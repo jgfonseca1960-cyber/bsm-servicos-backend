@@ -1,3 +1,4 @@
+```python
 from fastapi import (
     APIRouter,
     Depends,
@@ -73,11 +74,14 @@ print("🔥 Cloudinary carregado!")
 
 def obter_foto_principal(fotos):
 
+    if not fotos:
+        return None
+
     principal = next(
         (
             f.url
             for f in fotos
-            if f.principal
+            if getattr(f, "principal", False)
         ),
         None
     )
@@ -85,10 +89,7 @@ def obter_foto_principal(fotos):
     if principal:
         return principal
 
-    if fotos:
-        return fotos[0].url
-
-    return None
+    return fotos[0].url
 
 
 # =========================================================
@@ -114,18 +115,22 @@ def serializar_empresa(
             1
         )
 
+    fotos = getattr(e, "fotos", []) or []
+
     lista_fotos = [
         {
             "id": f.id,
             "url": f.url,
-            "principal": bool(f.principal),
+            "principal": bool(
+                getattr(f, "principal", False)
+            ),
             "public_id": getattr(
                 f,
                 "public_id",
                 None
             )
         }
-        for f in e.fotos
+        for f in fotos
     ]
 
     empresa_serializada = {
@@ -136,29 +141,73 @@ def serializar_empresa(
 
         "id": e.id,
 
-        "nome": e.nome,
+        "nome": getattr(e, "nome", None),
 
-        "descricao": e.descricao,
+        "descricao": getattr(
+            e,
+            "descricao",
+            None
+        ),
 
-        "telefone": e.telefone,
+        "telefone": getattr(
+            e,
+            "telefone",
+            None
+        ),
 
-        "whatsapp": e.whatsapp,
+        "whatsapp": getattr(
+            e,
+            "whatsapp",
+            None
+        ),
 
-        "email": e.email,
+        "email": getattr(
+            e,
+            "email",
+            None
+        ),
 
-        "endereco": e.endereco,
+        "endereco": getattr(
+            e,
+            "endereco",
+            None
+        ),
 
-        "bairro": e.bairro,
+        "bairro": getattr(
+            e,
+            "bairro",
+            None
+        ),
 
-        "cidade": e.cidade,
+        "cidade": getattr(
+            e,
+            "cidade",
+            None
+        ),
 
-        "estado": e.estado,
+        "estado": getattr(
+            e,
+            "estado",
+            None
+        ),
 
-        "cep": e.cep,
+        "cep": getattr(
+            e,
+            "cep",
+            None
+        ),
 
-        "latitude": e.latitude,
+        "latitude": getattr(
+            e,
+            "latitude",
+            None
+        ),
 
-        "longitude": e.longitude,
+        "longitude": getattr(
+            e,
+            "longitude",
+            None
+        ),
 
         "ativo": bool(
             getattr(
@@ -248,22 +297,34 @@ def serializar_empresa(
         # DOCUMENTOS
         # =================================================
 
-        "cpf": e.cpf,
+        "cpf": getattr(
+            e,
+            "cpf",
+            None
+        ),
 
-        "cnpj": e.cnpj,
+        "cnpj": getattr(
+            e,
+            "cnpj",
+            None
+        ),
 
         # =================================================
         # SERVIÇO
         # =================================================
 
-        "servico_id": e.servico_id,
+        "servico_id": getattr(
+            e,
+            "servico_id",
+            None
+        ),
 
         # =================================================
         # FOTOS
         # =================================================
 
         "foto_principal": obter_foto_principal(
-            e.fotos
+            fotos
         ),
 
         "fotos": lista_fotos,
@@ -301,261 +362,13 @@ def serializar_empresa(
 
 
 # =========================================================
-# ☁️ UPLOAD FOTO
-# =========================================================
-
-@router.post("/{empresa_id}/fotos")
-def upload_foto(
-    empresa_id: int,
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db)
-):
-
-    empresa = db.query(Empresa).filter(
-        Empresa.id == empresa_id
-    ).first()
-
-    if not empresa:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Empresa não encontrada"
-        )
-
-    try:
-
-        resultado = cloudinary.uploader.upload(
-            file.file,
-            folder="bsm/empresas"
-        )
-
-        url = resultado.get(
-            "secure_url"
-        )
-
-        total_fotos = db.query(EmpresaFoto).filter(
-            EmpresaFoto.empresa_id == empresa_id
-        ).count()
-
-        principal = (
-            total_fotos == 0
-        )
-
-        foto = EmpresaFoto(
-            empresa_id=empresa_id,
-            url=url,
-            principal=principal,
-            public_id=resultado.get(
-                "public_id"
-            )
-        )
-
-        db.add(foto)
-
-        db.commit()
-
-        db.refresh(foto)
-
-        return {
-            "message": "Foto enviada com sucesso",
-
-            "foto": {
-                "id": foto.id,
-                "url": foto.url,
-                "principal": foto.principal,
-                "public_id": foto.public_id
-            }
-        }
-
-    except Exception as e:
-
-        db.rollback()
-
-        print("❌ ERRO UPLOAD FOTO")
-        print(str(e))
-
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
-
-
-# =========================================================
-# ⭐ DEFINIR FOTO PRINCIPAL
-# =========================================================
-
-@router.put(
-    "/{empresa_id}/foto-principal/{foto_id}"
-)
-def definir_foto_principal(
-    empresa_id: int,
-    foto_id: int,
-    db: Session = Depends(get_db)
-):
-
-    empresa = db.query(Empresa).filter(
-        Empresa.id == empresa_id
-    ).first()
-
-    if not empresa:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Empresa não encontrada"
-        )
-
-    fotos = db.query(EmpresaFoto).filter(
-        EmpresaFoto.empresa_id == empresa_id
-    ).all()
-
-    foto_principal = None
-
-    for foto in fotos:
-
-        foto.principal = False
-
-        if foto.id == foto_id:
-
-            foto.principal = True
-
-            foto_principal = foto
-
-    if not foto_principal:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Foto não encontrada"
-        )
-
-    db.commit()
-
-    return {
-        "message": "Foto principal atualizada"
-    }
-
-
-# =========================================================
-# ❌ DELETAR FOTO
-# =========================================================
-
-@router.delete("/foto/{foto_id}")
-def deletar_foto(
-    foto_id: int,
-    db: Session = Depends(get_db)
-):
-
-    foto = db.query(EmpresaFoto).filter(
-        EmpresaFoto.id == foto_id
-    ).first()
-
-    if not foto:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Foto não encontrada"
-        )
-
-    empresa = db.query(Empresa).filter(
-        Empresa.id == foto.empresa_id
-    ).first()
-
-    era_principal = foto.principal
-
-    try:
-
-        if foto.public_id:
-
-            cloudinary.uploader.destroy(
-                foto.public_id
-            )
-
-    except Exception as e:
-
-        print(
-            f"❌ ERRO CLOUDINARY: {e}"
-        )
-
-    db.delete(foto)
-
-    db.commit()
-
-    if era_principal and empresa:
-
-        nova_principal = db.query(EmpresaFoto).filter(
-            EmpresaFoto.empresa_id == empresa.id
-        ).first()
-
-        if nova_principal:
-
-            nova_principal.principal = True
-
-            db.commit()
-
-    return {
-        "message": "Foto removida"
-    }
-
-
-# =========================================================
-# ➕ CRIAR EMPRESA
-# =========================================================
-
-@router.post("/")
-
-def criar_empresa(
-    dados: EmpresaCreate,
-    db: Session = Depends(get_db)
-):
-
-    try:
-
-        data = dados.model_dump()
-
-        print("\n📥 CREATE DATA:")
-        print(data)
-
-        if data.get("servico_id") == 0:
-
-            data["servico_id"] = None
-
-        nova = Empresa(**data)
-
-        db.add(nova)
-
-        db.commit()
-
-        db.refresh(nova)
-
-        db.expire_all()
-
-        empresa_atualizada = db.query(Empresa).filter(
-            Empresa.id == nova.id
-        ).first()
-
-        return serializar_empresa(
-            empresa_atualizada,
-            db
-        )
-
-    except Exception as e:
-
-        db.rollback()
-
-        print("\n❌ ERRO CREATE EMPRESA")
-        print(str(e))
-
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
-
-
-# =========================================================
 # 📡 LISTAR EMPRESAS
 # =========================================================
 
-@router.get("/")
-
+@router.get(
+    "/",
+    response_model=list[EmpresaResponse]
+)
 def listar_empresas(
     db: Session = Depends(get_db)
 ):
@@ -565,14 +378,6 @@ def listar_empresas(
     print(
         f"\n🔥 TOTAL EMPRESAS: {len(empresas)}"
     )
-
-    for emp in empresas:
-
-        print(
-            emp.id,
-            emp.nome,
-            getattr(emp, "premium", None)
-        )
 
     empresas.sort(
         key=lambda x: (
@@ -617,8 +422,10 @@ def listar_empresas(
 # 🔍 DETALHE EMPRESA
 # =========================================================
 
-@router.get("/{empresa_id}")
-
+@router.get(
+    "/{empresa_id}",
+    response_model=EmpresaResponse
+)
 def detalhe_empresa(
     empresa_id: int,
     db: Session = Depends(get_db)
@@ -635,116 +442,8 @@ def detalhe_empresa(
             detail="Empresa não encontrada"
         )
 
-    print("\n🔥 DETALHE EMPRESA:")
-    print("ID =", empresa.id)
-    print("PREMIUM =", empresa.premium)
-
     return serializar_empresa(
         empresa,
         db
     )
-
-
-# =========================================================
-# ✏️ UPDATE EMPRESA
-# =========================================================
-
-@router.put("/{empresa_id}")
-
-def atualizar_empresa(
-    empresa_id: int,
-    dados: EmpresaUpdate,
-    db: Session = Depends(get_db)
-):
-
-    empresa = db.query(Empresa).filter(
-        Empresa.id == empresa_id
-    ).first()
-
-    if not empresa:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Empresa não encontrada"
-        )
-
-    try:
-
-        update_data = dados.model_dump(
-            exclude_unset=True
-        )
-
-        print("\n📥 UPDATE DATA:")
-        print(update_data)
-
-        if update_data.get("servico_id") == 0:
-
-            update_data["servico_id"] = None
-
-        for key, value in update_data.items():
-
-            setattr(
-                empresa,
-                key,
-                value
-            )
-
-        db.commit()
-
-        db.expire_all()
-
-        empresa_atualizada = db.query(Empresa).filter(
-            Empresa.id == empresa_id
-        ).first()
-
-        print("\n🔥 RESULTADO FINAL:")
-        print("premium =", empresa_atualizada.premium)
-        print("destaque =", empresa_atualizada.destaque)
-        print("plano =", empresa_atualizada.plano)
-
-        return serializar_empresa(
-            empresa_atualizada,
-            db
-        )
-
-    except Exception as e:
-
-        db.rollback()
-
-        print("\n❌ ERRO UPDATE EMPRESA")
-        print(str(e))
-
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
-
-
-# =========================================================
-# ❌ DELETAR EMPRESA
-# =========================================================
-
-@router.delete("/{empresa_id}")
-def deletar_empresa(
-    empresa_id: int,
-    db: Session = Depends(get_db)
-):
-
-    empresa = db.query(Empresa).filter(
-        Empresa.id == empresa_id
-    ).first()
-
-    if not empresa:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Empresa não encontrada"
-        )
-
-    db.delete(empresa)
-
-    db.commit()
-
-    return {
-        "message": "Empresa removida com sucesso"
-    }
+```

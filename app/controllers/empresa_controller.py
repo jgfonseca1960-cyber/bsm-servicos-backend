@@ -141,7 +141,7 @@ def empresa_to_dict(
         "longitude": e.longitude,
 
         "ativo": e.ativo,
-        "avaliacao_media": e.avaliacao_media,
+        "avaliacao_media": media,
 
         "cpf": e.cpf,
         "cnpj": e.cnpj,
