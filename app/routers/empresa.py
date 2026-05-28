@@ -25,6 +25,10 @@ from app.schemas.empresa_schema import (
     EmpresaResponse
 )
 
+# 👇 NOVO IMPORT (PERMISSÕES)
+from app.services.permissoes import get_permissoes
+
+
 # =========================================================
 # 🚀 ROUTER
 # =========================================================
@@ -138,127 +142,67 @@ def serializar_empresa(
         })
 
     # =====================================================
-    # 📦 SERIALIZAÇÃO
+    # 📦 SERIALIZAÇÃO BASE
     # =====================================================
+
+    plano = getattr(e, "plano", "gratuito")
 
     empresa_serializada = {
 
         "id": e.id,
-
         "nome": e.nome,
-
         "descricao": e.descricao,
-
         "telefone": e.telefone,
-
         "whatsapp": e.whatsapp,
-
         "email": e.email,
-
         "endereco": e.endereco,
-
         "bairro": e.bairro,
-
         "cidade": e.cidade,
-
         "estado": e.estado,
-
         "cep": e.cep,
-
         "latitude": e.latitude,
-
         "longitude": e.longitude,
 
-        "ativo": bool(
-            getattr(
-                e,
-                "ativo",
-                True
-            )
-        ),
+        "ativo": bool(getattr(e, "ativo", True)),
 
         # =================================================
-        # ⭐ PREMIUM
+        # ⭐ PLANO (FONTE DA VERDADE)
         # =================================================
 
-        "premium": bool(
-            getattr(
-                e,
-                "premium",
-                False
-            )
-        ),
+        "plano": plano,
 
-        "destaque": bool(
-            getattr(
-                e,
-                "destaque",
-                False
-            )
-        ),
+        # =================================================
+        # 🔐 PERMISSÕES (NOVO SISTEMA)
+        # =================================================
 
-        "plano": getattr(
-            e,
-            "plano",
-            "gratuito"
-        ),
+        "permissoes": get_permissoes(plano),
 
-        "prioridade": int(
-            getattr(
-                e,
-                "prioridade",
-                0
-            ) or 0
-        ),
+        # =================================================
+        # ⭐ CAMPOS LEGADOS (mantidos por compatibilidade)
+        # =================================================
 
-        "whatsapp_destacado": bool(
-            getattr(
-                e,
-                "whatsapp_destacado",
-                False
-            )
-        ),
+        "premium": bool(getattr(e, "premium", False)),
+        "destaque": bool(getattr(e, "destaque", False)),
 
-        "exibir_no_topo": bool(
-            getattr(
-                e,
-                "exibir_no_topo",
-                False
-            )
-        ),
+        "prioridade": int(getattr(e, "prioridade", 0) or 0),
 
-        "selo_premium": bool(
-            getattr(
-                e,
-                "selo_premium",
-                False
-            )
-        ),
-
-        "is_premium": bool(
-            getattr(
-                e,
-                "is_premium",
-                False
-            )
-        ),
+        "whatsapp_destacado": bool(getattr(e, "whatsapp_destacado", False)),
+        "exibir_no_topo": bool(getattr(e, "exibir_no_topo", False)),
+        "selo_premium": bool(getattr(e, "selo_premium", False)),
+        "is_premium": bool(getattr(e, "is_premium", False)),
 
         # =================================================
         # ⭐ AVALIAÇÃO
         # =================================================
 
         "avaliacao_media": media,
-
-        "total_avaliacoes": len(
-            avaliacoes
-        ),
+        "total_avaliacoes": len(avaliacoes),
 
         # =================================================
         # 📄 DOCUMENTOS
         # =================================================
 
         "cpf": e.cpf,
-
         "cnpj": e.cnpj,
 
         # =================================================
@@ -271,32 +215,24 @@ def serializar_empresa(
         # 📷 FOTOS
         # =================================================
 
-        "foto_principal": obter_foto_principal(
-            e.fotos
-        ),
-
+        "foto_principal": obter_foto_principal(e.fotos),
         "fotos": lista_fotos,
 
         # =================================================
-        # ⭐ LISTA AVALIAÇÕES
+        # ⭐ AVALIAÇÕES DETALHADAS
         # =================================================
 
         "avaliacoes": [
-
             {
                 "id": a.id,
-
                 "usuario": (
                     a.usuario.nome
                     if a.usuario
                     else f"Usuário {a.usuario_id}"
                 ),
-
                 "nota": a.nota,
-
                 "comentario": a.comentario
             }
-
             for a in avaliacoes
         ]
     }
@@ -304,9 +240,8 @@ def serializar_empresa(
     print("\n🔥 SERIALIZANDO EMPRESA:")
     print("ID =", empresa_serializada["id"])
     print("NOME =", empresa_serializada["nome"])
-    print("PREMIUM =", empresa_serializada["premium"])
-    print("DESTAQUE =", empresa_serializada["destaque"])
     print("PLANO =", empresa_serializada["plano"])
+    print("PERMISSÕES =", empresa_serializada["permissoes"])
 
     return empresa_serializada
 
@@ -325,45 +260,19 @@ def listar_empresas(
 
     empresas = db.query(Empresa).all()
 
-    print(
-        f"\n🔥 TOTAL EMPRESAS: {len(empresas)}"
-    )
+    print(f"\n🔥 TOTAL EMPRESAS: {len(empresas)}")
 
     empresas.sort(
         key=lambda x: (
-            -int(
-                getattr(
-                    x,
-                    "prioridade",
-                    0
-                ) or 0
-            ),
-
-            not bool(
-                getattr(
-                    x,
-                    "premium",
-                    False
-                )
-            ),
-
-            not bool(
-                getattr(
-                    x,
-                    "destaque",
-                    False
-                )
-            ),
-
+            -int(getattr(x, "prioridade", 0) or 0),
+            not bool(getattr(x, "premium", False)),
+            not bool(getattr(x, "destaque", False)),
             x.nome.lower()
         )
     )
 
     return [
-        serializar_empresa(
-            e,
-            db
-        )
+        serializar_empresa(e, db)
         for e in empresas
     ]
 
@@ -386,14 +295,9 @@ def detalhe_empresa(
     ).first()
 
     if not empresa:
-
         raise HTTPException(
             status_code=404,
             detail="Empresa não encontrada"
         )
 
-    return serializar_empresa(
-        empresa,
-        db
-    )
-```
+    return serializar_empresa(empresa, db)
