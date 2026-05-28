@@ -1,3 +1,4 @@
+```python
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import Optional, List
@@ -5,9 +6,11 @@ import math
 import os
 
 from app.database import get_db
+
 from app.models.empresa_model import Empresa
 from app.models.empresa_foto_model import EmpresaFoto
 from app.models.servico_model import Servico
+from app.models.avaliacao_model import Avaliacao
 
 from app.utils.files import gerar_url_imagem
 
@@ -27,14 +30,29 @@ router = APIRouter(
 # =========================================================
 # 📁 GARANTE PASTA UPLOAD
 # =========================================================
-os.makedirs("uploads/empresas", exist_ok=True)
+
+os.makedirs(
+    "uploads/empresas",
+    exist_ok=True
+)
 
 # =========================================================
 # 📍 DISTÂNCIA
 # =========================================================
-def calcular_distancia(lat1, lon1, lat2, lon2):
 
-    if not lat1 or not lon1 or not lat2 or not lon2:
+def calcular_distancia(
+    lat1,
+    lon1,
+    lat2,
+    lon2
+):
+
+    if (
+        lat1 is None
+        or lon1 is None
+        or lat2 is None
+        or lon2 is None
+    ):
         return None
 
     R = 6371
@@ -49,13 +67,17 @@ def calcular_distancia(lat1, lon1, lat2, lon2):
         * math.sin(dlon / 2) ** 2
     )
 
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    c = 2 * math.atan2(
+        math.sqrt(a),
+        math.sqrt(1 - a)
+    )
 
     return round(R * c, 2)
 
 # =========================================================
 # 🔧 TRATAR URL
 # =========================================================
+
 def tratar_url(url: str):
 
     if not url:
@@ -69,11 +91,35 @@ def tratar_url(url: str):
 # =========================================================
 # 🔥 SERIALIZER
 # =========================================================
+
 def serializar_empresa(
     e: Empresa,
+    db: Session,
     user_lat=None,
     user_lon=None
 ):
+
+    # =====================================================
+    # ⭐ AVALIAÇÕES
+    # =====================================================
+
+    avaliacoes = db.query(Avaliacao).filter(
+        Avaliacao.empresa_id == e.id
+    ).all()
+
+    media = 0.0
+
+    if avaliacoes:
+
+        media = round(
+            sum(a.nota for a in avaliacoes)
+            / len(avaliacoes),
+            1
+        )
+
+    # =====================================================
+    # 📸 FOTOS
+    # =====================================================
 
     fotos_validas = []
 
@@ -101,21 +147,28 @@ def serializar_empresa(
     foto_principal = None
 
     for foto in fotos_validas:
+
         if foto["principal"]:
             foto_principal = foto["url"]
             break
 
     if not foto_principal and fotos_validas:
+
         foto_principal = fotos_validas[0]["url"]
+
+    # =====================================================
+    # 📍 DISTÂNCIA
+    # =====================================================
 
     distancia = None
 
     if (
-        user_lat
-        and user_lon
-        and e.latitude
-        and e.longitude
+        user_lat is not None
+        and user_lon is not None
+        and e.latitude is not None
+        and e.longitude is not None
     ):
+
         distancia = calcular_distancia(
             user_lat,
             user_lon,
@@ -123,10 +176,17 @@ def serializar_empresa(
             e.longitude
         )
 
+    # =====================================================
+    # 🚀 SERIALIZAÇÃO
+    # =====================================================
+
     return {
+
         "id": e.id,
+
         "nome": e.nome,
         "descricao": e.descricao,
+
         "telefone": e.telefone,
         "whatsapp": e.whatsapp,
         "email": e.email,
@@ -140,23 +200,82 @@ def serializar_empresa(
         "latitude": e.latitude,
         "longitude": e.longitude,
 
-        "ativo": e.ativo,
-        "avaliacao_media": media,
+        "ativo": bool(e.ativo),
 
+        # ⭐ PREMIUM
+        "premium": bool(
+            getattr(e, "premium", False)
+        ),
+
+        "destaque": bool(
+            getattr(e, "destaque", False)
+        ),
+
+        "plano": getattr(
+            e,
+            "plano",
+            "gratuito"
+        ),
+
+        "prioridade": int(
+            getattr(e, "prioridade", 0) or 0
+        ),
+
+        "whatsapp_destacado": bool(
+            getattr(
+                e,
+                "whatsapp_destacado",
+                False
+            )
+        ),
+
+        "exibir_no_topo": bool(
+            getattr(
+                e,
+                "exibir_no_topo",
+                False
+            )
+        ),
+
+        "selo_premium": bool(
+            getattr(
+                e,
+                "selo_premium",
+                False
+            )
+        ),
+
+        "is_premium": bool(
+            getattr(
+                e,
+                "is_premium",
+                False
+            )
+        ),
+
+        # ⭐ AVALIAÇÃO
+        "avaliacao_media": media,
+        "total_avaliacoes": len(avaliacoes),
+
+        # 📄 DOCUMENTOS
         "cpf": e.cpf,
         "cnpj": e.cnpj,
 
+        # 🧩 SERVIÇO
         "servico_id": e.servico_id,
 
+        # 📸 FOTOS
         "foto_principal": foto_principal,
         "fotos": fotos_validas,
 
+        # 📍 DISTÂNCIA
         "distancia_km": distancia
     }
 
 # =========================================================
 # 🔍 LISTAR EMPRESAS
 # =========================================================
+
 @router.get(
     "/",
     response_model=List[EmpresaResponse]
@@ -173,16 +292,19 @@ def listar_empresas(
     query = db.query(Empresa)
 
     if servico_id:
+
         query = query.filter(
             Empresa.servico_id == servico_id
         )
 
     if cidade:
+
         query = query.filter(
             Empresa.cidade.ilike(f"%{cidade}%")
         )
 
     if bairro:
+
         query = query.filter(
             Empresa.bairro.ilike(f"%{bairro}%")
         )
@@ -192,18 +314,29 @@ def listar_empresas(
     resultado = [
         serializar_empresa(
             e,
+            db,
             latitude,
             longitude
         )
         for e in empresas
     ]
 
+    resultado.sort(
+        key=lambda x: (
+            -int(x.get("prioridade", 0)),
+            not bool(x.get("premium", False)),
+            not bool(x.get("destaque", False)),
+            x["nome"].lower()
+        )
+    )
+
     if latitude and longitude:
+
         resultado.sort(
             key=lambda x:
             x["distancia_km"]
-            if x["distancia_km"]
-            else 9999
+            if x["distancia_km"] is not None
+            else 999999
         )
 
     return resultado
@@ -211,6 +344,7 @@ def listar_empresas(
 # =========================================================
 # 🔍 DETALHE EMPRESA
 # =========================================================
+
 @router.get(
     "/{empresa_id}",
     response_model=EmpresaResponse
@@ -225,16 +359,21 @@ def detalhe_empresa(
     ).first()
 
     if not empresa:
+
         raise HTTPException(
             status_code=404,
             detail="Empresa não encontrada"
         )
 
-    return serializar_empresa(empresa)
+    return serializar_empresa(
+        empresa,
+        db
+    )
 
 # =========================================================
 # ➕ CRIAR EMPRESA
 # =========================================================
+
 @router.post(
     "/",
     response_model=EmpresaResponse
@@ -247,14 +386,20 @@ def criar_empresa(
     empresa = Empresa(**data.model_dump())
 
     db.add(empresa)
+
     db.commit()
+
     db.refresh(empresa)
 
-    return serializar_empresa(empresa)
+    return serializar_empresa(
+        empresa,
+        db
+    )
 
 # =========================================================
 # ✏️ ATUALIZAR EMPRESA
 # =========================================================
+
 @router.put(
     "/{empresa_id}",
     response_model=EmpresaResponse
@@ -270,6 +415,7 @@ def atualizar_empresa(
     ).first()
 
     if not empresa:
+
         raise HTTPException(
             status_code=404,
             detail="Empresa não encontrada"
@@ -280,16 +426,26 @@ def atualizar_empresa(
     )
 
     for key, value in update_data.items():
-        setattr(empresa, key, value)
+
+        setattr(
+            empresa,
+            key,
+            value
+        )
 
     db.commit()
+
     db.refresh(empresa)
 
-    return serializar_empresa(empresa)
+    return serializar_empresa(
+        empresa,
+        db
+    )
 
 # =========================================================
 # ❌ DELETAR EMPRESA
 # =========================================================
+
 @router.delete("/{empresa_id}")
 def deletar_empresa(
     empresa_id: int,
@@ -301,160 +457,17 @@ def deletar_empresa(
     ).first()
 
     if not empresa:
+
         raise HTTPException(
             status_code=404,
             detail="Empresa não encontrada"
         )
 
     db.delete(empresa)
+
     db.commit()
 
     return {
         "msg": "Empresa deletada"
     }
-
-# =========================================================
-# ☁️ UPLOAD FOTO CLOUDINARY
-# =========================================================
-@router.post(
-    "/{empresa_id}/fotos",
-    summary="Upload de foto da empresa"
-)
-async def upload_foto(
-    empresa_id: int,
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db)
-):
-
-    empresa = db.query(Empresa).filter(
-        Empresa.id == empresa_id
-    ).first()
-
-    if not empresa:
-        raise HTTPException(
-            status_code=404,
-            detail="Empresa não encontrada"
-        )
-
-    try:
-
-        conteudo = await file.read()
-
-        resultado = cloudinary.uploader.upload(
-            conteudo,
-            folder="bsm/empresas"
-        )
-
-        url = resultado.get("secure_url")
-
-        total_fotos = db.query(EmpresaFoto).filter(
-            EmpresaFoto.empresa_id == empresa_id
-        ).count()
-
-        foto = EmpresaFoto(
-            empresa_id=empresa_id,
-            url=url,
-            principal=(total_fotos == 0)
-        )
-
-        db.add(foto)
-
-        db.commit()
-        db.refresh(foto)
-
-        return {
-            "msg": "Foto enviada com sucesso",
-            "foto": {
-                "id": foto.id,
-                "url": foto.url,
-                "principal": foto.principal
-            }
-        }
-
-    except Exception as e:
-
-        db.rollback()
-
-        print("🔥🔥🔥 ERRO CLOUDINARY 🔥🔥🔥")
-        print(str(e))
-
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro upload: {str(e)}"
-        )
-
-# =========================================================
-# ⭐ DEFINIR FOTO PRINCIPAL
-# =========================================================
-@router.put(
-    "/{empresa_id}/foto-principal/{foto_id}"
-)
-def definir_principal(
-    empresa_id: int,
-    foto_id: int,
-    db: Session = Depends(get_db)
-):
-
-    foto = db.query(EmpresaFoto).filter(
-        EmpresaFoto.id == foto_id,
-        EmpresaFoto.empresa_id == empresa_id
-    ).first()
-
-    if not foto:
-        raise HTTPException(
-            status_code=404,
-            detail="Foto não encontrada"
-        )
-
-    db.query(EmpresaFoto).filter(
-        EmpresaFoto.empresa_id == empresa_id
-    ).update({
-        "principal": False
-    })
-
-    foto.principal = True
-
-    db.commit()
-
-    return {
-        "msg": "Foto principal definida"
-    }
-
-# =========================================================
-# ❌ EXCLUIR FOTO
-# =========================================================
-@router.delete("/foto/{foto_id}")
-def deletar_foto(
-    foto_id: int,
-    db: Session = Depends(get_db)
-):
-
-    foto = db.query(EmpresaFoto).filter(
-        EmpresaFoto.id == foto_id
-    ).first()
-
-    if not foto:
-        raise HTTPException(
-            status_code=404,
-            detail="Foto não encontrada"
-        )
-
-    empresa_id = foto.empresa_id
-    era_principal = foto.principal
-
-    db.delete(foto)
-    db.commit()
-
-    if era_principal:
-
-        nova_principal = db.query(EmpresaFoto).filter(
-            EmpresaFoto.empresa_id == empresa_id
-        ).first()
-
-        if nova_principal:
-            nova_principal.principal = True
-            db.commit()
-
-    return {
-        "msg": "Foto removida"
-    }
+```
