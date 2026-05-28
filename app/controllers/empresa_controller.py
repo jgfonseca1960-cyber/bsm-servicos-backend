@@ -69,7 +69,7 @@ def tratar_url(url: str):
 # =========================================================
 # 🔥 SERIALIZER
 # =========================================================
-def empresa_to_dict(
+def serializar_empresa(
     e: Empresa,
     user_lat=None,
     user_lon=None
@@ -190,7 +190,7 @@ def listar_empresas(
     empresas = query.all()
 
     resultado = [
-        empresa_to_dict(
+        serializar_empresa(
             e,
             latitude,
             longitude
@@ -230,7 +230,7 @@ def detalhe_empresa(
             detail="Empresa não encontrada"
         )
 
-    return empresa_to_dict(empresa)
+    return serializar_empresa(empresa)
 
 # =========================================================
 # ➕ CRIAR EMPRESA
@@ -250,7 +250,7 @@ def criar_empresa(
     db.commit()
     db.refresh(empresa)
 
-    return empresa_to_dict(empresa)
+    return serializar_empresa(empresa)
 
 # =========================================================
 # ✏️ ATUALIZAR EMPRESA
@@ -285,7 +285,7 @@ def atualizar_empresa(
     db.commit()
     db.refresh(empresa)
 
-    return empresa_to_dict(empresa)
+    return serializar_empresa(empresa)
 
 # =========================================================
 # ❌ DELETAR EMPRESA
