@@ -500,10 +500,8 @@ def deletar_foto(
 # ➕ CRIAR EMPRESA
 # =========================================================
 
-@router.post(
-    "/",
-    response_model=EmpresaResponse
-)
+@router.post("/")
+
 def criar_empresa(
     dados: EmpresaCreate,
     db: Session = Depends(get_db)
@@ -556,10 +554,8 @@ def criar_empresa(
 # 📡 LISTAR EMPRESAS
 # =========================================================
 
-@router.get(
-    "/",
-    response_model=list[EmpresaResponse]
-)
+@router.get("/")
+
 def listar_empresas(
     db: Session = Depends(get_db)
 ):
@@ -621,10 +617,8 @@ def listar_empresas(
 # 🔍 DETALHE EMPRESA
 # =========================================================
 
-@router.get(
-    "/{empresa_id}",
-    response_model=EmpresaResponse
-)
+@router.get("/{empresa_id}")
+
 def detalhe_empresa(
     empresa_id: int,
     db: Session = Depends(get_db)
@@ -655,10 +649,8 @@ def detalhe_empresa(
 # ✏️ UPDATE EMPRESA
 # =========================================================
 
-@router.put(
-    "/{empresa_id}",
-    response_model=EmpresaResponse
-)
+@router.put("/{empresa_id}")
+
 def atualizar_empresa(
     empresa_id: int,
     dados: EmpresaUpdate,
