@@ -1,26 +1,148 @@
 from pydantic import BaseModel
 from typing import Optional
 
-# ================= EMPRESA =================
-class EmpresaBase(BaseModel):
-    nome: str
-    telefone: Optional[str] = None
-    endereco: Optional[str] = None
-    servico_id: Optional[int] = None
 
+# =====================================================
+# 📸 FOTO
+# =====================================================
 
-class EmpresaCreate(EmpresaBase):
-    pass
+class FotoResponse(BaseModel):
 
-
-class EmpresaResponse(EmpresaBase):
     id: int
+    url: str
+    principal: bool
+    public_id: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 
-# ================= SERVICO =================
+# =====================================================
+# 🏢 EMPRESA BASE
+# =====================================================
+
+class EmpresaBase(BaseModel):
+
+    nome: str
+
+    descricao: Optional[str] = None
+
+    telefone: Optional[str] = None
+    whatsapp: Optional[str] = None
+    email: Optional[str] = None
+
+    endereco: Optional[str] = None
+    bairro: Optional[str] = None
+    cidade: Optional[str] = None
+    estado: Optional[str] = None
+    cep: Optional[str] = None
+
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+    ativo: Optional[bool] = True
+
+    cpf: Optional[str] = None
+    cnpj: Optional[str] = None
+
+    servico_id: Optional[int] = None
+
+    # ⭐ PREMIUM
+
+    premium: Optional[bool] = False
+    destaque: Optional[bool] = False
+
+    plano: Optional[str] = "gratuito"
+
+    prioridade: Optional[int] = 0
+
+    whatsapp_destacado: Optional[bool] = False
+
+    exibir_no_topo: Optional[bool] = False
+
+    selo_premium: Optional[bool] = False
+
+
+# =====================================================
+# ➕ CREATE
+# =====================================================
+
+class EmpresaCreate(EmpresaBase):
+    pass
+
+
+# =====================================================
+# ✏️ UPDATE
+# =====================================================
+
+class EmpresaUpdate(BaseModel):
+
+    nome: Optional[str] = None
+
+    descricao: Optional[str] = None
+
+    telefone: Optional[str] = None
+    whatsapp: Optional[str] = None
+    email: Optional[str] = None
+
+    endereco: Optional[str] = None
+    bairro: Optional[str] = None
+    cidade: Optional[str] = None
+    estado: Optional[str] = None
+    cep: Optional[str] = None
+
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+    ativo: Optional[bool] = None
+
+    cpf: Optional[str] = None
+    cnpj: Optional[str] = None
+
+    servico_id: Optional[int] = None
+
+    # ⭐ PREMIUM
+
+    premium: Optional[bool] = None
+    destaque: Optional[bool] = None
+
+    plano: Optional[str] = None
+
+    prioridade: Optional[int] = None
+
+    whatsapp_destacado: Optional[bool] = None
+
+    exibir_no_topo: Optional[bool] = None
+
+    selo_premium: Optional[bool] = None
+
+
+# =====================================================
+# 📦 RESPONSE
+# =====================================================
+
+class EmpresaResponse(EmpresaBase):
+
+    id: int
+
+    avaliacao_media: Optional[float] = 0.0
+
+    foto_principal: Optional[str] = None
+
+    fotos: list[FotoResponse] = []
+
+    total_avaliacoes: Optional[int] = 0
+
+    is_premium: Optional[bool] = False
+
+    class Config:
+        from_attributes = True
+
+
+# =====================================================
+# 🔧 SERVIÇO
+# =====================================================
+
 class ServicoBase(BaseModel):
     nome: str
 
@@ -30,53 +152,33 @@ class ServicoCreate(ServicoBase):
 
 
 class ServicoResponse(ServicoBase):
+
     id: int
 
     class Config:
         from_attributes = True
 
 
-# ================= USUARIO =================
+# =====================================================
+# 👤 USUÁRIO
+# =====================================================
+
 class UsuarioBase(BaseModel):
+
     nome: str
     email: str
 
 
 class UsuarioCreate(UsuarioBase):
+
     senha: str
-    tipo: str  = "False" # 👈 ADICIONE ISSO
+
+    tipo: str = "False"
+
 
 class UsuarioResponse(UsuarioBase):
+
     id: int
-
-    class Config:
-        from_attributes = True
-
-
-# ================= FOTO =================
-class EmpresaFotoBase(BaseModel):
-    url: str
-    empresa_id: int
-
-
-class EmpresaFotoCreate(EmpresaFotoBase):
-    pass
-
-
-class EmpresaFotoResponse(EmpresaFotoBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-        
-        
-from pydantic import BaseModel
-
-class FotoResponse(BaseModel):
-    id: int
-    caminho: str
-    principal: bool
 
     class Config:
         from_attributes = True
