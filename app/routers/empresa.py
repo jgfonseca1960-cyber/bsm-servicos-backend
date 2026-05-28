@@ -101,13 +101,17 @@ def serializar_empresa(
     db: Session
 ):
 
+    # =====================================================
+    # ⭐ AVALIAÇÕES
+    # =====================================================
+
     avaliacoes = db.query(Avaliacao).filter(
         Avaliacao.empresa_id == e.id
     ).all()
 
     media = 0.0
 
-    if avaliacoes:
+    if len(avaliacoes) > 0:
 
         media = round(
             sum(a.nota for a in avaliacoes)
@@ -115,113 +119,56 @@ def serializar_empresa(
             1
         )
 
-    fotos = getattr(e, "fotos", []) or []
+    # =====================================================
+    # 📷 FOTOS
+    # =====================================================
 
-    lista_fotos = [
-        {
+    lista_fotos = []
+
+    for f in e.fotos:
+
+        lista_fotos.append({
             "id": f.id,
             "url": f.url,
-            "principal": bool(
-                getattr(f, "principal", False)
-            ),
+            "principal": bool(f.principal),
             "public_id": getattr(
                 f,
                 "public_id",
                 None
             )
-        }
-        for f in fotos
-    ]
+        })
 
-    ```python
-avaliacoes = db.query(Avaliacao).filter(
-    Avaliacao.empresa_id == e.id
-).all()
+    # =====================================================
+    # 📦 SERIALIZAÇÃO
+    # =====================================================
 
-media = 0.0
-
-if avaliacoes:
-    media = round(
-        sum(a.nota for a in avaliacoes)
-        / len(avaliacoes),
-        1
-    )
-    
     empresa_serializada = {
-
-        # =================================================
-        # BÁSICO
-        # =================================================
 
         "id": e.id,
 
-        "nome": getattr(e, "nome", None),
+        "nome": e.nome,
 
-        "descricao": getattr(
-            e,
-            "descricao",
-            None
-        ),
+        "descricao": e.descricao,
 
-        "telefone": getattr(
-            e,
-            "telefone",
-            None
-        ),
+        "telefone": e.telefone,
 
-        "whatsapp": getattr(
-            e,
-            "whatsapp",
-            None
-        ),
+        "whatsapp": e.whatsapp,
 
-        "email": getattr(
-            e,
-            "email",
-            None
-        ),
+        "email": e.email,
 
-        "endereco": getattr(
-            e,
-            "endereco",
-            None
-        ),
+        "endereco": e.endereco,
 
-        "bairro": getattr(
-            e,
-            "bairro",
-            None
-        ),
+        "bairro": e.bairro,
 
-        "cidade": getattr(
-            e,
-            "cidade",
-            None
-        ),
+        "cidade": e.cidade,
 
-        "estado": getattr(
-            e,
-            "estado",
-            None
-        ),
+        "estado": e.estado,
 
-        "cep": getattr(
-            e,
-            "cep",
-            None
-        ),
+        "cep": e.cep,
 
-        "latitude": getattr(
-            e,
-            "latitude",
-            None
-        ),
+        "latitude": e.latitude,
 
-        "longitude": getattr(
-            e,
-            "longitude",
-            None
-        ),
+        "longitude": e.longitude,
 
         "ativo": bool(
             getattr(
@@ -298,7 +245,7 @@ if avaliacoes:
         ),
 
         # =================================================
-        # AVALIAÇÃO
+        # ⭐ AVALIAÇÃO
         # =================================================
 
         "avaliacao_media": media,
@@ -308,46 +255,35 @@ if avaliacoes:
         ),
 
         # =================================================
-        # DOCUMENTOS
+        # 📄 DOCUMENTOS
         # =================================================
 
-        "cpf": getattr(
-            e,
-            "cpf",
-            None
-        ),
+        "cpf": e.cpf,
 
-        "cnpj": getattr(
-            e,
-            "cnpj",
-            None
-        ),
+        "cnpj": e.cnpj,
 
         # =================================================
-        # SERVIÇO
+        # 🛠 SERVIÇO
         # =================================================
 
-        "servico_id": getattr(
-            e,
-            "servico_id",
-            None
-        ),
+        "servico_id": e.servico_id,
 
         # =================================================
-        # FOTOS
+        # 📷 FOTOS
         # =================================================
 
         "foto_principal": obter_foto_principal(
-            fotos
+            e.fotos
         ),
 
         "fotos": lista_fotos,
 
         # =================================================
-        # AVALIAÇÕES
+        # ⭐ LISTA AVALIAÇÕES
         # =================================================
 
         "avaliacoes": [
+
             {
                 "id": a.id,
 
@@ -361,6 +297,7 @@ if avaliacoes:
 
                 "comentario": a.comentario
             }
+
             for a in avaliacoes
         ]
     }
