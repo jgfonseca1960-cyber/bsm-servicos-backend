@@ -469,4 +469,3 @@ def deletar_empresa(
     return {
         "msg": "Empresa deletada"
     }
-```
