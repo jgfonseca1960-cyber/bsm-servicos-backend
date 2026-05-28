@@ -1,4 +1,3 @@
-```python
 from fastapi import (
     APIRouter,
     Depends,
