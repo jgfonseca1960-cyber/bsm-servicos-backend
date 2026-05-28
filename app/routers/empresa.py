@@ -1,7 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    UploadFile,
+    File
+)
+
 from sqlalchemy.orm import Session
 
 import os
+
 import cloudinary
 import cloudinary.uploader
 
@@ -17,6 +25,10 @@ from app.schemas.empresa_schema import (
     EmpresaResponse
 )
 
+# =========================================================
+# 🚀 ROUTER
+# =========================================================
+
 router = APIRouter(
     prefix="/empresa",
     tags=["Empresa"]
@@ -26,7 +38,10 @@ router = APIRouter(
 # 🌐 BASE URL
 # =========================================================
 
-BASE_URL = "https://bsm-servicos-backend.onrender.com"
+BASE_URL = os.getenv(
+    "BASE_URL",
+    "https://bsm-servicos-backend-1.onrender.com"
+)
 
 # =========================================================
 # 📁 CONFIG UPLOAD
@@ -50,6 +65,8 @@ cloudinary.config(
     secure=True
 )
 
+print("🔥 Cloudinary carregado!")
+
 # =========================================================
 # 🔥 FOTO PRINCIPAL
 # =========================================================
@@ -58,7 +75,8 @@ def obter_foto_principal(fotos):
 
     principal = next(
         (
-            f.url for f in fotos
+            f.url
+            for f in fotos
             if f.principal
         ),
         None
@@ -77,7 +95,10 @@ def obter_foto_principal(fotos):
 # 📦 SERIALIZAR EMPRESA
 # =========================================================
 
-def serializar_empresa(e, db: Session):
+def serializar_empresa(
+    e,
+    db: Session
+):
 
     avaliacoes = db.query(Avaliacao).filter(
         Avaliacao.empresa_id == e.id
@@ -86,6 +107,7 @@ def serializar_empresa(e, db: Session):
     media = 0.0
 
     if avaliacoes:
+
         media = round(
             sum(a.nota for a in avaliacoes)
             / len(avaliacoes),
@@ -96,49 +118,149 @@ def serializar_empresa(e, db: Session):
         {
             "id": f.id,
             "url": f.url,
-            "principal": f.principal,
-            "public_id": getattr(f, "public_id", None)
+            "principal": bool(f.principal),
+            "public_id": getattr(
+                f,
+                "public_id",
+                None
+            )
         }
         for f in e.fotos
     ]
 
-    return {
+    empresa_serializada = {
+
+        # =================================================
+        # BÁSICO
+        # =================================================
+
         "id": e.id,
+
         "nome": e.nome,
+
         "descricao": e.descricao,
 
         "telefone": e.telefone,
+
         "whatsapp": e.whatsapp,
+
         "email": e.email,
 
         "endereco": e.endereco,
+
         "bairro": e.bairro,
+
         "cidade": e.cidade,
+
         "estado": e.estado,
+
         "cep": e.cep,
 
         "latitude": e.latitude,
+
         "longitude": e.longitude,
 
-        "ativo": bool(e.ativo),
+        "ativo": bool(
+            getattr(
+                e,
+                "ativo",
+                True
+            )
+        ),
 
+        # =================================================
         # ⭐ PREMIUM
-        "premium": bool(e.premium),
-        "destaque": bool(e.destaque),
-        "plano": e.plano,
-        "prioridade": int(e.prioridade or 0),
-        "whatsapp_destacado": bool(e.whatsapp_destacado),
-        "exibir_no_topo": bool(e.exibir_no_topo),
-        "selo_premium": bool(e.selo_premium),
+        # =================================================
 
-        "is_premium": bool(e.is_premium),
+        "premium": bool(
+            getattr(
+                e,
+                "premium",
+                False
+            )
+        ),
+
+        "destaque": bool(
+            getattr(
+                e,
+                "destaque",
+                False
+            )
+        ),
+
+        "plano": getattr(
+            e,
+            "plano",
+            "gratuito"
+        ),
+
+        "prioridade": int(
+            getattr(
+                e,
+                "prioridade",
+                0
+            ) or 0
+        ),
+
+        "whatsapp_destacado": bool(
+            getattr(
+                e,
+                "whatsapp_destacado",
+                False
+            )
+        ),
+
+        "exibir_no_topo": bool(
+            getattr(
+                e,
+                "exibir_no_topo",
+                False
+            )
+        ),
+
+        "selo_premium": bool(
+            getattr(
+                e,
+                "selo_premium",
+                False
+            )
+        ),
+
+        "is_premium": bool(
+            getattr(
+                e,
+                "is_premium",
+                False
+            )
+        ),
+
+        # =================================================
+        # AVALIAÇÃO
+        # =================================================
 
         "avaliacao_media": media,
 
+        "total_avaliacoes": len(
+            avaliacoes
+        ),
+
+        # =================================================
+        # DOCUMENTOS
+        # =================================================
+
         "cpf": e.cpf,
+
         "cnpj": e.cnpj,
 
+        # =================================================
+        # SERVIÇO
+        # =================================================
+
         "servico_id": e.servico_id,
+
+        # =================================================
+        # FOTOS
+        # =================================================
 
         "foto_principal": obter_foto_principal(
             e.fotos
@@ -146,21 +268,231 @@ def serializar_empresa(e, db: Session):
 
         "fotos": lista_fotos,
 
-        "total_avaliacoes": len(avaliacoes),
+        # =================================================
+        # AVALIAÇÕES
+        # =================================================
 
         "avaliacoes": [
             {
                 "id": a.id,
+
                 "usuario": (
                     a.usuario.nome
-                    if a.usuario else
-                    f"Usuário {a.usuario_id}"
+                    if a.usuario
+                    else f"Usuário {a.usuario_id}"
                 ),
+
                 "nota": a.nota,
+
                 "comentario": a.comentario
             }
             for a in avaliacoes
         ]
+    }
+
+    print("\n🔥 SERIALIZANDO EMPRESA:")
+    print("ID =", empresa_serializada["id"])
+    print("NOME =", empresa_serializada["nome"])
+    print("PREMIUM =", empresa_serializada["premium"])
+    print("DESTAQUE =", empresa_serializada["destaque"])
+    print("PLANO =", empresa_serializada["plano"])
+
+    return empresa_serializada
+
+
+# =========================================================
+# ☁️ UPLOAD FOTO
+# =========================================================
+
+@router.post("/{empresa_id}/fotos")
+def upload_foto(
+    empresa_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+
+    empresa = db.query(Empresa).filter(
+        Empresa.id == empresa_id
+    ).first()
+
+    if not empresa:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada"
+        )
+
+    try:
+
+        resultado = cloudinary.uploader.upload(
+            file.file,
+            folder="bsm/empresas"
+        )
+
+        url = resultado.get(
+            "secure_url"
+        )
+
+        total_fotos = db.query(EmpresaFoto).filter(
+            EmpresaFoto.empresa_id == empresa_id
+        ).count()
+
+        principal = (
+            total_fotos == 0
+        )
+
+        foto = EmpresaFoto(
+            empresa_id=empresa_id,
+            url=url,
+            principal=principal,
+            public_id=resultado.get(
+                "public_id"
+            )
+        )
+
+        db.add(foto)
+
+        db.commit()
+
+        db.refresh(foto)
+
+        return {
+            "message": "Foto enviada com sucesso",
+
+            "foto": {
+                "id": foto.id,
+                "url": foto.url,
+                "principal": foto.principal,
+                "public_id": foto.public_id
+            }
+        }
+
+    except Exception as e:
+
+        db.rollback()
+
+        print("❌ ERRO UPLOAD FOTO")
+        print(str(e))
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
+
+# =========================================================
+# ⭐ DEFINIR FOTO PRINCIPAL
+# =========================================================
+
+@router.put(
+    "/{empresa_id}/foto-principal/{foto_id}"
+)
+def definir_foto_principal(
+    empresa_id: int,
+    foto_id: int,
+    db: Session = Depends(get_db)
+):
+
+    empresa = db.query(Empresa).filter(
+        Empresa.id == empresa_id
+    ).first()
+
+    if not empresa:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada"
+        )
+
+    fotos = db.query(EmpresaFoto).filter(
+        EmpresaFoto.empresa_id == empresa_id
+    ).all()
+
+    foto_principal = None
+
+    for foto in fotos:
+
+        foto.principal = False
+
+        if foto.id == foto_id:
+
+            foto.principal = True
+
+            foto_principal = foto
+
+    if not foto_principal:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Foto não encontrada"
+        )
+
+    db.commit()
+
+    return {
+        "message": "Foto principal atualizada"
+    }
+
+
+# =========================================================
+# ❌ DELETAR FOTO
+# =========================================================
+
+@router.delete("/foto/{foto_id}")
+def deletar_foto(
+    foto_id: int,
+    db: Session = Depends(get_db)
+):
+
+    foto = db.query(EmpresaFoto).filter(
+        EmpresaFoto.id == foto_id
+    ).first()
+
+    if not foto:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Foto não encontrada"
+        )
+
+    empresa = db.query(Empresa).filter(
+        Empresa.id == foto.empresa_id
+    ).first()
+
+    era_principal = foto.principal
+
+    try:
+
+        if foto.public_id:
+
+            cloudinary.uploader.destroy(
+                foto.public_id
+            )
+
+    except Exception as e:
+
+        print(
+            f"❌ ERRO CLOUDINARY: {e}"
+        )
+
+    db.delete(foto)
+
+    db.commit()
+
+    if era_principal and empresa:
+
+        nova_principal = db.query(EmpresaFoto).filter(
+            EmpresaFoto.empresa_id == empresa.id
+        ).first()
+
+        if nova_principal:
+
+            nova_principal.principal = True
+
+            db.commit()
+
+    return {
+        "message": "Foto removida"
     }
 
 
@@ -181,7 +513,11 @@ def criar_empresa(
 
         data = dados.model_dump()
 
+        print("\n📥 CREATE DATA:")
+        print(data)
+
         if data.get("servico_id") == 0:
+
             data["servico_id"] = None
 
         nova = Empresa(**data)
@@ -191,6 +527,8 @@ def criar_empresa(
         db.commit()
 
         db.refresh(nova)
+
+        db.expire_all()
 
         empresa_atualizada = db.query(Empresa).filter(
             Empresa.id == nova.id
@@ -205,7 +543,7 @@ def criar_empresa(
 
         db.rollback()
 
-        print("❌ ERRO CREATE EMPRESA")
+        print("\n❌ ERRO CREATE EMPRESA")
         print(str(e))
 
         raise HTTPException(
@@ -228,17 +566,53 @@ def listar_empresas(
 
     empresas = db.query(Empresa).all()
 
+    print(
+        f"\n🔥 TOTAL EMPRESAS: {len(empresas)}"
+    )
+
+    for emp in empresas:
+
+        print(
+            emp.id,
+            emp.nome,
+            getattr(emp, "premium", None)
+        )
+
     empresas.sort(
         key=lambda x: (
-            -int(getattr(x, "prioridade", 0)),
-            not bool(getattr(x, "premium", False)),
-            not bool(getattr(x, "destaque", False)),
+            -int(
+                getattr(
+                    x,
+                    "prioridade",
+                    0
+                ) or 0
+            ),
+
+            not bool(
+                getattr(
+                    x,
+                    "premium",
+                    False
+                )
+            ),
+
+            not bool(
+                getattr(
+                    x,
+                    "destaque",
+                    False
+                )
+            ),
+
             x.nome.lower()
         )
     )
 
     return [
-        serializar_empresa(e, db)
+        serializar_empresa(
+            e,
+            db
+        )
         for e in empresas
     ]
 
@@ -261,10 +635,15 @@ def detalhe_empresa(
     ).first()
 
     if not empresa:
+
         raise HTTPException(
             status_code=404,
             detail="Empresa não encontrada"
         )
+
+    print("\n🔥 DETALHE EMPRESA:")
+    print("ID =", empresa.id)
+    print("PREMIUM =", empresa.premium)
 
     return serializar_empresa(
         empresa,
@@ -291,6 +670,7 @@ def atualizar_empresa(
     ).first()
 
     if not empresa:
+
         raise HTTPException(
             status_code=404,
             detail="Empresa não encontrada"
@@ -302,10 +682,11 @@ def atualizar_empresa(
             exclude_unset=True
         )
 
-        print("📥 UPDATE DATA:")
+        print("\n📥 UPDATE DATA:")
         print(update_data)
 
         if update_data.get("servico_id") == 0:
+
             update_data["servico_id"] = None
 
         for key, value in update_data.items():
@@ -318,14 +699,13 @@ def atualizar_empresa(
 
         db.commit()
 
-        # 🔥 FORÇA RECARREGAR DO BANCO
         db.expire_all()
 
         empresa_atualizada = db.query(Empresa).filter(
             Empresa.id == empresa_id
         ).first()
 
-        print("🔥 RESULTADO FINAL:")
+        print("\n🔥 RESULTADO FINAL:")
         print("premium =", empresa_atualizada.premium)
         print("destaque =", empresa_atualizada.destaque)
         print("plano =", empresa_atualizada.plano)
@@ -339,7 +719,7 @@ def atualizar_empresa(
 
         db.rollback()
 
-        print("❌ ERRO UPDATE EMPRESA")
+        print("\n❌ ERRO UPDATE EMPRESA")
         print(str(e))
 
         raise HTTPException(
@@ -363,6 +743,7 @@ def deletar_empresa(
     ).first()
 
     if not empresa:
+
         raise HTTPException(
             status_code=404,
             detail="Empresa não encontrada"
