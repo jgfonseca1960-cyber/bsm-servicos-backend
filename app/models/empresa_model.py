@@ -11,7 +11,6 @@ from sqlalchemy.orm import relationship
 
 from app.database import Base
 
-
 class Empresa(Base):
 
     __tablename__ = "empresas"
@@ -39,6 +38,8 @@ class Empresa(Base):
 
     cpf = Column(String)
     cnpj = Column(String)
+
+
 
     # =====================================================
     # ⭐ PREMIUM
@@ -75,6 +76,11 @@ class Empresa(Base):
         Integer,
         ForeignKey("servicos.id"),
         nullable=True
+    )
+
+    servico = relationship(
+    "Servico",
+    back_populates="empresas"
     )
 
     # =====================================================
