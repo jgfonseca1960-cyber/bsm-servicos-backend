@@ -230,6 +230,14 @@ def serializar_empresa(
                 False
             )
         ),
+
+        "selo_premium": bool(
+    getattr(
+        e,
+        "selo_premium",
+        False
+    )
+),
               
         # ⭐ AVALIAÇÃO
         "avaliacao_media": media,

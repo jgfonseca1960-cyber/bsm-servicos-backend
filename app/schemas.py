@@ -49,7 +49,6 @@ class EmpresaBase(BaseModel):
 
     # ⭐ PREMIUM
 
-    premium: Optional[bool] = False
     destaque: Optional[bool] = False
 
     plano: Optional[str] = "gratuito"
@@ -103,7 +102,6 @@ class EmpresaUpdate(BaseModel):
 
     # ⭐ PREMIUM
 
-    premium: Optional[bool] = None
     destaque: Optional[bool] = None
 
     plano: Optional[str] = None
