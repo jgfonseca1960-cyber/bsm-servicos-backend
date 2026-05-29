@@ -41,12 +41,10 @@ class Empresa(Base):
 
 
 
-    # =====================================================
-    # ⭐ PREMIUM
-    # =====================================================
-
-    premium = Column(Boolean, default=False)
-
+# =====================================================
+# 🏆 PLANOS E DESTAQUES
+# =====================================================
+    
     destaque = Column(Boolean, default=False)
 
     plano = Column(String, default="gratuito")
@@ -98,11 +96,3 @@ class Empresa(Base):
         back_populates="empresa",
         cascade="all, delete"
     )
-
-    # =====================================================
-    # PROPERTY
-    # =====================================================
-
-    @property
-    def is_premium(self):
-        return bool(self.premium)

@@ -1,6 +1,5 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
-
 
 # =========================================================
 # 📸 FOTO RESPONSE
@@ -62,20 +61,19 @@ class EmpresaBase(BaseModel):
 
     servico_id: Optional[int] = None
 
-    # =====================================================
-    # ⭐ PREMIUM
-    # =====================================================
+# =====================================================
+# 🏆 PLANOS E DESTAQUES
+# =====================================================
 
-    premium: Optional[bool] = False
-    destaque: Optional[bool] = False
+destaque: Optional[bool] = None
 
-    plano: Optional[str] = "gratuito"
+plano: Optional[str] = None
 
-    prioridade: Optional[int] = 0
+prioridade: Optional[int] = None
 
-    whatsapp_destacado: Optional[bool] = False
-    exibir_no_topo: Optional[bool] = False
-    selo_premium: Optional[bool] = False
+whatsapp_destacado: Optional[bool] = None
+exibir_no_topo: Optional[bool] = None
+selo_premium: Optional[bool] = None
 
 
 # =========================================================
@@ -120,7 +118,6 @@ class EmpresaUpdate(BaseModel):
     # ⭐ PREMIUM
     # =====================================================
 
-    premium: Optional[bool] = None
     destaque: Optional[bool] = None
 
     plano: Optional[str] = None
@@ -142,15 +139,13 @@ class EmpresaResponse(EmpresaBase):
 
     foto_principal: Optional[str] = None
 
-    fotos: List[FotoResponse] = []
+    fotos: List[FotoResponse] = Field(default_factory=list)
 
     avaliacao_media: Optional[float] = 0
 
     total_avaliacoes: Optional[int] = 0
 
-    avaliacoes: List[AvaliacaoResponse] = []
-
-    is_premium: Optional[bool] = False
-
+    avaliacoes: List[AvaliacaoResponse] = Field(default_factory=list)
+ 
     class Config:
         from_attributes = True

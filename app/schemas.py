@@ -133,8 +133,6 @@ class EmpresaResponse(EmpresaBase):
 
     total_avaliacoes: Optional[int] = 0
 
-    is_premium: Optional[bool] = False
-
     class Config:
         from_attributes = True
 

@@ -201,11 +201,6 @@ def serializar_empresa(
 
         "ativo": bool(e.ativo),
 
-        # ⭐ PREMIUM
-        "premium": bool(
-            getattr(e, "premium", False)
-        ),
-
         "destaque": bool(
             getattr(e, "destaque", False)
         ),
@@ -235,23 +230,7 @@ def serializar_empresa(
                 False
             )
         ),
-
-        "selo_premium": bool(
-            getattr(
-                e,
-                "selo_premium",
-                False
-            )
-        ),
-
-        "is_premium": bool(
-            getattr(
-                e,
-                "is_premium",
-                False
-            )
-        ),
-
+              
         # ⭐ AVALIAÇÃO
         "avaliacao_media": media,
         "total_avaliacoes": len(avaliacoes),
@@ -270,6 +249,22 @@ def serializar_empresa(
         # 📍 DISTÂNCIA
         "distancia_km": distancia
     }
+
+# =========================================================
+# 🏆 PESO DOS PLANOS
+# =========================================================
+
+def peso_plano(plano):
+
+    plano = (plano or "").lower()
+
+    if plano == "master":
+        return 0
+
+    if plano == "premium":
+        return 1
+
+    return 2
 
 # =========================================================
 # 🔍 LISTAR EMPRESAS
@@ -310,32 +305,42 @@ def listar_empresas(
 
     empresas = query.all()
 
+    # =====================================================
+    # 🏆 ORDENAÇÃO POR PLANO
+    # MASTER → PREMIUM → GRATUITO
+    # =====================================================
+    
     resultado = [
-        serializar_empresa(
-            e,
-            db,
-            latitude,
-            longitude
-        )
-        for e in empresas
-    ]
-
+    serializar_empresa(
+        e,
+        db,
+        latitude,
+        longitude
+    )
+    for e in empresas
+]
     resultado.sort(
         key=lambda x: (
+            peso_plano(x.get("plano")),
             -int(x.get("prioridade", 0)),
-            not bool(x.get("premium", False)),
             not bool(x.get("destaque", False)),
             x["nome"].lower()
         )
     )
 
-    if latitude and longitude:
+    # =====================================================
+    # 📍 SE INFORMAR LOCALIZAÇÃO
+    # ORDENA POR DISTÂNCIA
+    # =====================================================
+
+    if latitude is not None and longitude is not None:
 
         resultado.sort(
-            key=lambda x:
-            x["distancia_km"]
-            if x["distancia_km"] is not None
-            else 999999
+            key=lambda x: (
+                x["distancia_km"]
+                if x["distancia_km"] is not None
+                else 999999
+            )
         )
 
     return resultado

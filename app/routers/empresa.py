@@ -1,32 +1,51 @@
 from fastapi import (
     APIRouter,
     Depends,
-    HTTPException,
-    UploadFile,
-    File
+    HTTPException
 )
 
 from sqlalchemy.orm import Session
-
 import os
-
 import cloudinary
-import cloudinary.uploader
 
 from app.database import get_db
-
 from app.models.empresa_model import Empresa
-from app.models.empresa_foto_model import EmpresaFoto
 from app.models.avaliacao_model import Avaliacao
+from app.schemas.empresa_schema import EmpresaResponse
 
-from app.schemas.empresa_schema import (
-    EmpresaCreate,
-    EmpresaUpdate,
-    EmpresaResponse
-)
 
-# 👇 NOVO IMPORT (PERMISSÕES)
-from app.services.permissoes import get_permissoes
+# =========================================================
+# 🔐 SISTEMA DE PLANOS
+# =========================================================
+
+def get_permissoes(plano: str) -> dict:
+    plano = (plano or "gratuito").strip().lower()
+
+    regras = {
+        "gratuito": {
+            "galeria": False,
+            "destaque": False,
+            "whatsapp_destacado": False,
+            "exibir_no_topo": False,
+            "selo_premium": False
+        },
+        "premium": {
+            "galeria": True,
+            "destaque": True,
+            "whatsapp_destacado": True,
+            "exibir_no_topo": False,
+            "selo_premium": True
+        },
+        "master": {
+            "galeria": True,
+            "destaque": True,
+            "whatsapp_destacado": True,
+            "exibir_no_topo": True,
+            "selo_premium": True
+        }
+    }
+
+    return regras.get(plano, regras["gratuito"])
 
 
 # =========================================================
@@ -38,25 +57,6 @@ router = APIRouter(
     tags=["Empresa"]
 )
 
-# =========================================================
-# 🌐 BASE URL
-# =========================================================
-
-BASE_URL = os.getenv(
-    "BASE_URL",
-    "https://bsm-servicos-backend-1.onrender.com"
-)
-
-# =========================================================
-# 📁 CONFIG UPLOAD
-# =========================================================
-
-UPLOAD_DIR = "uploads"
-
-os.makedirs(
-    UPLOAD_DIR,
-    exist_ok=True
-)
 
 # =========================================================
 # ☁️ CLOUDINARY
@@ -71,84 +71,41 @@ cloudinary.config(
 
 print("🔥 Cloudinary carregado!")
 
+
 # =========================================================
-# 🔥 FOTO PRINCIPAL
+# 📷 FOTO PRINCIPAL
 # =========================================================
 
 def obter_foto_principal(fotos):
-
     if not fotos:
         return None
 
     principal = next(
-        (
-            f.url
-            for f in fotos
-            if getattr(f, "principal", False)
-        ),
+        (f.url for f in fotos if getattr(f, "principal", False)),
         None
     )
 
-    if principal:
-        return principal
-
-    return fotos[0].url
+    return principal or (fotos[0].url if fotos else None)
 
 
 # =========================================================
-# 📦 SERIALIZAR EMPRESA
+# 📦 SERIALIZAÇÃO
 # =========================================================
 
-def serializar_empresa(
-    e,
-    db: Session
-):
-
-    # =====================================================
-    # ⭐ AVALIAÇÕES
-    # =====================================================
+def serializar_empresa(e, db: Session):
 
     avaliacoes = db.query(Avaliacao).filter(
         Avaliacao.empresa_id == e.id
     ).all()
 
-    media = 0.0
+    media = (
+        round(sum(a.nota for a in avaliacoes) / len(avaliacoes), 1)
+        if avaliacoes else 0.0
+    )
 
-    if len(avaliacoes) > 0:
+    plano = (getattr(e, "plano", "gratuito") or "").strip().lower()
 
-        media = round(
-            sum(a.nota for a in avaliacoes)
-            / len(avaliacoes),
-            1
-        )
-
-    # =====================================================
-    # 📷 FOTOS
-    # =====================================================
-
-    lista_fotos = []
-
-    for f in e.fotos:
-
-        lista_fotos.append({
-            "id": f.id,
-            "url": f.url,
-            "principal": bool(f.principal),
-            "public_id": getattr(
-                f,
-                "public_id",
-                None
-            )
-        })
-
-    # =====================================================
-    # 📦 SERIALIZAÇÃO BASE
-    # =====================================================
-
-    plano = getattr(e, "plano", "gratuito")
-
-    empresa_serializada = {
-
+    return {
         "id": e.id,
         "nome": e.nome,
         "descricao": e.descricao,
@@ -165,71 +122,31 @@ def serializar_empresa(
 
         "ativo": bool(getattr(e, "ativo", True)),
 
-        # =================================================
-        # ⭐ PLANO (FONTE DA VERDADE)
-        # =================================================
-
         "plano": plano,
-
-        # =================================================
-        # 🔐 PERMISSÕES (NOVO SISTEMA)
-        # =================================================
-
         "permissoes": get_permissoes(plano),
-
-        # =================================================
-        # ⭐ CAMPOS LEGADOS (mantidos por compatibilidade)
-        # =================================================
-
-        "premium": bool(getattr(e, "premium", False)),
-        "destaque": bool(getattr(e, "destaque", False)),
-
-        "prioridade": int(getattr(e, "prioridade", 0) or 0),
-
-        "whatsapp_destacado": bool(getattr(e, "whatsapp_destacado", False)),
-        "exibir_no_topo": bool(getattr(e, "exibir_no_topo", False)),
-        "selo_premium": bool(getattr(e, "selo_premium", False)),
-        "is_premium": bool(getattr(e, "is_premium", False)),
-
-        # =================================================
-        # ⭐ AVALIAÇÃO
-        # =================================================
 
         "avaliacao_media": media,
         "total_avaliacoes": len(avaliacoes),
 
-        # =================================================
-        # 📄 DOCUMENTOS
-        # =================================================
-
         "cpf": e.cpf,
         "cnpj": e.cnpj,
-
-        # =================================================
-        # 🛠 SERVIÇO
-        # =================================================
-
         "servico_id": e.servico_id,
 
-        # =================================================
-        # 📷 FOTOS
-        # =================================================
-
         "foto_principal": obter_foto_principal(e.fotos),
-        "fotos": lista_fotos,
 
-        # =================================================
-        # ⭐ AVALIAÇÕES DETALHADAS
-        # =================================================
+        "fotos": [
+            {
+                "id": f.id,
+                "url": f.url,
+                "principal": bool(f.principal)
+            }
+            for f in e.fotos
+        ],
 
         "avaliacoes": [
             {
                 "id": a.id,
-                "usuario": (
-                    a.usuario.nome
-                    if a.usuario
-                    else f"Usuário {a.usuario_id}"
-                ),
+                "usuario": a.usuario.nome if a.usuario else f"Usuário {a.usuario_id}",
                 "nota": a.nota,
                 "comentario": a.comentario
             }
@@ -237,36 +154,45 @@ def serializar_empresa(
         ]
     }
 
-    print("\n🔥 SERIALIZANDO EMPRESA:")
-    print("ID =", empresa_serializada["id"])
-    print("NOME =", empresa_serializada["nome"])
-    print("PLANO =", empresa_serializada["plano"])
-    print("PERMISSÕES =", empresa_serializada["permissoes"])
 
-    return empresa_serializada
+# =========================================================
+# 🧠 SCORE DE PLANO (🔥 ESSENCIAL PARA ORDERNAR)
+# =========================================================
+
+def get_plano_score(e):
+    plano = (getattr(e, "plano", "gratuito") or "").strip().lower()
+
+    if plano == "master":
+        return 3
+    if plano == "premium":
+        return 2
+    return 1
 
 
 # =========================================================
-# 📡 LISTAR EMPRESAS
+# 📡 LISTAR EMPRESAS (SORT CORRIGIDO)
 # =========================================================
 
-@router.get(
-    "/",
-    response_model=list[EmpresaResponse]
-)
-def listar_empresas(
-    db: Session = Depends(get_db)
-):
+@router.get("/", response_model=list[EmpresaResponse])
+def listar_empresas(db: Session = Depends(get_db)):
 
     empresas = db.query(Empresa).all()
 
-    print(f"\n🔥 TOTAL EMPRESAS: {len(empresas)}")
+for e in empresas:
+    print(
+        "EMPRESA:",
+        e.nome,
+        "| PLANO:",
+        getattr(e, "plano", None)
+    )
+    
 
     empresas.sort(
         key=lambda x: (
-            -int(getattr(x, "prioridade", 0) or 0),
-            not bool(getattr(x, "premium", False)),
+            -get_plano_score(x),  # 🔥 PREMIUM REAL PRIMEIRO
+            not bool(getattr(x, "exibir_no_topo", False)),
             not bool(getattr(x, "destaque", False)),
+            -int(getattr(x, "prioridade", 0) or 0),
             x.nome.lower()
         )
     )
@@ -278,13 +204,10 @@ def listar_empresas(
 
 
 # =========================================================
-# 🔍 DETALHE EMPRESA
+# 🔍 DETALHE
 # =========================================================
 
-@router.get(
-    "/{empresa_id}",
-    response_model=EmpresaResponse
-)
+@router.get("/{empresa_id}", response_model=EmpresaResponse)
 def detalhe_empresa(
     empresa_id: int,
     db: Session = Depends(get_db)
