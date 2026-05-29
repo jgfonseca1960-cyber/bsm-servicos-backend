@@ -61,20 +61,21 @@ class EmpresaBase(BaseModel):
 
     servico_id: Optional[int] = None
 
-# =====================================================
-# 🏆 PLANOS E DESTAQUES
-# =====================================================
+    # ==========================================
+    # 🏆 PLANOS E DESTAQUES
+    # ==========================================
 
-destaque: Optional[bool] = None
+    destaque: Optional[bool] = False
 
-plano: Optional[str] = None
+    plano: Optional[str] = "gratuito"
 
-prioridade: Optional[int] = None
+    prioridade: Optional[int] = 0
 
-whatsapp_destacado: Optional[bool] = None
-exibir_no_topo: Optional[bool] = None
-selo_premium: Optional[bool] = None
+    whatsapp_destacado: Optional[bool] = False
 
+    exibir_no_topo: Optional[bool] = False
+
+    selo_premium: Optional[bool] = False
 
 # =========================================================
 # ➕ CREATE
