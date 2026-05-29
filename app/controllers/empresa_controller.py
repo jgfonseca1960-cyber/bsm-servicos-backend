@@ -437,6 +437,33 @@ def atualizar_empresa(
         exclude_unset=True
     )
 
+# =========================================================
+# ✏️ REGRAS PARA CADA PLANO
+# =========================================================
+
+plano = update_data.get("plano")
+
+if plano == "gratuito":
+    update_data["destaque"] = False
+    update_data["whatsapp_destacado"] = False
+    update_data["exibir_no_topo"] = False
+    update_data["selo_premium"] = False
+    update_data["prioridade"] = 0
+
+elif plano == "premium":
+    update_data["destaque"] = True
+    update_data["whatsapp_destacado"] = True
+    update_data["exibir_no_topo"] = False
+    update_data["selo_premium"] = True
+    update_data["prioridade"] = 50
+
+elif plano == "master":
+    update_data["destaque"] = True
+    update_data["whatsapp_destacado"] = True
+    update_data["exibir_no_topo"] = True
+    update_data["selo_premium"] = True
+    update_data["prioridade"] = 100
+
     for key, value in update_data.items():
 
         setattr(
