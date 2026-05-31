@@ -328,13 +328,13 @@ def listar_empresas(
     for e in empresas
 ]
     resultado.sort(
-        key=lambda x: (
-            peso_plano(x.get("plano")),
-            -int(x.get("prioridade", 0)),
-            not bool(x.get("destaque", False)),
-            x["nome"].lower()
-        )
+    key=lambda x: (
+        not bool(x.get("exibir_no_topo", False)),
+        peso_plano(x.get("plano")),
+        -int(x.get("prioridade", 0)),
+        x["nome"].lower()
     )
+)
 
     # =====================================================
     # 📍 SE INFORMAR LOCALIZAÇÃO

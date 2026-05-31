@@ -142,9 +142,14 @@ def login(
         )
 
         return {
+            return {
             "access_token": access_token,
             "token_type": "bearer",
             "tipo_usuario": tipo_usuario,
+            "usuario_id": usuario.id,
+            "nome": usuario.nome,
+            "email": usuario.email,
+        }
         }
 
     except HTTPException:
