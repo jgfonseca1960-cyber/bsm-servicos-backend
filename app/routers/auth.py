@@ -143,6 +143,7 @@ def login(
 
         return {
             return {
+                
             "access_token": access_token,
             "token_type": "bearer",
             "tipo_usuario": tipo_usuario,
