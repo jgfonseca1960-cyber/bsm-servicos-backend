@@ -15,11 +15,14 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def verificar_senha(senha_plana: str, senha_hash: str) -> bool:
     try:
-        # 🔥 Se for hash (bcrypt)
+        if not senha_hash:
+            return False
+
+        # bcrypt
         if senha_hash.startswith("$2b$"):
             return pwd_context.verify(senha_plana, senha_hash)
 
-        # 🔥 Fallback (senha simples - legado)
+        # fallback legado
         return senha_plana == senha_hash
 
     except Exception as e:
@@ -44,14 +47,14 @@ def login(
         if not usuario:
             raise HTTPException(status_code=401, detail="Usuário não encontrado")
 
-        # 🔐 VALIDA SENHA (HASH + LEGADO)
+        # 🔐 VALIDA SENHA
         if not verificar_senha(form_data.password, usuario.senha_hash):
             raise HTTPException(status_code=401, detail="Senha inválida")
 
         # 👤 DEFINE TIPO
         tipo_usuario = "admin" if usuario.is_admin else "usuario"
 
-        # 🔑 GERA TOKEN
+        # 🔑 TOKEN
         access_token = create_access_token(
             data={
                 "sub": str(usuario.id),
@@ -61,8 +64,8 @@ def login(
 
         return {
             "access_token": access_token,
-              "token_type": "bearer",
-             "tipo_usuario": usuario.tipo_usuario,
+            "token_type": "bearer",
+            "tipo_usuario": tipo_usuario,   # ✅ CORRIGIDO AQUI
             "usuario_id": usuario.id,
         }
 
