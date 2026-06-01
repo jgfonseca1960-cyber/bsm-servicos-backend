@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -11,7 +11,12 @@ class Usuario(Base):
 
     nome = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
-    senha = Column(String, nullable=False)
+
+    # 🔥 CORRETO (bate com seu banco real)
+    senha_hash = Column(String, nullable=False)
+
+    # 🔥 NOVO CAMPO DO BANCO
+    is_admin = Column(Boolean, default=False)
 
     # ==========================================
     # ⭐ RELACIONAMENTO COM AVALIAÇÕES
