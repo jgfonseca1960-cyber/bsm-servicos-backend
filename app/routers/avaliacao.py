@@ -49,17 +49,20 @@ def criar(av: AvaliacaoCreate, db: Session = Depends(get_db)):
             detail="Usuário já avaliou esta empresa"
         )
 
-    nova = Avaliacao(**av.dict())
+    nova = Avaliacao(
+        empresa_id=av.empresa_id,
+        usuario_id=av.usuario_id,
+        nota=av.nota,
+        comentario=av.comentario
+    )
 
     db.add(nova)
     db.commit()
     db.refresh(nova)
 
-    # 🔥 atualiza média automaticamente
     atualizar_media_empresa(db, av.empresa_id)
 
     return nova
-
 
 # =========================
 # 📋 LISTAR TODAS

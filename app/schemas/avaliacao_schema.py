@@ -12,7 +12,7 @@ class AvaliacaoCreate(BaseModel):
     usuario_id: int
     nota: int
     comentario: str | None = None
-    
+
     @field_validator("comentario")
     def validar_comentario(cls, v, info):
         nota = info.data.get("nota")
@@ -24,7 +24,7 @@ class AvaliacaoCreate(BaseModel):
                 )
 
         return v
-
+    
 class AvaliacaoResponse(AvaliacaoBase):
     id: int
 
