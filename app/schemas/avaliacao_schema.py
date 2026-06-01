@@ -9,9 +9,10 @@ class AvaliacaoBase(BaseModel):
 
 class AvaliacaoCreate(BaseModel):
     empresa_id: int
+    usuario_id: int
     nota: int
     comentario: str | None = None
-
+    
     @field_validator("comentario")
     def validar_comentario(cls, v, info):
         nota = info.data.get("nota")
