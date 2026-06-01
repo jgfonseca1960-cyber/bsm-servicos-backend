@@ -1,8 +1,20 @@
 from sqlalchemy import Column, Integer, String, Boolean
 from app.database import Base
+from sqlalchemy.orm import relationship
 
 
 class Usuario(Base):
+
+######
+
+    from sqlalchemy.orm import relationship
+
+    avaliacoes = relationship(
+    "Avaliacao",
+    back_pop
+
+######
+
     __tablename__ = "usuarios"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -14,3 +26,9 @@ class Usuario(Base):
 
     # 🔹 Controle de acesso
     is_admin = Column(Boolean, default=False)
+
+    avaliacoes = relationship(
+    "Avaliacao",
+    back_populates="usuario",
+    cascade="all, delete-orphan"
+)
