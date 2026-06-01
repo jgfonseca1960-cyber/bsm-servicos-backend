@@ -1,34 +1,23 @@
-from sqlalchemy import Column, Integer, String, Boolean
-from app.database import Base
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
+
+from app.database import Base
 
 
 class Usuario(Base):
-
-######
-
-    from sqlalchemy.orm import relationship
-
-    avaliacoes = relationship(
-    "Avaliacao",
-    back_pop
-
-######
-
     __tablename__ = "usuarios"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # 🔹 Campos obrigatórios
-    nome = Column(String(100), nullable=False)
-    email = Column(String(150), unique=True, index=True, nullable=False)
-    senha_hash = Column(String(255), nullable=False)
+    nome = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    senha = Column(String, nullable=False)
 
-    # 🔹 Controle de acesso
-    is_admin = Column(Boolean, default=False)
-
+    # ==========================================
+    # ⭐ RELACIONAMENTO COM AVALIAÇÕES
+    # ==========================================
     avaliacoes = relationship(
-    "Avaliacao",
-    back_populates="usuario",
-    cascade="all, delete-orphan"
-)
+        "Avaliacao",
+        back_populates="usuario",
+        cascade="all, delete-orphan"
+    )
