@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -13,31 +13,39 @@ router = APIRouter(
     tags=["Avaliações"]
 )
 
-
 # =========================
-# 🔥 FUNÇÃO AUXILIAR: atualizar média
+# 🔧 FUNÇÃO: calcular média
 # =========================
-def atualizar_media_empresa(db: Session, empresa_id: int):
-
-    media = db.query(func.avg(Avaliacao.nota)).filter(
+def calcular_media(db: Session, empresa_id: int):
+    return db.query(func.avg(Avaliacao.nota)).filter(
         Avaliacao.empresa_id == empresa_id
     ).scalar()
+
+
+# =========================
+# 🔄 ATUALIZAR MÉDIA EMPRESA
+# =========================
+def atualizar_media_empresa(db: Session, empresa_id: int):
 
     empresa = db.query(Empresa).filter(
         Empresa.id == empresa_id
     ).first()
 
-    if empresa:
-        empresa.avaliacao_media = round(media or 0, 1)
-        db.commit()
+    if not empresa:
+        return
+
+    media = calcular_media(db, empresa_id)
+
+    empresa.avaliacao_media = round(media or 0, 1)
 
 
 # =========================
 # ⭐ CRIAR AVALIAÇÃO
 # =========================
-@router.post("/")
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def criar(av: AvaliacaoCreate, db: Session = Depends(get_db)):
 
+    # evita duplicidade
     existe = db.query(Avaliacao).filter(
         Avaliacao.usuario_id == av.usuario_id,
         Avaliacao.empresa_id == av.empresa_id
@@ -49,6 +57,13 @@ def criar(av: AvaliacaoCreate, db: Session = Depends(get_db)):
             detail="Usuário já avaliou esta empresa"
         )
 
+    # validação básica de nota (IMPORTANTE)
+    if av.nota < 1 or av.nota > 5:
+        raise HTTPException(
+            status_code=400,
+            detail="A nota deve ser entre 1 e 5"
+        )
+
     nova = Avaliacao(
         empresa_id=av.empresa_id,
         usuario_id=av.usuario_id,
@@ -57,30 +72,32 @@ def criar(av: AvaliacaoCreate, db: Session = Depends(get_db)):
     )
 
     db.add(nova)
-    db.commit()
-    db.refresh(nova)
 
     atualizar_media_empresa(db, av.empresa_id)
 
+    db.commit()
+    db.refresh(nova)
+
     return nova
+
 
 # =========================
 # 📋 LISTAR TODAS
 # =========================
 @router.get("/")
 def listar(db: Session = Depends(get_db)):
-    return db.query(Avaliacao).all()
+    return db.query(Avaliacao).order_by(Avaliacao.created_at.desc()).all()
 
 
 # =========================
-# 🏢 LISTAR POR EMPRESA
+# 🏢 POR EMPRESA
 # =========================
 @router.get("/empresa/{empresa_id}")
 def por_empresa(empresa_id: int, db: Session = Depends(get_db)):
 
     return db.query(Avaliacao).filter(
         Avaliacao.empresa_id == empresa_id
-    ).all()
+    ).order_by(Avaliacao.created_at.desc()).all()
 
 
 # =========================
@@ -89,37 +106,39 @@ def por_empresa(empresa_id: int, db: Session = Depends(get_db)):
 @router.get("/media/{empresa_id}")
 def media(empresa_id: int, db: Session = Depends(get_db)):
 
-    m = db.query(func.avg(Avaliacao.nota)).filter(
-        Avaliacao.empresa_id == empresa_id
-    ).scalar()
+    media = calcular_media(db, empresa_id)
 
     return {
         "empresa_id": empresa_id,
-        "media": round(m or 0, 1)
+        "media": round(media or 0, 1)
     }
 
 
 # =========================
-# 🏆 RANKING DE EMPRESAS
+# 🏆 RANKING DE EMPRESAS (MELHORADO)
 # =========================
 @router.get("/ranking")
 def ranking(db: Session = Depends(get_db)):
 
-    r = db.query(
-        Avaliacao.empresa_id,
-        func.avg(Avaliacao.nota).label("media"),
-        func.count(Avaliacao.id).label("total")
+    resultado = db.query(
+        Empresa.id,
+        Empresa.nome,
+        Empresa.avaliacao_media,
+        func.count(Avaliacao.id).label("total_avaliacoes")
+    ).join(
+        Avaliacao, Avaliacao.empresa_id == Empresa.id
     ).group_by(
-        Avaliacao.empresa_id
+        Empresa.id
     ).order_by(
-        func.avg(Avaliacao.nota).desc()
+        Empresa.avaliacao_media.desc()
     ).all()
 
     return [
         {
-            "empresa_id": item.empresa_id,
-            "media": round(item.media or 0, 1),
-            "total_avaliacoes": item.total
+            "empresa_id": item.id,
+            "nome": item.nome,
+            "media": round(item.avaliacao_media or 0, 1),
+            "total_avaliacoes": item.total_avaliacoes
         }
-        for item in r
+        for item in resultado
     ]
