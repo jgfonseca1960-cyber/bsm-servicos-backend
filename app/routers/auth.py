@@ -8,15 +8,19 @@ from app.database import get_db
 from app.models.usuario_model import Usuario
 from app.core.security import create_access_token
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter(
+    prefix="/auth",
+    tags=["Auth"]
+)
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto",
 )
 
+
 # =========================
-# 📦 SCHEMA REGISTER
+# SCHEMA REGISTER
 # =========================
 class RegisterRequest(BaseModel):
     nome: str
@@ -25,7 +29,7 @@ class RegisterRequest(BaseModel):
 
 
 # =========================
-# 🔐 HASH
+# HASH
 # =========================
 def verificar_senha(
     senha_plana,
@@ -46,7 +50,7 @@ def gerar_hash_senha(
 
 
 # =========================
-# 🆕 REGISTER
+# REGISTER
 # =========================
 @router.post("/register")
 def register(
@@ -81,6 +85,7 @@ def register(
 
         return {
             "message": "Usuário criado com sucesso",
+            "usuario_id": novo_usuario.id,
         }
 
     except HTTPException:
@@ -96,7 +101,7 @@ def register(
 
 
 # =========================
-# 🔑 LOGIN
+# LOGIN
 # =========================
 @router.post("/login")
 def login(
@@ -118,7 +123,6 @@ def login(
                 detail="Usuário não encontrado",
             )
 
-        # 🔥 VERIFICA HASH
         if not verificar_senha(
             form_data.password,
             usuario.senha_hash,
@@ -142,15 +146,12 @@ def login(
         )
 
         return {
-            return {
-                
             "access_token": access_token,
             "token_type": "bearer",
             "tipo_usuario": tipo_usuario,
             "usuario_id": usuario.id,
             "nome": usuario.nome,
             "email": usuario.email,
-        }
         }
 
     except HTTPException:
@@ -166,3 +167,4 @@ def login(
             status_code=500,
             detail=str(e),
         )
+    
