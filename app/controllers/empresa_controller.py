@@ -260,7 +260,7 @@ def serializar_empresa(
     "avaliacoes": [
         {
             "id": a.id,
-            "usuario": a.usuario.nome if a.usuario else f"Usuário {a.usuario_id}",
+            "usuario": f"Usuário {a.usuario_id}",
             "nota": a.nota,
             "comentario": a.comentario
         }
@@ -352,16 +352,14 @@ def listar_empresas(
     # =====================================================
 
 
-    if latitude is not None and longitude is not None:
+if latitude is not None and longitude is not None:
 
     resultado.sort(
         key=lambda x: (
             peso_plano(x.get("plano")),
-            (
-                x["distancia_km"]
-                if x["distancia_km"] is not None
-                else 999999
-            )
+            x["distancia_km"]
+            if x["distancia_km"] is not None
+            else 999999
         )
     )
 
