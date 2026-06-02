@@ -123,11 +123,9 @@ def serializar_empresa(e, db: Session):
         "cep": e.cep,
         "latitude": e.latitude,
         "longitude": e.longitude,
-
         "ativo": bool(getattr(e, "ativo", True)),
-
         "plano": plano,
-        
+
         "avaliacao_media": media,
         "total_avaliacoes": len(avaliacoes),
 
@@ -137,15 +135,16 @@ def serializar_empresa(e, db: Session):
 
         "foto_principal": obter_foto_principal(e.fotos),
 
+        # 🔥 FIX IMPORTANTE
         "fotos": [
-    {
-        "id": f.id,
-        "url": f.url,
-        "principal": bool(f.principal),
-        "public_id": f.public_id
-    }
-    for f in e.fotos
-]
+            {
+                "id": f.id,
+                "url": f.url,
+                "principal": bool(f.principal),
+                "public_id": f.public_id
+            }
+            for f in (e.fotos or [])
+        ],
 
         "avaliacoes": [
             {
@@ -157,7 +156,6 @@ def serializar_empresa(e, db: Session):
             for a in avaliacoes
         ]
     }
-
 
 # =========================================================
 # 🧠 SCORE DE PLANO (🔥 ESSENCIAL PARA ORDERNAR)
@@ -270,7 +268,8 @@ async def upload_foto_empresa(
     db.refresh(foto)
 
     return {
-        "id": foto.id,
-        "url": foto.url,
-        "public_id": foto.public_id
-    }
+    "id": foto.id,
+    "url": foto.url,
+    "public_id": foto.public_id,
+    "empresa_id": empresa_id
+}
