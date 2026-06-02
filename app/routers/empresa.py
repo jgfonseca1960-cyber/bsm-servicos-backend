@@ -227,6 +227,8 @@ def detalhe_empresa(
 
     return serializar_empresa(empresa, db)
 
+
+
 @router.post("/{empresa_id}/fotos")
 async def upload_foto_empresa(
     empresa_id: int,
@@ -244,17 +246,25 @@ async def upload_foto_empresa(
             detail="Empresa não encontrada"
         )
 
+    plano = (empresa.plano or "gratuito").lower()
+
+    if plano == "gratuito":
+        raise HTTPException(
+            status_code=403,
+            detail="Plano não permite galeria de fotos"
+        )
+
     resultado = cloudinary.uploader.upload(
         file.file,
         folder="bsm/empresas"
     )
 
-   foto = EmpresaFoto(
-    empresa_id=empresa_id,
-    url=resultado["secure_url"],
-    public_id=resultado.get("public_id"),
-    principal=False
-)
+    foto = EmpresaFoto(
+        empresa_id=empresa_id,
+        url=resultado["secure_url"],
+        public_id=resultado.get("public_id"),
+        principal=False
+    )
 
     db.add(foto)
     db.commit()
@@ -262,5 +272,6 @@ async def upload_foto_empresa(
 
     return {
         "id": foto.id,
-        "url": foto.url
+        "url": foto.url,
+        "public_id": foto.public_id
     }
