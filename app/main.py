@@ -61,7 +61,7 @@ from app.routers.utils import router as utils_router
 from app.routers.avaliacao import router as avaliacoes_router
 
 # ⚠️ AQUI É O PONTO CRÍTICO DO SEU ERRO
-from app.routes.empresa import router as empresa_router
+from app.routers.empresa import router as empresa_router
 
 # =========================================================
 # 🌐 CORS
