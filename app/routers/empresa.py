@@ -13,6 +13,10 @@ from app.models.empresa_model import Empresa
 from app.models.avaliacao_model import Avaliacao
 from app.schemas.empresa_schema import EmpresaResponse
 
+from fastapi import UploadFile, File
+import cloudinary.uploader
+
+from app.models.empresa_foto_model import EmpresaFoto
 
 # =========================================================
 # 🔐 SISTEMA DE PLANOS
@@ -178,18 +182,17 @@ def listar_empresas(db: Session = Depends(get_db)):
 
     empresas = db.query(Empresa).all()
 
-for e in empresas:
-    print(
-        "EMPRESA:",
-        e.nome,
-        "| PLANO:",
-        getattr(e, "plano", None)
-    )
-    
+    for e in empresas:
+        print(
+            "EMPRESA:",
+            e.nome,
+            "| PLANO:",
+            getattr(e, "plano", None)
+        )
 
     empresas.sort(
         key=lambda x: (
-            -get_plano_score(x),  # 🔥 PREMIUM REAL PRIMEIRO
+            -get_plano_score(x),
             not bool(getattr(x, "exibir_no_topo", False)),
             not bool(getattr(x, "destaque", False)),
             -int(getattr(x, "prioridade", 0) or 0),
@@ -201,7 +204,6 @@ for e in empresas:
         serializar_empresa(e, db)
         for e in empresas
     ]
-
 
 # =========================================================
 # 🔍 DETALHE
@@ -224,3 +226,41 @@ def detalhe_empresa(
         )
 
     return serializar_empresa(empresa, db)
+
+@router.post("/{empresa_id}/fotos")
+async def upload_foto_empresa(
+    empresa_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+
+    empresa = db.query(Empresa).filter(
+        Empresa.id == empresa_id
+    ).first()
+
+    if not empresa:
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada"
+        )
+
+    resultado = cloudinary.uploader.upload(
+        file.file,
+        folder="bsm/empresas"
+    )
+
+   foto = EmpresaFoto(
+    empresa_id=empresa_id,
+    url=resultado["secure_url"],
+    public_id=resultado.get("public_id"),
+    principal=False
+)
+
+    db.add(foto)
+    db.commit()
+    db.refresh(foto)
+
+    return {
+        "id": foto.id,
+        "url": foto.url
+    }
