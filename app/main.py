@@ -29,6 +29,7 @@ from app.database import (
     init_db
 )
 
+
 # =========================================================
 # CONTROLLERS / ROUTERS
 # =========================================================
@@ -37,9 +38,9 @@ from app.controllers.auth_controller import (
     router as auth_router
 )
 
-from app.controllers.empresa_controller import (
-    router as empresa_router
-)
+from app.routes.empresa import router as empresa_router
+
+app.include_router(empresa_router)
 
 from app.controllers.servico_controller import (
     router as servico_router
