@@ -304,64 +304,51 @@ def listar_empresas(
     query = db.query(Empresa)
 
     if servico_id:
-
         query = query.filter(
             Empresa.servico_id == servico_id
         )
 
     if cidade:
-
         query = query.filter(
             Empresa.cidade.ilike(f"%{cidade}%")
         )
 
     if bairro:
-
         query = query.filter(
             Empresa.bairro.ilike(f"%{bairro}%")
         )
 
     empresas = query.all()
 
-    # =====================================================
-    # 🏆 ORDENAÇÃO POR PLANO
-    # MASTER → PREMIUM → GRATUITO
-    # =====================================================
-    
     resultado = [
-    serializar_empresa(
-        e,
-        db,
-        latitude,
-        longitude
-    )
-    for e in empresas
-]
-    resultado.sort(
-    key=lambda x: (
-        not bool(x.get("exibir_no_topo", False)),
-        peso_plano(x.get("plano")),
-        -int(x.get("prioridade", 0)),
-        x["nome"].lower()
-    )
-)
-
-    # =====================================================
-    # 📍 SE INFORMAR LOCALIZAÇÃO
-    # ORDENA POR DISTÂNCIA
-    # =====================================================
-
-
-if latitude is not None and longitude is not None:
+        serializar_empresa(
+            e,
+            db,
+            latitude,
+            longitude
+        )
+        for e in empresas
+    ]
 
     resultado.sort(
         key=lambda x: (
+            not bool(x.get("exibir_no_topo", False)),
             peso_plano(x.get("plano")),
-            x["distancia_km"]
-            if x["distancia_km"] is not None
-            else 999999
+            -int(x.get("prioridade", 0)),
+            x["nome"].lower()
         )
     )
+
+    if latitude is not None and longitude is not None:
+
+        resultado.sort(
+            key=lambda x: (
+                peso_plano(x.get("plano")),
+                x["distancia_km"]
+                if x["distancia_km"] is not None
+                else 999999
+            )
+        )
 
     return resultado
 
