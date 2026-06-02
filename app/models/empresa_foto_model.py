@@ -8,23 +8,18 @@ class EmpresaFoto(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # 🔗 RELAÇÃO
     empresa_id = Column(
         Integer,
-        ForeignKey("empresas.id", ondelete="CASCADE"),  # 🔥 importante
+        ForeignKey("empresas.id", ondelete="CASCADE"),
         nullable=False
     )
 
-    # 🖼 URL da imagem
     url = Column(String, nullable=False)
 
-    # ⭐ FOTO PRINCIPAL
     principal = Column(Boolean, default=False, nullable=False)
 
-    # ☁️ Cloudinary (IMPORTANTE pra deletar depois)
     public_id = Column(String, nullable=True)
 
-    # 🔁 RELACIONAMENTO
     empresa = relationship(
         "Empresa",
         back_populates="fotos"

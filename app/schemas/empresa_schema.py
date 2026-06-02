@@ -129,6 +129,7 @@ class EmpresaUpdate(BaseModel):
     exibir_no_topo: Optional[bool] = None
     selo_premium: Optional[bool] = None
 
+    distancia_km: Optional[float] = None
 
 # =========================================================
 # 📦 RESPONSE
@@ -142,11 +143,13 @@ class EmpresaResponse(EmpresaBase):
 
     fotos: List[FotoResponse] = Field(default_factory=list)
 
-    avaliacao_media: Optional[float] = 0
+    avaliacao_media: float = 0.0
 
-    total_avaliacoes: Optional[int] = 0
+    total_avaliacoes: int = 0
 
     avaliacoes: List[AvaliacaoResponse] = Field(default_factory=list)
- 
+
+    distancia_km: Optional[float] = None
+
     class Config:
         from_attributes = True

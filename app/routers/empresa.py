@@ -127,8 +127,7 @@ def serializar_empresa(e, db: Session):
         "ativo": bool(getattr(e, "ativo", True)),
 
         "plano": plano,
-        "permissoes": get_permissoes(plano),
-
+        
         "avaliacao_media": media,
         "total_avaliacoes": len(avaliacoes),
 
@@ -139,13 +138,14 @@ def serializar_empresa(e, db: Session):
         "foto_principal": obter_foto_principal(e.fotos),
 
         "fotos": [
-            {
-                "id": f.id,
-                "url": f.url,
-                "principal": bool(f.principal)
-            }
-            for f in e.fotos
-        ],
+    {
+        "id": f.id,
+        "url": f.url,
+        "principal": bool(f.principal),
+        "public_id": f.public_id
+    }
+    for f in e.fotos
+]
 
         "avaliacoes": [
             {
@@ -226,7 +226,6 @@ def detalhe_empresa(
         )
 
     return serializar_empresa(empresa, db)
-
 
 
 @router.post("/{empresa_id}/fotos")

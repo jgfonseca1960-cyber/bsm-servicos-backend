@@ -98,6 +98,7 @@ def serializar_empresa(
     user_lon=None
 ):
 
+
     # =====================================================
     # ⭐ AVALIAÇÕES
     # =====================================================
@@ -254,9 +255,18 @@ def serializar_empresa(
         "foto_principal": foto_principal,
         "fotos": fotos_validas,
 
-        # 📍 DISTÂNCIA
-        "distancia_km": distancia
-    }
+    "distancia_km": distancia,
+
+    "avaliacoes": [
+        {
+            "id": a.id,
+            "usuario": a.usuario.nome if a.usuario else f"Usuário {a.usuario_id}",
+            "nota": a.nota,
+            "comentario": a.comentario
+        }
+        for a in avaliacoes
+    ]
+}
 
 # =========================================================
 # 🏆 PESO DOS PLANOS
@@ -341,15 +351,19 @@ def listar_empresas(
     # ORDENA POR DISTÂNCIA
     # =====================================================
 
+
     if latitude is not None and longitude is not None:
 
-        resultado.sort(
-            key=lambda x: (
+    resultado.sort(
+        key=lambda x: (
+            peso_plano(x.get("plano")),
+            (
                 x["distancia_km"]
                 if x["distancia_km"] is not None
                 else 999999
             )
         )
+    )
 
     return resultado
 

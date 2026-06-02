@@ -86,13 +86,13 @@ class Empresa(Base):
     # =====================================================
 
     fotos = relationship(
-        "EmpresaFoto",
-        back_populates="empresa",
-        cascade="all, delete"
-    )
+    "EmpresaFoto",
+    back_populates="empresa",
+    cascade="all, delete-orphan"
+)
 
     avaliacoes = relationship(
-        "Avaliacao",
-        back_populates="empresa",
-        cascade="all, delete"
-    )
+    "Avaliacao",
+    back_populates="empresa",
+    cascade="all, delete-orphan"
+)
