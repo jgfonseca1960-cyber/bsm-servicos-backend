@@ -66,9 +66,9 @@ router = APIRouter(
 # =========================================================
 
 cloudinary.config(
-    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
-    api_key=os.getenv("CLOUDINARY_API_KEY"),
-    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    cloud_name=os.getenv("dksia9lvn"),
+    api_key=os.getenv("477495685379182"),
+    api_secret=os.getenv("HBNvXFfrl8fa7s3a2v5VjSPftz0"),
     secure=True
 )
 
