@@ -1,4 +1,4 @@
-print("🔥🔥🔥 MAIN CARREGADO 🔥🔥🔥")
+print("🔥🔥🔥 MAIN NOVO  🔥🔥🔥")
 
 import os
 import traceback
