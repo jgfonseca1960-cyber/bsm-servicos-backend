@@ -57,7 +57,6 @@ def get_permissoes(plano: str) -> dict:
 # =========================================================
 
 router = APIRouter(
-    prefix="/empresa",
     tags=["Empresa"]
 )
 
