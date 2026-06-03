@@ -22,7 +22,7 @@ from app.database import engine, init_db
 
 BASE_URL = os.getenv(
     "BASE_URL",
-    "https://bsm-servicos-backend-1.onrender.com"
+    "https://bsm-servicos-backend.onrender.com"
 )
 
 print("🌐 BASE_URL =", BASE_URL)
