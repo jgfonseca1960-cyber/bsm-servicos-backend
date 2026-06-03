@@ -7,4 +7,11 @@ cloudinary.config(
     api_secret=os.getenv("HBNvXFfrl8fa7s3a2v5VjSPftz0"),
     secure=True)
 
+import os
+
+print("==== CLOUDINARY DEBUG ====")
+print("CLOUD_NAME =", os.getenv("CLOUDINARY_CLOUD_NAME"))
+print("API_KEY =", os.getenv("CLOUDINARY_API_KEY"))
+print("SECRET OK =", bool(os.getenv("CLOUDINARY_API_SECRET")))
+print("==========================")
 print("🔥 Cloudinary carregado!")

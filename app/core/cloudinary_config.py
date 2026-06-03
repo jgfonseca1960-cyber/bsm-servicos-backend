@@ -8,3 +8,12 @@ cloudinary.config(
     secure=True)
 
 print("🔥 Cloudinary carregado!")
+
+import os
+
+print("==== CLOUDINARY DEBUG ====")
+print("CLOUD_NAME =", os.getenv("CLOUDINARY_CLOUD_NAME"))
+print("API_KEY =", os.getenv("CLOUDINARY_API_KEY"))
+print("SECRET OK =", bool(os.getenv("CLOUDINARY_API_SECRET")))
+print("==========================")
+print("🔥 Cloudinary carregado!")
