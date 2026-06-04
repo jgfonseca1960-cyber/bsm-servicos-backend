@@ -224,6 +224,36 @@ def detalhe_empresa(
 
     return serializar_empresa(empresa, db)
 
+#################################################
+
+@router.put("/{empresa_id}")
+def atualizar_empresa(
+    empresa_id: int,
+    dados: EmpresaUpdate,
+    db: Session = Depends(get_db)
+):
+
+    empresa = db.query(Empresa).filter(
+        Empresa.id == empresa_id
+    ).first()
+
+    if not empresa:
+        raise HTTPException(
+            status_code=404,
+            detail="Empresa não encontrada"
+        )
+
+    update_data = dados.model_dump(exclude_unset=True)
+
+    for campo, valor in update_data.items():
+        setattr(empresa, campo, valor)
+
+    db.commit()
+    db.refresh(empresa)
+
+    return serializar_empresa(empresa, db)
+
+#######################################
 
 @router.post("/{empresa_id}/fotos")
 async def upload_foto_empresa(
@@ -296,3 +326,4 @@ async def upload_foto_empresa(
         "empresa_id": empresa_id,
         "principal": foto.principal
     }
+
