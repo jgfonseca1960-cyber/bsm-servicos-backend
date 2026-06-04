@@ -11,7 +11,11 @@ import cloudinary
 from app.database import get_db
 from app.models.empresa_model import Empresa
 from app.models.avaliacao_model import Avaliacao
-from app.schemas.empresa_schema import EmpresaResponse
+
+from app.schemas.empresa_schema import (
+    EmpresaResponse,
+    EmpresaUpdate
+)
 
 from fastapi import UploadFile, File
 
