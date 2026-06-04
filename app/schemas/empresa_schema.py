@@ -21,15 +21,14 @@ class FotoResponse(BaseModel):
 # =========================================================
 
 class AvaliacaoResponse(BaseModel):
-
     id: int
-    usuario: str
+    empresa_id: int
+    usuario_id: int
     nota: int
-    comentario: Optional[str] = None
+    comentario: str | None = None
 
     class Config:
         from_attributes = True
-
 
 # =========================================================
 # 🏢 EMPRESA BASE

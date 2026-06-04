@@ -97,7 +97,8 @@ app.include_router(empresa_router, prefix="/empresa", tags=["Empresa"])
 app.include_router(servico_router, prefix="/servicos", tags=["Serviços"])
 app.include_router(usuario_router, prefix="/usuarios", tags=["Usuários"])
 app.include_router(utils_router)
-app.include_router(avaliacoes_router, prefix="/avaliacoes", tags=["Avaliações"])
+# app.include_router(avaliacoes_router, prefix="/avaliacoes", tags=["Avaliações"])
+app.include_router(avaliacoes_router)
 
 # =========================================================
 # 🔥 LIFESPAN
