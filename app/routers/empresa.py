@@ -243,12 +243,20 @@ async def upload_foto_empresa(
 
     plano = (empresa.plano or "gratuito").lower()
 
+# Gratuito = apenas 1 foto
+    
     if plano == "gratuito":
+
+    total_fotos = db.query(EmpresaFoto).filter(
+        EmpresaFoto.empresa_id == empresa_id
+    ).count()
+
+    if total_fotos >= 1:
         raise HTTPException(
             status_code=403,
-            detail="Plano não permite galeria de fotos"
+            detail="Plano gratuito permite apenas 1 foto"
         )
-
+    
     resultado = cloudinary.uploader.upload(
         file.file,
         folder="bsm/empresas"

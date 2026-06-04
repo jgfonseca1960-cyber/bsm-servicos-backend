@@ -16,13 +16,14 @@ from sqlalchemy import text
 
 from app.database import engine, init_db
 
+
 # =========================================================
 # 🌐 CONFIG
 # =========================================================
 
 BASE_URL = os.getenv(
     "BASE_URL",
-    "https://bsm-servicos-backend.onrender.com"
+    "https://bsm-servicos-backend-1.onrender.com"
 )
 
 print("🌐 BASE_URL =", BASE_URL)
@@ -70,7 +71,7 @@ from app.routers.empresa import router as empresa_router
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
