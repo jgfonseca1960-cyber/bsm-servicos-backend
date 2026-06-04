@@ -150,15 +150,23 @@ def serializar_empresa(e, db: Session):
             for f in (e.fotos or [])
         ],
 
-        "avaliacoes": [
-            {
-                "id": a.id,
-                "usuario": a.usuario.nome if a.usuario else f"Usuário {a.usuario_id}",
-                "nota": a.nota,
-                "comentario": a.comentario
-            }
-            for a in avaliacoes
-        ]
+"avaliacoes": [
+    {
+        "id": a.id,
+        "empresa_id": a.empresa_id,
+        "usuario_id": a.usuario_id,
+        "usuario": (
+            a.usuario.nome
+            if getattr(a, "usuario", None)
+            else f"Usuário {a.usuario_id}"
+        ),
+        "nota": a.nota,
+        "comentario": a.comentario
+    }
+    for a in avaliacoes
+],
+
+
     }
 
 # =========================================================
