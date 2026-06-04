@@ -14,6 +14,7 @@ from app.models.avaliacao_model import Avaliacao
 from app.schemas.empresa_schema import EmpresaResponse
 
 from fastapi import UploadFile, File
+
 import cloudinary.uploader
 
 from app.models.empresa_foto_model import EmpresaFoto
@@ -243,30 +244,45 @@ async def upload_foto_empresa(
 
     plano = (empresa.plano or "gratuito").lower()
 
-# Gratuito = apenas 1 foto
-    
+    # =====================================================
+    # GRATUITO = PERMITE APENAS 1 FOTO
+    # PREMIUM E MASTER = GALERIA LIVRE
+    # =====================================================
+
     if plano == "gratuito":
 
-    total_fotos = db.query(EmpresaFoto).filter(
-        EmpresaFoto.empresa_id == empresa_id
-    ).count()
+        total_fotos = db.query(EmpresaFoto).filter(
+            EmpresaFoto.empresa_id == empresa_id
+        ).count()
 
-    if total_fotos >= 1:
-        raise HTTPException(
-            status_code=403,
-            detail="Plano gratuito permite apenas 1 foto"
-        )
-    
+        if total_fotos >= 1:
+            raise HTTPException(
+                status_code=403,
+                detail="Plano gratuito permite apenas 1 foto"
+            )
+
+    # =====================================================
+    # UPLOAD CLOUDINARY
+    # =====================================================
+
     resultado = cloudinary.uploader.upload(
         file.file,
         folder="bsm/empresas"
     )
 
+    # =====================================================
+    # PRIMEIRA FOTO = PRINCIPAL
+    # =====================================================
+
+    total_fotos = db.query(EmpresaFoto).filter(
+        EmpresaFoto.empresa_id == empresa_id
+    ).count()
+
     foto = EmpresaFoto(
         empresa_id=empresa_id,
         url=resultado["secure_url"],
         public_id=resultado.get("public_id"),
-        principal=False
+        principal=(total_fotos == 0)
     )
 
     db.add(foto)
@@ -274,8 +290,9 @@ async def upload_foto_empresa(
     db.refresh(foto)
 
     return {
-    "id": foto.id,
-    "url": foto.url,
-    "public_id": foto.public_id,
-    "empresa_id": empresa_id
-}
+        "id": foto.id,
+        "url": foto.url,
+        "public_id": foto.public_id,
+        "empresa_id": empresa_id,
+        "principal": foto.principal
+    }
