@@ -14,6 +14,7 @@ from app.models.avaliacao_model import Avaliacao
 
 from app.schemas.empresa_schema import (
     EmpresaResponse,
+    EmpresaCreate,
     EmpresaUpdate
 )
 
@@ -229,6 +230,20 @@ def detalhe_empresa(
     return serializar_empresa(empresa, db)
 
 #################################################
+
+@router.post("/", response_model=EmpresaResponse)
+def criar_empresa(
+    dados: EmpresaCreate,
+    db: Session = Depends(get_db)
+):
+
+    empresa = Empresa(**dados.model_dump())
+
+    db.add(empresa)
+    db.commit()
+    db.refresh(empresa)
+
+    return serializar_empresa(empresa, db)
 
 @router.put("/{empresa_id}")
 def atualizar_empresa(
