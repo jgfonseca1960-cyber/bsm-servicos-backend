@@ -36,7 +36,7 @@ class AvaliacaoResponse(AvaliacaoBase):
     empresa_id: int
     usuario_id: int
 
-    usuario: Optional[str] = None
+    
 
     class Config:
         from_attributes = True
