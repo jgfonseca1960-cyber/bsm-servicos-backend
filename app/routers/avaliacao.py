@@ -46,6 +46,7 @@ def atualizar_media_empresa(
     db: Session,
     empresa_id: int
 ):
+    return
 
     empresa = db.query(Empresa).filter(
         Empresa.id == empresa_id
@@ -218,22 +219,25 @@ def ranking(
         db.query(
             Empresa.id,
             Empresa.nome,
-            Empresa.avaliacao_media,
+            func.avg(
+                Avaliacao.nota
+            ).label("media"),
             func.count(
                 Avaliacao.id
-            ).label(
-                "total_avaliacoes"
-            )
+            ).label("total_avaliacoes")
         )
         .outerjoin(
             Avaliacao,
             Avaliacao.empresa_id == Empresa.id
         )
         .group_by(
-            Empresa.id
+            Empresa.id,
+            Empresa.nome
         )
         .order_by(
-            Empresa.avaliacao_media.desc()
+            func.avg(
+                Avaliacao.nota
+            ).desc()
         )
         .all()
     )
@@ -243,14 +247,13 @@ def ranking(
             "empresa_id": item.id,
             "nome": item.nome,
             "media": round(
-                item.avaliacao_media or 0,
+                item.media or 0,
                 1
             ),
             "total_avaliacoes": item.total_avaliacoes
         }
         for item in resultado
     ]
-
 
 # =========================================================
 # 🗑️ EXCLUIR AVALIAÇÃO

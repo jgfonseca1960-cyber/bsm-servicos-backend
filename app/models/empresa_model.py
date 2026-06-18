@@ -39,12 +39,24 @@ class Empresa(Base):
     cpf = Column(String)
     cnpj = Column(String)
 
+    # =====================================================
+    # ⭐ AVALIAÇÕES
+    # =====================================================
 
+    avaliacao_media = Column(
+        Float,
+        default=0
+    )
 
-# =====================================================
-# 🏆 PLANOS E DESTAQUES
-# =====================================================
-    
+    total_avaliacoes = Column(
+        Integer,
+        default=0
+    )
+
+    # =====================================================
+    # 🏆 PLANOS E DESTAQUES
+    # =====================================================
+
     destaque = Column(Boolean, default=False)
 
     plano = Column(String, default="gratuito")
@@ -66,10 +78,6 @@ class Empresa(Base):
         default=False
     )
 
-    # =====================================================
-    # FK
-    # =====================================================
-
     servico_id = Column(
         Integer,
         ForeignKey("servicos.id"),
@@ -77,22 +85,18 @@ class Empresa(Base):
     )
 
     servico = relationship(
-    "Servico",
-    back_populates="empresas"
+        "Servico",
+        back_populates="empresas"
     )
 
-    # =====================================================
-    # RELACIONAMENTOS
-    # =====================================================
-
     fotos = relationship(
-    "EmpresaFoto",
-    back_populates="empresa",
-    cascade="all, delete-orphan"
-)
+        "EmpresaFoto",
+        back_populates="empresa",
+        cascade="all, delete-orphan"
+    )
 
     avaliacoes = relationship(
-    "Avaliacao",
-    back_populates="empresa",
-    cascade="all, delete-orphan"
-)
+        "Avaliacao",
+        back_populates="empresa",
+        cascade="all, delete-orphan"
+    )
