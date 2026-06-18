@@ -79,10 +79,6 @@ def criar(
     db: Session = Depends(get_db)
 ):
 
-    # ----------------------------------
-    # valida empresa
-    # ----------------------------------
-
     empresa = db.query(Empresa).filter(
         Empresa.id == av.empresa_id
     ).first()
@@ -92,10 +88,6 @@ def criar(
             status_code=404,
             detail="Empresa não encontrada"
         )
-
-    # ----------------------------------
-    # evita duplicidade
-    # ----------------------------------
 
     existe = db.query(Avaliacao).filter(
         Avaliacao.usuario_id == av.usuario_id,
@@ -108,19 +100,11 @@ def criar(
             detail="Usuário já avaliou esta empresa"
         )
 
-    # ----------------------------------
-    # valida nota
-    # ----------------------------------
-
     if av.nota < 1 or av.nota > 5:
         raise HTTPException(
             status_code=400,
             detail="A nota deve ser entre 1 e 5"
         )
-
-    # ----------------------------------
-    # cria avaliação
-    # ----------------------------------
 
     nova = Avaliacao(
         empresa_id=av.empresa_id,
@@ -130,9 +114,7 @@ def criar(
     )
 
     db.add(nova)
-
     db.commit()
-
     db.refresh(nova)
 
     atualizar_media_empresa(
@@ -142,60 +124,9 @@ def criar(
 
     db.commit()
 
-#      db.refresh(nova)
+    return nova
 
-return {
-
-    "id": nova.id,
-    "empresa_id": nova.empresa_id,
-    "usuario_id": nova.usuario_id,
-    "nota": nova.nota,
-    "comentario": nova.comentario,
-
-    "usuario": (
-        nova.usuario.nome
-        if nova.usuario
-        else None
-    ),
-
-    "status": getattr(
-        nova,
-        "status",
-        "publicada"
-    ),
-
-    "suspeita": getattr(
-        nova,
-        "suspeita",
-        False
-    ),
-
-    "denuncias": getattr(
-        nova,
-        "denuncias",
-        0
-    ),
-
-    "motivo_denuncia": getattr(
-        nova,
-        "motivo_denuncia",
-        None
-    ),
-
-    "resposta_empresa": getattr(
-        nova,
-        "resposta_empresa",
-        None
-    ),
-
-    "data_avaliacao": getattr(
-        nova,
-        "data_avaliacao",
-        None
-    )
-}
-
-
+    
 # =========================================================
 # 📋 LISTAR TODAS
 # =========================================================
@@ -233,43 +164,16 @@ def por_empresa(
         )
 
     avaliacoes = db.query(
-    Avaliacao
-).filter(
-    Avaliacao.empresa_id == empresa_id
-).order_by(
-    Avaliacao.id.desc()
-).all()
+        Avaliacao
+    ).filter(
+        Avaliacao.empresa_id == empresa_id
+    ).order_by(
+        Avaliacao.id.desc()
+    ).all()
 
-return [
-    {
-        "id": a.id,
-        "empresa_id": a.empresa_id,
-        "usuario_id": a.usuario_id,
-        "usuario": (
-            a.usuario.nome
-            if a.usuario
-            else None
-        ),
-        "nota": a.nota,
-        "comentario": a.comentario,
-        "status": getattr(a, "status", "publicada"),
-        "suspeita": getattr(a, "suspeita", False),
-        "denuncias": getattr(a, "denuncias", 0),
-        "resposta_empresa": getattr(
-            a,
-            "resposta_empresa",
-            None
-        ),
-        "data_avaliacao": getattr(
-            a,
-            "data_avaliacao",
-            None
-        )
-    }
-    for a in avaliacoes
-]
-
-
+    return avaliacoes
+    
+   
 # =========================================================
 # ⭐ MÉDIA DA EMPRESA
 # =========================================================

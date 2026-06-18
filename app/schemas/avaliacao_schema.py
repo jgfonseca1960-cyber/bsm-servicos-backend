@@ -47,7 +47,6 @@ class AvaliacaoCreate(BaseModel):
 
 class AvaliacaoResponse(AvaliacaoBase):
     id: int
-
     empresa_id: int
     usuario_id: int
 
