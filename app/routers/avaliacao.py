@@ -219,8 +219,9 @@ def ranking(
         db.query(
             Empresa.id,
             Empresa.nome,
-            func.avg(
-                Avaliacao.nota
+            func.coalesce(
+                func.avg(Avaliacao.nota),
+                0
             ).label("media"),
             func.count(
                 Avaliacao.id
@@ -235,8 +236,12 @@ def ranking(
             Empresa.nome
         )
         .order_by(
-            func.avg(
-                Avaliacao.nota
+            func.coalesce(
+                func.avg(Avaliacao.nota),
+                0
+            ).desc(),
+            func.count(
+                Avaliacao.id
             ).desc()
         )
         .all()
@@ -246,10 +251,7 @@ def ranking(
         {
             "empresa_id": item.id,
             "nome": item.nome,
-            "media": round(
-                item.media or 0,
-                1
-            ),
+            "media": round(item.media, 1),
             "total_avaliacoes": item.total_avaliacoes
         }
         for item in resultado
