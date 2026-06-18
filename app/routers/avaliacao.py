@@ -131,15 +131,69 @@ def criar(
 
     db.add(nova)
 
+    db.commit()
+
+    db.refresh(nova)
+
     atualizar_media_empresa(
         db,
         av.empresa_id
     )
 
     db.commit()
-    db.refresh(nova)
 
-    return nova
+#      db.refresh(nova)
+
+return {
+
+    "id": nova.id,
+    "empresa_id": nova.empresa_id,
+    "usuario_id": nova.usuario_id,
+    "nota": nova.nota,
+    "comentario": nova.comentario,
+
+    "usuario": (
+        nova.usuario.nome
+        if nova.usuario
+        else None
+    ),
+
+    "status": getattr(
+        nova,
+        "status",
+        "publicada"
+    ),
+
+    "suspeita": getattr(
+        nova,
+        "suspeita",
+        False
+    ),
+
+    "denuncias": getattr(
+        nova,
+        "denuncias",
+        0
+    ),
+
+    "motivo_denuncia": getattr(
+        nova,
+        "motivo_denuncia",
+        None
+    ),
+
+    "resposta_empresa": getattr(
+        nova,
+        "resposta_empresa",
+        None
+    ),
+
+    "data_avaliacao": getattr(
+        nova,
+        "data_avaliacao",
+        None
+    )
+}
 
 
 # =========================================================
@@ -178,13 +232,42 @@ def por_empresa(
             detail="Empresa não encontrada"
         )
 
-    return db.query(
-        Avaliacao
-    ).filter(
-        Avaliacao.empresa_id == empresa_id
-    ).order_by(
-        Avaliacao.id.desc()
-    ).all()
+    avaliacoes = db.query(
+    Avaliacao
+).filter(
+    Avaliacao.empresa_id == empresa_id
+).order_by(
+    Avaliacao.id.desc()
+).all()
+
+return [
+    {
+        "id": a.id,
+        "empresa_id": a.empresa_id,
+        "usuario_id": a.usuario_id,
+        "usuario": (
+            a.usuario.nome
+            if a.usuario
+            else None
+        ),
+        "nota": a.nota,
+        "comentario": a.comentario,
+        "status": getattr(a, "status", "publicada"),
+        "suspeita": getattr(a, "suspeita", False),
+        "denuncias": getattr(a, "denuncias", 0),
+        "resposta_empresa": getattr(
+            a,
+            "resposta_empresa",
+            None
+        ),
+        "data_avaliacao": getattr(
+            a,
+            "data_avaliacao",
+            None
+        )
+    }
+    for a in avaliacoes
+]
 
 
 # =========================================================
