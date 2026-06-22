@@ -238,9 +238,11 @@ async def global_exception_handler(
         }
     )
 
+#
 # =========================================================
 # 🔥 LOG FINAL
 # =========================================================
+#
 
 print("🔥 BACKEND CARREGADO")
 print("📄 Swagger: /docs")
