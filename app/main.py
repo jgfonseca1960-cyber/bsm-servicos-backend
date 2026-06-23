@@ -123,13 +123,33 @@ from app.routers.avaliacao import (
 # 🌐 CORS
 # =========================================================
 
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:5000",
+    "http://localhost:51361",
+    "http://127.0.0.1:51361",
+    "https://bsm-servicos-frontend.onrender.com",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=origins,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
+
+# =========================================================
+# TESTE CORS
+# =========================================================
+
+@app.options("/{full_path:path}")
+async def options_handler(full_path: str):
+    return {"ok": True}
+
 
 # =========================================================
 # 📁 UPLOADS

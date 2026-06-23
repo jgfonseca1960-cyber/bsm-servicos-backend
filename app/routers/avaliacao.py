@@ -46,7 +46,6 @@ def atualizar_media_empresa(
     db: Session,
     empresa_id: int
 ):
-    return
 
     empresa = db.query(Empresa).filter(
         Empresa.id == empresa_id
@@ -64,7 +63,6 @@ def atualizar_media_empresa(
         media or 0,
         1
     )
-
 
 # =========================================================
 # ⭐ CRIAR AVALIAÇÃO

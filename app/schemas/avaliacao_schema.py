@@ -1,7 +1,7 @@
 from datetime import datetime
-
-from pydantic import BaseModel, field_validator
 from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 # =========================================================
@@ -14,6 +14,19 @@ class AvaliacaoBase(BaseModel):
 
 
 # =========================================================
+# USUÁRIO RESUMIDO
+# =========================================================
+
+class UsuarioResumo(BaseModel):
+    id: int
+    nome: Optional[str] = None
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+
+# =========================================================
 # CREATE
 # =========================================================
 
@@ -21,7 +34,7 @@ class AvaliacaoCreate(BaseModel):
     empresa_id: int
     usuario_id: int
     nota: int
-    comentario: str | None = None
+    comentario: Optional[str] = None
 
     @field_validator("comentario")
     @classmethod
@@ -35,7 +48,8 @@ class AvaliacaoCreate(BaseModel):
 
             if len(comentario) < 20:
                 raise ValueError(
-                    "Avaliações com nota 1 ou 2 exigem justificativa com pelo menos 20 caracteres."
+                    "Avaliações com nota 1 ou 2 exigem "
+                    "justificativa com pelo menos 20 caracteres."
                 )
 
         return v
@@ -47,11 +61,12 @@ class AvaliacaoCreate(BaseModel):
 
 class AvaliacaoResponse(AvaliacaoBase):
     id: int
+
     empresa_id: int
     usuario_id: int
 
-    # Nome do usuário exibido no app
-    usuario: Optional[str] = None
+    # Usuário relacionado
+    usuario: Optional[UsuarioResumo] = None
 
     # Moderação
     status: Optional[str] = "publicada"
@@ -68,5 +83,6 @@ class AvaliacaoResponse(AvaliacaoBase):
     # Datas
     data_avaliacao: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes=True
+    )
