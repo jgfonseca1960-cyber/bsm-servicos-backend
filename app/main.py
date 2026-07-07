@@ -5,6 +5,7 @@ import traceback
 from contextlib import asynccontextmanager
 
 import app.config.cloudinary_config
+from app.controllers.dashboard_controller import router as dashboard_router
 
 from fastapi import (
     FastAPI,
@@ -257,6 +258,8 @@ async def global_exception_handler(
             "detail": str(exc)
         }
     )
+
+app.include_router(dashboard_router)
 
 #
 # =========================================================

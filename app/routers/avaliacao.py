@@ -290,3 +290,47 @@ def excluir_avaliacao(
     return {
         "message": "Avaliação removida com sucesso"
     }
+
+# =========================================================
+# RESUMO AVALIAÇÃO
+# =========================================================
+
+
+@router.get("/resumo")
+def resumo(db: Session = Depends(get_db)):
+
+    total_empresas = db.query(Empresa).count()
+
+    total_servicos = db.query(Servico).count()
+
+    total_avaliacoes = db.query(Avaliacao).count()
+
+    empresas_avaliadas = (
+        db.query(Empresa)
+        .filter(Empresa.avaliacao_media > 0)
+        .count()
+    )
+
+    empresas_sem_avaliacao = (
+        total_empresas - empresas_avaliadas
+    )
+
+    media = db.query(
+        func.avg(Empresa.avaliacao_media)
+    ).scalar()
+
+    return {
+
+        "total_empresas": total_empresas,
+
+        "total_servicos": total_servicos,
+
+        "total_avaliacoes": total_avaliacoes,
+
+        "empresas_avaliadas": empresas_avaliadas,
+
+        "empresas_sem_avaliacao": empresas_sem_avaliacao,
+
+        "media_geral": round(media or 0,1)
+
+    }
