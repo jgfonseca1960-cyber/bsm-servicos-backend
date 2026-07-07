@@ -12,6 +12,7 @@ from app.database import get_db
 
 from app.models.avaliacao_model import Avaliacao
 from app.models.empresa_model import Empresa
+from app.models.servico_model import Servico
 
 from app.schemas.avaliacao_schema import (
     AvaliacaoCreate,
