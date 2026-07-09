@@ -19,6 +19,8 @@ from app.schemas.avaliacao_schema import (
     AvaliacaoResponse
 )
 
+from sqlalchemy import desc
+
 router = APIRouter(
     prefix="/avaliacoes",
     tags=["Avaliações"]
@@ -333,5 +335,208 @@ def resumo(db: Session = Depends(get_db)):
         "empresas_sem_avaliacao": empresas_sem_avaliacao,
 
         "media_geral": round(media or 0,1)
+
+    }
+
+    # =========================================================
+# DASHBOARD ADMIN
+# =========================================================
+
+@router.get("/dashboard")
+def dashboard(db: Session = Depends(get_db)):
+
+    total_empresas = db.query(Empresa).count()
+
+    total_servicos = db.query(Servico).count()
+
+    total_avaliacoes = db.query(Avaliacao).count()
+
+    empresas_avaliadas = (
+        db.query(Empresa)
+        .filter(Empresa.avaliacao_media > 0)
+        .count()
+    )
+
+    empresas_sem_avaliacao = (
+        total_empresas - empresas_avaliadas
+    )
+
+    media_geral = db.query(
+        func.avg(Empresa.avaliacao_media)
+    ).scalar()
+
+    # ==========================================
+    # RANKING
+    # ==========================================
+
+    ranking = (
+        db.query(
+            Empresa.id,
+            Empresa.nome,
+            func.coalesce(
+                func.avg(Avaliacao.nota),
+                0
+            ).label("media"),
+            func.count(
+                Avaliacao.id
+            ).label("total_avaliacoes")
+        )
+        .outerjoin(
+            Avaliacao,
+            Avaliacao.empresa_id == Empresa.id
+        )
+        .group_by(
+            Empresa.id,
+            Empresa.nome
+        )
+        .order_by(
+            desc("media"),
+            desc("total_avaliacoes")
+        )
+        .limit(10)
+        .all()
+    )
+
+    ranking_json = [
+
+        {
+            "empresa_id": item.id,
+            "nome": item.nome,
+            "media": round(item.media,1),
+            "total_avaliacoes": item.total_avaliacoes
+        }
+
+        for item in ranking
+
+    ]
+
+    # ==========================================
+    # PIORES EMPRESAS
+    # ==========================================
+
+    piores = (
+        db.query(
+            Empresa.id,
+            Empresa.nome,
+            func.coalesce(
+                func.avg(Avaliacao.nota),
+                0
+            ).label("media"),
+            func.count(
+                Avaliacao.id
+            ).label("total_avaliacoes")
+        )
+        .outerjoin(
+            Avaliacao,
+            Avaliacao.empresa_id == Empresa.id
+        )
+        .group_by(
+            Empresa.id,
+            Empresa.nome
+        )
+        .having(
+            func.count(Avaliacao.id) > 0
+        )
+        .order_by(
+            "media"
+        )
+        .limit(10)
+        .all()
+    )
+
+    piores_json = [
+
+        {
+            "empresa_id": item.id,
+            "nome": item.nome,
+            "media": round(item.media,1),
+            "total_avaliacoes": item.total_avaliacoes
+        }
+
+        for item in piores
+
+    ]
+
+    # ==========================================
+    # ÚLTIMAS AVALIAÇÕES
+    # ==========================================
+
+    ultimas = (
+        db.query(
+            Avaliacao,
+            Empresa.nome
+        )
+        .join(
+            Empresa,
+            Empresa.id == Avaliacao.empresa_id
+        )
+        .order_by(
+            Avaliacao.id.desc()
+        )
+        .limit(10)
+        .all()
+    )
+
+    ultimas_json = []
+
+    for av, empresa_nome in ultimas:
+
+        ultimas_json.append({
+
+            "id": av.id,
+
+            "empresa": empresa_nome,
+
+            "empresa_id": av.empresa_id,
+
+            "usuario_id": av.usuario_id,
+
+            "nota": av.nota,
+
+            "comentario": av.comentario
+
+        })
+
+    # ==========================================
+    # DISTRIBUIÇÃO DAS NOTAS
+    # ==========================================
+
+    estatisticas = {}
+
+    for nota in range(1,6):
+
+        quantidade = (
+            db.query(Avaliacao)
+            .filter(Avaliacao.nota == nota)
+            .count()
+        )
+
+        estatisticas[f"nota{nota}"] = quantidade
+
+    return {
+
+        "resumo":{
+
+            "total_empresas": total_empresas,
+
+            "total_servicos": total_servicos,
+
+            "total_avaliacoes": total_avaliacoes,
+
+            "empresas_avaliadas": empresas_avaliadas,
+
+            "empresas_sem_avaliacao": empresas_sem_avaliacao,
+
+            "media_geral": round(media_geral or 0,1)
+
+        },
+
+        "ranking": ranking_json,
+
+        "piores": piores_json,
+
+        "estatisticas": estatisticas,
+
+        "ultimas_avaliacoes": ultimas_json
 
     }
