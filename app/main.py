@@ -2,6 +2,7 @@ print("🔥🔥🔥 MAIN NOVO 🔥🔥🔥")
 
 import os
 import traceback
+from app.routers.dashboard_router import router as dashboard_router
 from contextlib import asynccontextmanager
 
 import app.config.cloudinary_config
@@ -91,6 +92,8 @@ app = FastAPI(
         "displayRequestDuration": True
     }
 )
+
+
 
 # =========================================================
 # 🔗 ROUTERS
