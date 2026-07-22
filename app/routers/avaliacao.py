@@ -21,6 +21,8 @@ from app.schemas.avaliacao_schema import (
 
 from sqlalchemy import desc
 
+from app.models.user import User
+
 router = APIRouter(
     prefix="/avaliacoes",
     tags=["Avaliações"]
