@@ -336,6 +336,8 @@ def resumo(db: Session = Depends(get_db)):
 
         "media_geral": round(media or 0,1)
 
+        total_usuarios = db.query(User).count()
+
     }
 
     # =========================================================
