@@ -324,6 +324,8 @@ def resumo(db: Session = Depends(get_db)):
 
     return {
 
+        "total_usuarios": db.query(User).count(),
+
         "total_empresas": total_empresas,
 
         "total_servicos": total_servicos,
@@ -335,9 +337,7 @@ def resumo(db: Session = Depends(get_db)):
         "empresas_sem_avaliacao": empresas_sem_avaliacao,
 
         "media_geral": round(media or 0,1),
-
-        total_usuarios = db.query(User).count(),
-
+      
     }
 
     # =========================================================
