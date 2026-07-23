@@ -21,7 +21,7 @@ from app.schemas.avaliacao_schema import (
 
 from sqlalchemy import desc
 
-from app.models.user import User
+from app.models.usuario_model import Usuario
 
 router = APIRouter(
     prefix="/avaliacoes",
@@ -326,7 +326,7 @@ def resumo(db: Session = Depends(get_db)):
 
     return {
 
-        "total_usuarios": db.query(User).count(),
+        "total_usuarios": db.query(Usuario).count(),
 
         "total_empresas": total_empresas,
 
