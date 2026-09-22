@@ -217,6 +217,23 @@ def health():
     return {
         "status": "ok"
     }
+# =========================================================
+# 📱 VERSÃO DO APLICATIVO
+# =========================================================
+
+VERSAO_APP = "1.1.0"
+BUILD_APP = 11
+
+
+@app.get("/versao")
+def verificar_versao():
+    return {
+        "versao": VERSAO_APP,
+        "build": BUILD_APP,
+        "versao_completa": f"{VERSAO_APP} ({BUILD_APP})",
+        "atualizacao_obrigatoria": False,
+        "mensagem": "Versão atual do BSM Serviços.",
+    }
 
 # =========================================================
 # 🏠 ROOT
