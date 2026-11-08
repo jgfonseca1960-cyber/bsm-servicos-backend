@@ -1,3 +1,7 @@
+from dotenv import load_dotenv
+
+load_dotenv()
+
 print("🔥🔥🔥 MAIN NOVO 🔥🔥🔥")
 
 import os
@@ -6,7 +10,8 @@ from app.routers.dashboard_router import router as dashboard_router
 from contextlib import asynccontextmanager
 
 import app.config.cloudinary_config
-from app.controllers.dashboard_controller import router as dashboard_router
+
+##  from app.controllers.dashboard_controller import router as dashboard_router
 
 from fastapi import (
     FastAPI,
@@ -17,7 +22,7 @@ from fastapi import (
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordBearer
+## from fastapi.security import OAuth2PasswordBearer
 from fastapi.staticfiles import StaticFiles
 
 from app.database import (
@@ -39,17 +44,10 @@ print("🌐 BASE_URL =", BASE_URL)
 # 🔐 AUTH
 # =========================================================
 
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/auth/login"
+from app.core.dependencies import (
+    get_current_user,
+    get_current_admin,
 )
-
-def get_current_user(
-    token: str = Depends(oauth2_scheme)
-):
-    return {
-        "token": token,
-        "is_admin": True
-    }
 
 # =========================================================
 # 🔥 LIFESPAN
