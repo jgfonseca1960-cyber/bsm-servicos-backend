@@ -1,14 +1,35 @@
-import os
 
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-DATABASE_URL = "postgresql://neondb_owner:npg_j5ogriF7NlLZ@ep-shy-fog-ac45dkha-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-# os.getenv("DATABASE_URL")
-print("DATABASE_URL =", DATABASE_URL)
+from app.core.config import DATABASE_URL
+
+
+# Define explicitamente o driver psycopg2.
+# Isso evita que o SQLAlchemy 2.1 tente importar psycopg (versão 3).
+def normalizar_database_url(url: str) -> str:
+    if url.startswith("postgresql://"):
+        return url.replace(
+            "postgresql://",
+            "postgresql+psycopg2://",
+            1,
+        )
+
+    if url.startswith("postgres://"):
+        return url.replace(
+            "postgres://",
+            "postgresql+psycopg2://",
+            1,
+        )
+
+    return url
+
+
+DATABASE_URL_FINAL = normalizar_database_url(DATABASE_URL)
+
+
 engine = create_engine(
-    DATABASE_URL,
+    DATABASE_URL_FINAL,
     pool_pre_ping=True,
 )
 
@@ -30,4 +51,7 @@ def get_db():
 
 
 def init_db():
+    # Registra todos os modelos antes de criar/verificar as tabelas.
+    import app.models  # noqa: F401
+
     Base.metadata.create_all(bind=engine)
