@@ -25,6 +25,29 @@ class Empresa(Base):
     whatsapp = Column(String)
     email = Column(String)
 
+    # =====================================================
+    # 🌐 REDES SOCIAIS E PRESENÇA DIGITAL
+    # =====================================================
+
+    instagram = Column(String)
+    facebook = Column(String)
+    site = Column(String)
+
+    # =====================================================
+    # 📱 APLICATIVO DE VENDAS
+    # =====================================================
+
+    possui_app = Column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false"
+    )
+
+    link_app_android = Column(String)
+    link_app_ios = Column(String)
+
+
     endereco = Column(String)
     bairro = Column(String)
     cidade = Column(String)
